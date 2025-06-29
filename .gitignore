@@ -1,4 +1,3 @@
-
 # Flutter build output
 /build/
 
@@ -42,6 +41,14 @@ android/.gradle/
 android/app/build/
 android/local.properties
 android/.idea/
+
+# Firebase configuration (contains API keys)
+app/lib/firebase_options.dart
+**/firebase_options.dart
+**/google-services.json
+**/GoogleService-Info.plist
+**/firebase.json
+**/.firebaserc
 
 # Misc
 *.lock
