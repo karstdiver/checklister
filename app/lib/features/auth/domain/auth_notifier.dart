@@ -61,8 +61,19 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       print('🔍 DEBUG: Starting anonymous sign in');
       state = state.copyWith(status: AuthStatus.loading);
-      await _auth.signInAnonymously();
+      final userCredential = await _auth.signInAnonymously();
       print('🔍 DEBUG: Anonymous sign in completed successfully');
+      print('🔍 DEBUG: User credential: ${userCredential.user?.uid}');
+
+      // Manually update state in case listener doesn't fire immediately
+      if (userCredential.user != null) {
+        print('🔍 DEBUG: Manually updating state to authenticated');
+        state = state.copyWith(
+          status: AuthStatus.authenticated,
+          user: userCredential.user,
+          errorMessage: null,
+        );
+      }
     } catch (e) {
       print('🔍 DEBUG: Anonymous sign in failed: $e');
       state = state.copyWith(

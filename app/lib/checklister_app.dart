@@ -5,6 +5,7 @@ import 'features/auth/presentation/splash_screen.dart';
 import 'features/auth/presentation/login_screen.dart';
 import 'features/checklists/presentation/home_screen.dart';
 import 'features/items/presentation/checklist_screen.dart';
+import 'features/settings/presentation/settings_screen.dart';
 import 'core/providers/providers.dart';
 import 'core/navigation/navigation_state.dart';
 
@@ -41,6 +42,8 @@ class ChecklisterApp extends ConsumerWidget {
         return const AboutScreen();
       case NavigationRoute.help:
         return const HelpScreen();
+      case NavigationRoute.settings:
+        return const SettingsScreen();
     }
   }
 }

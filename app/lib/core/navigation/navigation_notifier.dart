@@ -15,6 +15,7 @@ class NavigationNotifier extends StateNotifier<NavigationState> {
       navigateTo(NavigationRoute.checklist, params: params);
   void navigateToAbout() => navigateTo(NavigationRoute.about);
   void navigateToHelp() => navigateTo(NavigationRoute.help);
+  void navigateToSettings() => navigateTo(NavigationRoute.settings);
 
   void goBack() {
     // Simple back navigation - could be enhanced with a navigation stack
@@ -28,6 +29,7 @@ class NavigationNotifier extends StateNotifier<NavigationState> {
         break;
       case NavigationRoute.about:
       case NavigationRoute.help:
+      case NavigationRoute.settings:
         navigateToSplash();
         break;
       case NavigationRoute.splash:

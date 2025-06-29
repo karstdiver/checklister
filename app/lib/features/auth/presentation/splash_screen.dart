@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../../../core/providers/providers.dart';
+import '../domain/auth_state.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -20,26 +21,30 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     });
   }
 
-  void _checkAuthAndNavigate() async {
-    // Small delay to show splash screen
-    await Future.delayed(const Duration(seconds: 3));
-
-    if (!mounted) return;
-
-    final authState = ref.read(authStateProvider);
-    final navigationNotifier = ref.read(navigationNotifierProvider.notifier);
-
-    if (authState.isAuthenticated) {
-      navigationNotifier.navigateToHome();
-    } else {
-      navigationNotifier.navigateToLogin();
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authStateProvider);
     final navigationNotifier = ref.read(navigationNotifierProvider.notifier);
+
+    // Listen for auth state changes and navigate accordingly
+    ref.listen<AuthState>(authStateProvider, (previous, next) {
+      if (next.isAuthenticated) {
+        print(
+          '🔍 DEBUG: SplashScreen detected authenticated user, navigating to home',
+        );
+        navigationNotifier.navigateToHome();
+      } else if (next.hasError) {
+        print(
+          '🔍 DEBUG: SplashScreen detected auth error: ${next.errorMessage}',
+        );
+        // Stay on splash to show error
+      } else if (!next.isLoading && next.status != AuthStatus.initial) {
+        print(
+          '🔍 DEBUG: SplashScreen detected unauthenticated user, navigating to login',
+        );
+        navigationNotifier.navigateToLogin();
+      }
+    });
 
     return Scaffold(
       body: Center(
@@ -70,6 +75,18 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 48),
+
+              // Debug info
+              Text(
+                'Auth Status: ${authState.status}',
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+              if (authState.user != null)
+                Text(
+                  'User: ${authState.user!.uid}',
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              const SizedBox(height: 24),
 
               // Loading indicator
               if (authState.isLoading)
@@ -117,5 +134,27 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         ),
       ),
     );
+  }
+
+  void _checkAuthAndNavigate() async {
+    // Small delay to show splash screen
+    await Future.delayed(const Duration(seconds: 3));
+
+    if (!mounted) return;
+
+    final authState = ref.read(authStateProvider);
+    final navigationNotifier = ref.read(navigationNotifierProvider.notifier);
+
+    print(
+      '🔍 DEBUG: SplashScreen _checkAuthAndNavigate - Status: ${authState.status}',
+    );
+
+    if (authState.isAuthenticated) {
+      print('🔍 DEBUG: SplashScreen navigating to home');
+      navigationNotifier.navigateToHome();
+    } else {
+      print('🔍 DEBUG: SplashScreen navigating to login');
+      navigationNotifier.navigateToLogin();
+    }
   }
 }

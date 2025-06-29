@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../../../core/providers/providers.dart';
+import '../../auth/domain/auth_state.dart';
+import '../../../shared/widgets/logout_dialog.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -9,8 +11,19 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentUser = ref.watch(currentUserProvider);
+    final authState = ref.watch(authStateProvider);
     final navigationNotifier = ref.read(navigationNotifierProvider.notifier);
     final authNotifier = ref.read(authNotifierProvider.notifier);
+
+    // Listen for auth state changes and navigate when unauthenticated
+    ref.listen<AuthState>(authStateProvider, (previous, next) {
+      if (next?.isAuthenticated != true && next?.status != AuthStatus.initial) {
+        print(
+          '🔍 DEBUG: HomeScreen detected unauthenticated user, navigating to login',
+        );
+        navigationNotifier.navigateToLogin();
+      }
+    });
 
     return Scaffold(
       appBar: AppBar(
@@ -24,10 +37,10 @@ class HomeScreen extends ConsumerWidget {
                   // TODO: Navigate to profile
                   break;
                 case 'settings':
-                  // TODO: Navigate to settings
+                  navigationNotifier.navigateToSettings();
                   break;
                 case 'logout':
-                  authNotifier.signOut();
+                  LogoutDialog.show(context, authNotifier);
                   break;
               }
             },
@@ -85,6 +98,18 @@ class HomeScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Debug info
+            Text(
+              'Auth Status: ${authState.status}',
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+            if (currentUser != null)
+              Text(
+                'User: ${currentUser.uid}',
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+            const SizedBox(height: 16),
+
             // Welcome message
             Text(
               tr('welcome_user', args: [currentUser?.email ?? tr('anonymous')]),

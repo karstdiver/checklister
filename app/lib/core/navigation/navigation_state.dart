@@ -1,4 +1,4 @@
-enum NavigationRoute { splash, login, home, checklist, about, help }
+enum NavigationRoute { splash, login, home, checklist, about, help, settings }
 
 class NavigationState {
   final NavigationRoute currentRoute;
@@ -33,6 +33,8 @@ class NavigationState {
         return '/about';
       case NavigationRoute.help:
         return '/help';
+      case NavigationRoute.settings:
+        return '/settings';
     }
   }
 }

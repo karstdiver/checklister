@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../../../core/providers/providers.dart';
+import '../domain/auth_state.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -51,6 +52,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final authState = ref.watch(authStateProvider);
     final navigationNotifier = ref.read(navigationNotifierProvider.notifier);
 
+    // Listen for auth state changes and navigate when authenticated
+    ref.listen<AuthState>(authStateProvider, (previous, next) {
+      if (next?.isAuthenticated == true) {
+        print(
+          '🔍 DEBUG: LoginScreen detected authenticated user, navigating to home',
+        );
+        navigationNotifier.navigateToHome();
+      }
+    });
+
     return Scaffold(
       appBar: AppBar(
         title: Text(_isSignUp ? tr('signup') : tr('login')),
@@ -82,6 +93,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 32),
+
+              // Debug info
+              Text(
+                'Auth Status: ${authState.status}',
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+              if (authState.user != null)
+                Text(
+                  'User: ${authState.user!.uid}',
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              const SizedBox(height: 16),
 
               // Email Field
               TextFormField(
