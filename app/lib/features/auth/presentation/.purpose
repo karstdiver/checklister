@@ -1,0 +1,3 @@
+Handles login, registration, password recovery, and Firebase Auth session management.
+
+This is the presentation/ layer of the auth feature.

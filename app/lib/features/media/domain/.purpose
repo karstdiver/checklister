@@ -1,0 +1,3 @@
+Manages image attachments and interactions with Firebase Storage.
+
+This is the domain/ layer of the media feature.

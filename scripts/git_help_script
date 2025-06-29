@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# <app_name> Git Help Script
+# This script shows how to commit and push changes to the GitHub repository
+
+echo "Checking Git status..."
+git status
+
+echo ""
+echo "To add all changed files, use:"
+echo "  git add ."
+
+echo ""
+echo "To commit your changes, use:"
+echo "  git commit -m \"Your commit message here\""
+
+echo ""
+echo "To push your changes to the repository, use:"
+echo "  git push origin main"
+echo "Replace 'main' with your branch name if different."
+
+echo ""
+echo "Script complete. Refer to Git documentation for more options."

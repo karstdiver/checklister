@@ -1,0 +1,3 @@
+Enables voice input, speech-to-text processing, and command parsing (future).
+
+This is the domain/ layer of the voice feature.

@@ -1,0 +1,3 @@
+Manages checklist collections including create, list, and delete operations.
+
+This is the domain/ layer of the checklists feature.

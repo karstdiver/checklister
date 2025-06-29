@@ -1,0 +1,89 @@
+
+# Flutter build output
+/build/
+
+# Flutter/Dart/Pub related
+.dart_tool/
+.packages
+.pub/
+.pub-cache/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.flutter-plugins-dependencies
+flutter_export_environment.sh
+
+# Dependency override
+.override/
+
+# IntelliJ related
+.idea/
+*.iml
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# iOS
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/Flutter/App.framework
+ios/Flutter/engine/
+ios/Runner.xcworkspace/
+ios/DerivedData/
+*.xcuserstate
+*.xcworkspace
+
+# Android
+android/.gradle/
+android/app/build/
+android/local.properties
+android/.idea/
+
+# Misc
+*.lock
+*.log
+*.tmp
+*.swp
+.DS_Store
+Thumbs.db
+Icon?
+
+# Dart tool and pubspec lock
+/.dart_tool/
+/.packages
+/pubspec.lock
+
+# VSCode and IDE settings
+.vscode/
+.idea/
+
+# Python virtual environments
+venv/
+
+# Node.js modules for backend (if applicable)
+node_modules/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+
+# Swap files
+*.swp
+
+# Environment variables file (optional to keep private)
+.env
+
+# Miscellaneous
+*.pyc
+
+# Local ignores
+junk
+junk*
+**/delme

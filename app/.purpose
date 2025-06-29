@@ -1,0 +1,6 @@
+This directory contains the Flutter app for <app name>, including frontend code, assets, and tests.
+This is the root directory of the <app name> app. This means:
+$ cd ~/Projects/<app name>/app
+$ flutter analyze
+$ flutter run  - need a device or emulator running to connect to
+

@@ -1,0 +1,3 @@
+Handles app-wide settings, theme preferences, and user configuration.
+
+This is the data/ layer of the settings feature.

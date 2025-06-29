@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "821052652843",
+    "project_id": "checklister-firebase-dev",
+    "storage_bucket": "checklister-firebase-dev.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:821052652843:android:0315dd6f772106bf63d96e",
+        "android_client_info": {
+          "package_name": "com.checklister.checklister"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAqTKXdp4nk26NMUr8KPZLQ9jNxbEOrCU8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

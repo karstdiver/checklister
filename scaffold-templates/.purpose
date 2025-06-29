@@ -1,0 +1,13 @@
+Contains templates for scaffolding new components or services in the project.
+
+A scaffold-templates directory typically contains boilerplate code templates used to quickly generate:
+
+UI screens
+StateNotifiers or NotifierProviders
+Firebase service wrappers
+Tests
+Localization files
+
+It's a developer productivity tool, not a runtime dependency.
+
+

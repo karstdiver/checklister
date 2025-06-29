@@ -1,0 +1,2 @@
+Holds global error classes and exception types used throughout the app.
+This directory contains core error types and exception handling models used across layers.

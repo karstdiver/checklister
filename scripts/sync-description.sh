@@ -1,0 +1,1 @@
+# Placeholder for sync-description.sh in scripts directory

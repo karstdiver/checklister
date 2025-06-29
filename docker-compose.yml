@@ -1,0 +1,5 @@
+# Docker Compose file for backend services
+version: '3'
+services:
+  backend:
+    build: .

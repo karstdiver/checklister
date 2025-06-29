@@ -1,0 +1,2 @@
+Contains project documentation, including guides, API documentation, and architectural decision records (ADRs).
+This directory should contain releaseable versions of the documents. The working versions should be developed in the roles directory.

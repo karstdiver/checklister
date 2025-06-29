@@ -1,0 +1,12 @@
+
+version: '3'
+services:
+  backend:
+    image: backend-image
+    ports:
+      - "5000:5000"
+  frontend:
+    image: flutter-image
+    ports:
+      - "8080:8080"
+    

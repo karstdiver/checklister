@@ -1,0 +1,3 @@
+This directory is reserved for the inactive role: Quality Engineer (Intermediate Skill Level).
+It will be activated in the project structure when this role is needed.
+This directory serves as a workspace for quality engineer to store and organize their work products, such as review notes, recommendations, and test reports. Releasable quality documents should be put into docs/quality. Working docs should be developed in this directory.

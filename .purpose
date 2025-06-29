@@ -1,0 +1,2 @@
+This is the top level directory for the developing <app_name>. This directory contains all files related to <app_name>. Backup this directory (<app_name>.zip) to save the app for restoration. Don't forget to do flutter clean before creating .zip file.
+

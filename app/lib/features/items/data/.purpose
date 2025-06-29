@@ -1,0 +1,3 @@
+Handles checklist item logic: swiping, editing, completion state, and order.
+
+This is the data/ layer of the items feature.
