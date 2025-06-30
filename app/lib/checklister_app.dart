@@ -1,50 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
+
+import 'core/providers/providers.dart';
 import 'features/auth/presentation/splash_screen.dart';
 import 'features/auth/presentation/login_screen.dart';
 import 'features/checklists/presentation/home_screen.dart';
-import 'features/items/presentation/checklist_screen.dart';
 import 'features/settings/presentation/settings_screen.dart';
-import 'core/providers/providers.dart';
-import 'core/navigation/navigation_state.dart';
+import 'shared/themes/app_theme.dart';
 
 class ChecklisterApp extends ConsumerWidget {
   const ChecklisterApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final navigationState = ref.watch(navigationStateProvider);
+    final authState = ref.watch(authStateProvider);
 
     return MaterialApp(
       title: 'Checklister',
+      theme: AppTheme.lightTheme,
+      home: const SplashScreen(),
+      debugShowCheckedModeBanner: false,
       localizationsDelegates: context.localizationDelegates,
       supportedLocales: context.supportedLocales,
       locale: context.locale,
-      theme: ThemeData.light(),
-      darkTheme: ThemeData.dark(),
-      themeMode: ThemeMode.system,
-      home: _buildScreen(navigationState.currentRoute),
+      routes: {
+        '/splash': (context) => const SplashScreen(),
+        '/login': (context) => const LoginScreen(),
+        '/home': (context) => const HomeScreen(),
+        '/settings': (context) => const SettingsScreen(),
+      },
     );
-  }
-
-  Widget _buildScreen(NavigationRoute route) {
-    switch (route) {
-      case NavigationRoute.splash:
-        return const SplashScreen();
-      case NavigationRoute.login:
-        return const LoginScreen();
-      case NavigationRoute.home:
-        return const HomeScreen();
-      case NavigationRoute.checklist:
-        return const ChecklistScreen();
-      case NavigationRoute.about:
-        return const AboutScreen();
-      case NavigationRoute.help:
-        return const HelpScreen();
-      case NavigationRoute.settings:
-        return const SettingsScreen();
-    }
   }
 }
 

@@ -12,18 +12,7 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final currentUser = ref.watch(currentUserProvider);
     final authState = ref.watch(authStateProvider);
-    final navigationNotifier = ref.read(navigationNotifierProvider.notifier);
     final authNotifier = ref.read(authNotifierProvider.notifier);
-
-    // Listen for auth state changes and navigate when unauthenticated
-    ref.listen<AuthState>(authStateProvider, (previous, next) {
-      if (next?.isAuthenticated != true && next?.status != AuthStatus.initial) {
-        print(
-          '🔍 DEBUG: HomeScreen detected unauthenticated user, navigating to login',
-        );
-        navigationNotifier.navigateToLogin();
-      }
-    });
 
     return Scaffold(
       appBar: AppBar(
@@ -37,7 +26,7 @@ class HomeScreen extends ConsumerWidget {
                   // TODO: Navigate to profile
                   break;
                 case 'settings':
-                  navigationNotifier.navigateToSettings();
+                  Navigator.pushNamed(context, '/settings');
                   break;
                 case 'logout':
                   LogoutDialog.show(context, authNotifier);

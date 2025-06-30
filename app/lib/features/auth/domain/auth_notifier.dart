@@ -9,27 +9,26 @@ class AuthNotifier extends StateNotifier<AuthState> {
     // Only listen to auth state changes if Firebase is available
     if (_auth != null) {
       try {
-        print('🔍 DEBUG: Attempting to listen to auth state changes');
         _auth.authStateChanges().listen((User? user) {
           if (user != null) {
-            print('🔍 DEBUG: User authenticated: ${user.uid}');
             state = state.copyWith(
               status: AuthStatus.authenticated,
               user: user,
               errorMessage: null,
             );
           } else {
-            print('🔍 DEBUG: User unauthenticated');
-            state = state.copyWith(
-              status: AuthStatus.unauthenticated,
-              user: null,
-              errorMessage: null,
-            );
+            // Don't automatically update state to unauthenticated during initialization
+            // Only update if we're not in the initial setup phase
+            if (state.status != AuthStatus.initial) {
+              state = state.copyWith(
+                status: AuthStatus.unauthenticated,
+                user: null,
+                errorMessage: null,
+              );
+            }
           }
         });
-        print('🔍 DEBUG: Successfully set up auth state listener');
       } catch (e) {
-        print('🔍 DEBUG: Error setting up auth state listener: $e');
         // Firebase not available, set to unauthenticated
         state = state.copyWith(
           status: AuthStatus.unauthenticated,
@@ -38,7 +37,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
         );
       }
     } else {
-      print('🔍 DEBUG: Firebase Auth is null, setting unauthenticated state');
       // No Firebase Auth available, set to unauthenticated
       state = state.copyWith(
         status: AuthStatus.unauthenticated,
@@ -50,7 +48,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<void> signInAnonymously() async {
     if (_auth == null) {
-      print('🔍 DEBUG: Firebase Auth is null, cannot sign in anonymously');
       state = state.copyWith(
         status: AuthStatus.error,
         errorMessage: 'Firebase not available',
@@ -59,15 +56,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
 
     try {
-      print('🔍 DEBUG: Starting anonymous sign in');
       state = state.copyWith(status: AuthStatus.loading);
       final userCredential = await _auth.signInAnonymously();
-      print('🔍 DEBUG: Anonymous sign in completed successfully');
-      print('🔍 DEBUG: User credential: ${userCredential.user?.uid}');
 
       // Manually update state in case listener doesn't fire immediately
       if (userCredential.user != null) {
-        print('🔍 DEBUG: Manually updating state to authenticated');
         state = state.copyWith(
           status: AuthStatus.authenticated,
           user: userCredential.user,
@@ -75,7 +68,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
         );
       }
     } catch (e) {
-      print('🔍 DEBUG: Anonymous sign in failed: $e');
       state = state.copyWith(
         status: AuthStatus.error,
         errorMessage: e.toString(),
@@ -140,7 +132,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<void> signOut() async {
     if (_auth == null) {
-      print('🔍 DEBUG: Firebase Auth is null, cannot sign out');
       state = state.copyWith(
         status: AuthStatus.error,
         errorMessage: 'Firebase not available',
@@ -149,11 +140,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
 
     try {
-      print('🔍 DEBUG: Starting sign out');
       await _auth.signOut();
-      print('🔍 DEBUG: Sign out completed successfully');
     } catch (e) {
-      print('🔍 DEBUG: Sign out failed: $e');
       state = state.copyWith(
         status: AuthStatus.error,
         errorMessage: e.toString(),

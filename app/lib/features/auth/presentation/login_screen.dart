@@ -45,29 +45,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _signInAnonymously() async {
     final authNotifier = ref.read(authNotifierProvider.notifier);
     await authNotifier.signInAnonymously();
+
+    // Navigate to home after successful anonymous sign-in
+    if (mounted) {
+      Navigator.pushReplacementNamed(context, '/home');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authStateProvider);
-    final navigationNotifier = ref.read(navigationNotifierProvider.notifier);
-
-    // Listen for auth state changes and navigate when authenticated
-    ref.listen<AuthState>(authStateProvider, (previous, next) {
-      if (next?.isAuthenticated == true) {
-        print(
-          '🔍 DEBUG: LoginScreen detected authenticated user, navigating to home',
-        );
-        navigationNotifier.navigateToHome();
-      }
-    });
 
     return Scaffold(
       appBar: AppBar(
         title: Text(_isSignUp ? tr('signup') : tr('login')),
         actions: [
           IconButton(
-            onPressed: () => navigationNotifier.navigateToAbout(),
+            onPressed: () {
+              // TODO: Navigate to about screen
+            },
             icon: const Icon(Icons.info_outline),
           ),
         ],

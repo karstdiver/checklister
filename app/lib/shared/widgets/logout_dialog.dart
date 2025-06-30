@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../../features/auth/domain/auth_notifier.dart';
 
@@ -17,9 +16,13 @@ class LogoutDialog {
               child: Text(tr('cancel')),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 Navigator.of(context).pop();
-                authNotifier.signOut();
+                await authNotifier.signOut();
+                // Navigate to splash screen immediately after logout
+                if (context.mounted) {
+                  Navigator.pushReplacementNamed(context, '/splash');
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,

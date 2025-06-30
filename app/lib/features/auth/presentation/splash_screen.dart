@@ -3,158 +3,287 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../../../core/providers/providers.dart';
 import '../domain/auth_state.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../../checklists/presentation/home_screen.dart';
+import 'dart:async';
+import '../../../shared/widgets/app_pulse_animation.dart';
+import 'package:animated_text_kit/animated_text_kit.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
-  const SplashScreen({super.key});
+  final Duration delay;
+  const SplashScreen({super.key, this.delay = const Duration(seconds: 4)});
 
   @override
   ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
 class _SplashScreenState extends ConsumerState<SplashScreen> {
+  Timer? _authCheckTimer;
+
   @override
   void initState() {
     super.initState();
-    // Auto-navigate based on auth state after a short delay
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkAuthAndNavigate();
-    });
+    if (false) {
+      // Check if user is already authenticated when screen loads
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _checkExistingAuth();
+        // Start a timer to periodically check for authentication
+        _authCheckTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+          _checkForAuthentication();
+        });
+      });
+    } else {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final firebaseAuth = FirebaseAuth.instance;
+        final currentUser = firebaseAuth.currentUser;
+        if (currentUser != null && mounted) {
+          Navigator.pushReplacementNamed(context, '/home');
+        } else if (mounted) {
+          // Add a short delay for branding effect
+          Future.delayed(widget.delay, () {
+            if (mounted) {
+              Navigator.pushReplacementNamed(context, '/login');
+            }
+          });
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _authCheckTimer?.cancel();
+    super.dispose();
+  }
+
+  void _checkExistingAuth() {
+    try {
+      final firebaseAuth = FirebaseAuth.instance;
+      final currentUser = firebaseAuth.currentUser;
+      print(
+        '🔍 DEBUG: Checking existing auth - Current user: ${currentUser?.uid}',
+      );
+
+      if (currentUser != null && mounted) {
+        print('🔍 DEBUG: User already authenticated, navigating to home');
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          (route) => false,
+        );
+      }
+    } catch (e) {
+      print('🔍 DEBUG: Error checking existing auth: $e');
+    }
+  }
+
+  void _checkForAuthentication() {
+    try {
+      final firebaseAuth = FirebaseAuth.instance;
+      final currentUser = firebaseAuth.currentUser;
+
+      if (currentUser != null && mounted) {
+        print(
+          '🔍 DEBUG: Timer detected authenticated user, navigating to home',
+        );
+        _authCheckTimer?.cancel();
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          (route) => false,
+        );
+      } else {
+        print('🔍 DEBUG: Timer check - no authenticated user found');
+      }
+    } catch (e) {
+      print('🔍 DEBUG: Error in timer auth check: $e');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authStateProvider);
-    final navigationNotifier = ref.read(navigationNotifierProvider.notifier);
-
-    // Listen for auth state changes and navigate accordingly
-    ref.listen<AuthState>(authStateProvider, (previous, next) {
-      if (next.isAuthenticated) {
-        print(
-          '🔍 DEBUG: SplashScreen detected authenticated user, navigating to home',
-        );
-        navigationNotifier.navigateToHome();
-      } else if (next.hasError) {
-        print(
-          '🔍 DEBUG: SplashScreen detected auth error: ${next.errorMessage}',
-        );
-        // Stay on splash to show error
-      } else if (!next.isLoading && next.status != AuthStatus.initial) {
-        print(
-          '🔍 DEBUG: SplashScreen detected unauthenticated user, navigating to login',
-        );
-        navigationNotifier.navigateToLogin();
-      }
-    });
 
     return Scaffold(
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
+      body: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          if (authState.isAuthenticated) {
+            Navigator.pushReplacementNamed(context, '/home');
+          } else {
+            Navigator.pushReplacementNamed(context, '/login');
+          }
+        },
+        child: Container(
+          width: double.infinity,
+          height: double.infinity,
+          color: Colors.black,
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // App Logo/Icon
-              const Icon(Icons.checklist, size: 80, color: Colors.blue),
-              const SizedBox(height: 24),
-
-              // App Title
+              const SizedBox(height: 64),
+              // Logo at the top
+              AppPulseAnimation(
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withOpacity(0.15),
+                  ),
+                  padding: const EdgeInsets.all(32),
+                  child: Image.asset(
+                    'assets/icons/icon.png',
+                    width: 80,
+                    height: 80,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 32),
+              // Large tagline
               Text(
-                tr('welcome_title'),
+                'Controlling Your Life',
                 style: const TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  letterSpacing: 1.1,
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 16),
-
-              // Subtitle
-              Text(
-                tr('welcome_subtitle'),
-                style: const TextStyle(fontSize: 16, color: Colors.grey),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 48),
-
-              // Debug info
-              Text(
-                'Auth Status: ${authState.status}',
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
-              ),
-              if (authState.user != null)
-                Text(
-                  'User: ${authState.user!.uid}',
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
-                ),
               const SizedBox(height: 24),
-
-              // Loading indicator
-              if (authState.isLoading)
-                const CircularProgressIndicator()
-              else
-                // Manual navigation buttons
-                Column(
-                  children: [
-                    ElevatedButton(
-                      onPressed: () => navigationNotifier.navigateToLogin(),
-                      child: Text(tr('login')),
+              // Animated CHECKLISTS (custom scale from 0.1x to 2.0x)
+              _ChecklistsScaleText(),
+              const SizedBox(height: 32),
+              // The rest of the splash content (centered vertically)
+              Expanded(
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(32.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // Subtitle
+                        Text(
+                          tr('welcome_subtitle'),
+                          style: const TextStyle(
+                            fontSize: 18,
+                            color: Colors.white70,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 48),
+                        if (authState.isLoading) ...[
+                          const CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                        ],
+                        Text(
+                          'Auth Status: ${authState.status}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.white70,
+                          ),
+                        ),
+                        if (authState.user != null)
+                          Text(
+                            'User: ${authState.user!.uid}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.white70,
+                            ),
+                          ),
+                        const SizedBox(height: 24),
+                        if (authState.hasError) ...[
+                          const SizedBox(height: 16),
+                          Text(
+                            authState.errorMessage ?? tr('error_unknown'),
+                            style: const TextStyle(
+                              color: Colors.redAccent,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: () {
+                              ref
+                                  .read(authNotifierProvider.notifier)
+                                  .clearError();
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: Colors.blue,
+                            ),
+                            child: Text(tr('retry')),
+                          ),
+                        ],
+                      ],
                     ),
-                    const SizedBox(height: 12),
-                    TextButton(
-                      onPressed: () => navigationNotifier.navigateToAbout(),
-                      child: Text(tr('about')),
-                    ),
-                    const SizedBox(height: 8),
-                    TextButton(
-                      onPressed: () => navigationNotifier.navigateToHelp(),
-                      child: Text(tr('help')),
-                    ),
-                  ],
+                  ),
                 ),
-
-              // Error message
-              if (authState.hasError) ...[
-                const SizedBox(height: 24),
-                Text(
-                  authState.errorMessage ?? tr('error_unknown'),
-                  style: const TextStyle(color: Colors.red),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () {
-                    ref.read(authNotifierProvider.notifier).clearError();
-                    _checkAuthAndNavigate();
-                  },
-                  child: Text(tr('retry')),
-                ),
-              ],
+              ),
             ],
           ),
         ),
       ),
     );
   }
+}
 
-  void _checkAuthAndNavigate() async {
-    // Small delay to show splash screen
-    await Future.delayed(const Duration(seconds: 3));
+class _ChecklistsScaleText extends StatefulWidget {
+  @override
+  State<_ChecklistsScaleText> createState() => _ChecklistsScaleTextState();
+}
 
-    if (!mounted) return;
+class _ChecklistsScaleTextState extends State<_ChecklistsScaleText>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnim;
 
-    final authState = ref.read(authStateProvider);
-    final navigationNotifier = ref.read(navigationNotifierProvider.notifier);
-
-    print(
-      '🔍 DEBUG: SplashScreen _checkAuthAndNavigate - Status: ${authState.status}',
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2200),
     );
+    _scaleAnim = Tween<double>(
+      begin: 0.1,
+      end: 1.5,
+      //).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutExpo));
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.bounceOut));
+    _controller.forward();
+  }
 
-    if (authState.isAuthenticated) {
-      print('🔍 DEBUG: SplashScreen navigating to home');
-      navigationNotifier.navigateToHome();
-    } else {
-      print('🔍 DEBUG: SplashScreen navigating to login');
-      navigationNotifier.navigateToLogin();
-    }
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _scaleAnim,
+      builder: (context, child) {
+        return Transform.scale(
+          scale: _scaleAnim.value,
+          child: Text(
+            tr('checklists'),
+            style: const TextStyle(
+              fontSize: 36,
+              fontWeight: FontWeight.w900,
+              color: Colors.white,
+              letterSpacing: 2.0,
+            ),
+          ),
+        );
+      },
+    );
   }
 }

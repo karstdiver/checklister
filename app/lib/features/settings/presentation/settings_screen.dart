@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../../../core/providers/providers.dart';
-import '../../auth/domain/auth_notifier.dart';
-import '../../auth/domain/auth_state.dart';
+import '../../../shared/themes/app_theme.dart';
+import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/logout_dialog.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -13,18 +13,8 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final currentUser = ref.watch(currentUserProvider);
     final authState = ref.watch(authStateProvider);
-    final navigationNotifier = ref.read(navigationNotifierProvider.notifier);
     final authNotifier = ref.read(authNotifierProvider.notifier);
-
-    // Listen for auth state changes and navigate when unauthenticated
-    ref.listen<AuthState>(authStateProvider, (previous, next) {
-      if (next?.isAuthenticated != true && next?.status != AuthStatus.initial) {
-        print(
-          '🔍 DEBUG: SettingsScreen detected unauthenticated user, navigating to login',
-        );
-        navigationNotifier.navigateToLogin();
-      }
-    });
+    final navigationNotifier = ref.read(navigationNotifierProvider.notifier);
 
     return Scaffold(
       appBar: AppBar(
