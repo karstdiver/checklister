@@ -16,7 +16,7 @@ class AppTheme {
 
   // Neutral Colors
   static const Color surfaceColor = Color(0xFFFFFFFF);
-  static const Color backgroundColor = Color(0xFFF8FAFC);
+  static const Color backgroundColor = Colors.black;
   static const Color cardColor = Color(0xFFFFFFFF);
 
   static const Color textPrimary = Color(0xFF1E293B);
@@ -87,6 +87,7 @@ class AppTheme {
         onSurface: textPrimary,
         onError: Colors.white,
       ),
+      scaffoldBackgroundColor: backgroundColor,
 
       // App Bar Theme
       appBarTheme: const AppBarTheme(

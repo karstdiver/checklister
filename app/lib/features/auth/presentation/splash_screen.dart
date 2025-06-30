@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../../../core/providers/providers.dart';
-import '../domain/auth_state.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../checklists/presentation/home_screen.dart';
 import 'dart:async';
 import '../../../shared/widgets/app_pulse_animation.dart';
-import 'package:animated_text_kit/animated_text_kit.dart';
+//import 'package:animated_text_kit/animated_text_kit.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   final Duration delay;
