@@ -99,7 +99,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
       if (userCredential.user != null) {
         // TODO: Create user document in Firestore if not exists
         print(
-          '🔍 DEBUG: [TODO] Create user doc for UID: \\${userCredential.user!.uid}',
+          '🔍 DEBUG: [TODO] Create user doc for UID: ${userCredential.user!.uid}',
+        );
+        // Manually update state to authenticated
+        state = state.copyWith(
+          status: AuthStatus.authenticated,
+          user: userCredential.user,
+          errorMessage: null,
         );
       }
     } catch (e) {

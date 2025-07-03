@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../../../core/providers/providers.dart';
+import '../../auth/domain/auth_state.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -54,6 +55,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authStateProvider);
+
+    ref.listen<AuthState>(authNotifierProvider, (prev, next) {
+      if (next.status == AuthStatus.authenticated) {
+        Navigator.pushReplacementNamed(context, '/home');
+      }
+    });
 
     return Scaffold(
       appBar: AppBar(
