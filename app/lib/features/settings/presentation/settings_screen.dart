@@ -4,6 +4,8 @@ import 'package:easy_localization/easy_localization.dart';
 import '../../../core/providers/providers.dart';
 import '../../../shared/widgets/logout_dialog.dart';
 import '../../../core/providers/theme_provider.dart';
+import 'dart:io' show Platform;
+import 'package:flutter/cupertino.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -151,35 +153,41 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             padding: const EdgeInsets.all(16.0),
             child: Text('Theme', style: Theme.of(context).textTheme.titleLarge),
           ),
-          RadioListTile<ThemeMode>(
-            title: Text('System Default'),
-            value: ThemeMode.system,
-            groupValue: ref.watch(themeModeProvider),
-            onChanged: (mode) {
-              if (mode != null) {
-                ref.read(themeModeProvider.notifier).state = mode;
-              }
-            },
-          ),
-          RadioListTile<ThemeMode>(
-            title: Text('Light'),
-            value: ThemeMode.light,
-            groupValue: ref.watch(themeModeProvider),
-            onChanged: (mode) {
-              if (mode != null) {
-                ref.read(themeModeProvider.notifier).state = mode;
-              }
-            },
-          ),
-          RadioListTile<ThemeMode>(
-            title: Text('Dark'),
-            value: ThemeMode.dark,
-            groupValue: ref.watch(themeModeProvider),
-            onChanged: (mode) {
-              if (mode != null) {
-                ref.read(themeModeProvider.notifier).state = mode;
-              }
-            },
+          Center(
+            child: Platform.isIOS
+                ? CupertinoSegmentedControl<ThemeMode>(
+                    groupValue: ref.watch(themeModeProvider),
+                    children: const {
+                      ThemeMode.system: Text('System'),
+                      ThemeMode.light: Text('Light'),
+                      ThemeMode.dark: Text('Dark'),
+                    },
+                    onValueChanged: (mode) {
+                      ref.read(themeModeProvider.notifier).state = mode;
+                    },
+                  )
+                : DropdownButton<ThemeMode>(
+                    value: ref.watch(themeModeProvider),
+                    items: const [
+                      DropdownMenuItem(
+                        value: ThemeMode.system,
+                        child: Text('System'),
+                      ),
+                      DropdownMenuItem(
+                        value: ThemeMode.light,
+                        child: Text('Light'),
+                      ),
+                      DropdownMenuItem(
+                        value: ThemeMode.dark,
+                        child: Text('Dark'),
+                      ),
+                    ],
+                    onChanged: (mode) {
+                      if (mode != null) {
+                        ref.read(themeModeProvider.notifier).state = mode;
+                      }
+                    },
+                  ),
           ),
 
           const SizedBox(height: 16),
