@@ -111,11 +111,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               // Email Field
               TextFormField(
                 controller: _emailController,
+                style: const TextStyle(color: Colors.white),
                 keyboardType: TextInputType.emailAddress,
                 decoration: InputDecoration(
                   labelText: tr('email'),
+                  labelStyle: const TextStyle(color: Colors.white70),
+                  hintStyle: const TextStyle(color: Colors.white54),
                   border: const OutlineInputBorder(),
-                  prefixIcon: const Icon(Icons.email),
+                  prefixIcon: const Icon(Icons.email, color: Colors.white70),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -132,11 +135,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               // Password Field
               TextFormField(
                 controller: _passwordController,
+                style: const TextStyle(color: Colors.white),
                 obscureText: true,
                 decoration: InputDecoration(
                   labelText: tr('password'),
+                  labelStyle: const TextStyle(color: Colors.white70),
+                  hintStyle: const TextStyle(color: Colors.white54),
                   border: const OutlineInputBorder(),
-                  prefixIcon: const Icon(Icons.lock),
+                  prefixIcon: const Icon(Icons.lock, color: Colors.white70),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
