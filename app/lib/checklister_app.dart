@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
 
 import 'core/providers/providers.dart';
+import 'core/providers/theme_provider.dart';
 import 'features/auth/presentation/splash_screen.dart';
 import 'features/auth/presentation/login_screen.dart';
 import 'features/checklists/presentation/home_screen.dart';
@@ -19,6 +20,8 @@ class ChecklisterApp extends ConsumerWidget {
     return MaterialApp(
       title: 'Checklister',
       theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ref.watch(themeModeProvider),
       home: const SplashScreen(),
       debugShowCheckedModeBanner: false,
       localizationsDelegates: context.localizationDelegates,

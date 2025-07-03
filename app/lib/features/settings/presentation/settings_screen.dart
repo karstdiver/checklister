@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../../../core/providers/providers.dart';
 import '../../../shared/widgets/logout_dialog.dart';
+import '../../../core/providers/theme_provider.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -28,7 +29,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       appBar: AppBar(
         title: Text(tr('settings')),
         leading: IconButton(
-          onPressed: () => navigationNotifier.goBack(),
+          onPressed: () => Navigator.of(context).pop(),
           icon: const Icon(Icons.arrow_back),
         ),
       ),
@@ -143,6 +144,42 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ),
               ],
             ),
+          ),
+
+          // Theme selection section
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text('Theme', style: Theme.of(context).textTheme.titleLarge),
+          ),
+          RadioListTile<ThemeMode>(
+            title: Text('System Default'),
+            value: ThemeMode.system,
+            groupValue: ref.watch(themeModeProvider),
+            onChanged: (mode) {
+              if (mode != null) {
+                ref.read(themeModeProvider.notifier).state = mode;
+              }
+            },
+          ),
+          RadioListTile<ThemeMode>(
+            title: Text('Light'),
+            value: ThemeMode.light,
+            groupValue: ref.watch(themeModeProvider),
+            onChanged: (mode) {
+              if (mode != null) {
+                ref.read(themeModeProvider.notifier).state = mode;
+              }
+            },
+          ),
+          RadioListTile<ThemeMode>(
+            title: Text('Dark'),
+            value: ThemeMode.dark,
+            groupValue: ref.watch(themeModeProvider),
+            onChanged: (mode) {
+              if (mode != null) {
+                ref.read(themeModeProvider.notifier).state = mode;
+              }
+            },
           ),
 
           const SizedBox(height: 16),
