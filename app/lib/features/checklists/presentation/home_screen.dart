@@ -19,7 +19,7 @@ class HomeScreen extends ConsumerWidget {
         actions: [
           // User menu
           PopupMenuButton<String>(
-            onSelected: (value) {
+            onSelected: (value) async {
               switch (value) {
                 case 'profile':
                   // TODO: Navigate to profile
@@ -28,7 +28,7 @@ class HomeScreen extends ConsumerWidget {
                   Navigator.pushNamed(context, '/settings');
                   break;
                 case 'logout':
-                  LogoutDialog.show(context, authNotifier);
+                  await LogoutDialog.show(context, authNotifier, ref);
                   break;
               }
             },

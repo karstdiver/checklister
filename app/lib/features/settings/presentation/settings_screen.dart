@@ -4,15 +4,25 @@ import 'package:easy_localization/easy_localization.dart';
 import '../../../core/providers/providers.dart';
 import '../../../shared/widgets/logout_dialog.dart';
 
-class SettingsScreen extends ConsumerWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final currentUser = ref.watch(currentUserProvider);
     final authState = ref.watch(authStateProvider);
-    final authNotifier = ref.read(authNotifierProvider.notifier);
     final navigationNotifier = ref.read(navigationNotifierProvider.notifier);
+    final authNotifier = ref.read(authNotifierProvider.notifier);
 
     return Scaffold(
       appBar: AppBar(
@@ -170,8 +180,8 @@ class SettingsScreen extends ConsumerWidget {
                 tr('logout'),
                 style: const TextStyle(color: Colors.red),
               ),
-              onTap: () {
-                LogoutDialog.show(context, authNotifier);
+              onTap: () async {
+                await LogoutDialog.show(context, authNotifier, ref);
               },
             ),
           ),

@@ -35,6 +35,9 @@ final currentUserProvider = Provider<User?>((ref) {
   return ref.watch(authStateProvider).user;
 });
 
+// app/lib/core/providers/providers.dart (or a new file)
+final showLogoutDialogProvider = StateProvider<bool>((ref) => false);
+
 // Navigation providers
 final navigationNotifierProvider =
     StateNotifierProvider<NavigationNotifier, NavigationState>((ref) {

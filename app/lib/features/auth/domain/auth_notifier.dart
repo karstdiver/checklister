@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'auth_state.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthNotifier extends StateNotifier<AuthState> {
   final FirebaseAuth? _auth;
@@ -90,8 +91,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       print('🔍 DEBUG: Starting email/password sign in for: $email');
       state = state.copyWith(status: AuthStatus.loading);
-      await _auth.signInWithEmailAndPassword(email: email, password: password);
+      final userCredential = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
       print('🔍 DEBUG: Email/password sign in completed successfully');
+      if (userCredential.user != null) {
+        // TODO: Create user document in Firestore if not exists
+        print(
+          '🔍 DEBUG: [TODO] Create user doc for UID: \\${userCredential.user!.uid}',
+        );
+      }
     } catch (e) {
       print('🔍 DEBUG: Email/password sign in failed: $e');
       state = state.copyWith(
@@ -142,6 +152,49 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       await _auth.signOut();
     } catch (e) {
+      state = state.copyWith(
+        status: AuthStatus.error,
+        errorMessage: e.toString(),
+      );
+    }
+  }
+
+  Future<void> signInWithGoogle() async {
+    if (_auth == null) {
+      print('🔍 DEBUG: Firebase Auth is null, cannot sign in with Google');
+      state = state.copyWith(
+        status: AuthStatus.error,
+        errorMessage: 'Firebase not available',
+      );
+      return;
+    }
+
+    try {
+      print('🔍 DEBUG: Starting Google sign in');
+      state = state.copyWith(status: AuthStatus.loading);
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+      if (googleUser == null) {
+        // User cancelled the sign-in
+        state = state.copyWith(status: AuthStatus.unauthenticated);
+        print('🔍 DEBUG: Google sign in cancelled by user');
+        return;
+      }
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+      final userCredential = await _auth.signInWithCredential(credential);
+      print('🔍 DEBUG: Google sign in completed successfully');
+      if (userCredential.user != null) {
+        // TODO: Create user document in Firestore if not exists
+        print(
+          '🔍 DEBUG: [TODO] Create user doc for UID: \\${userCredential.user!.uid}',
+        );
+      }
+    } catch (e) {
+      print('🔍 DEBUG: Google sign in failed: $e');
       state = state.copyWith(
         status: AuthStatus.error,
         errorMessage: e.toString(),

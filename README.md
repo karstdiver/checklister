@@ -1,4 +1,6 @@
 # ✅ Checklister App
+# Checklister App  
+*Essential truth spoken concisely is true eloquence.*
 
 **Checklister** is a cross-platform Flutter app designed to guide users through checklist-driven tasks. Inspired by aviation-grade checklists, the app provides swipe-based, image-enhanced, and voice-activated interactions to ensure step-by-step execution for any repeatable procedure.
 
