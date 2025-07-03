@@ -6,6 +6,7 @@ import '../../../shared/widgets/logout_dialog.dart';
 import '../../../core/providers/theme_provider.dart';
 import 'dart:io' show Platform;
 import 'package:flutter/cupertino.dart';
+import '../../../core/providers/settings_provider.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -156,18 +157,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           Center(
             child: Platform.isIOS
                 ? CupertinoSegmentedControl<ThemeMode>(
-                    groupValue: ref.watch(themeModeProvider),
+                    groupValue: ref.watch(settingsProvider).themeMode,
                     children: const {
                       ThemeMode.system: Text('System'),
                       ThemeMode.light: Text('Light'),
                       ThemeMode.dark: Text('Dark'),
                     },
                     onValueChanged: (mode) {
-                      ref.read(themeModeProvider.notifier).state = mode;
+                      ref.read(settingsProvider.notifier).setThemeMode(mode);
                     },
                   )
                 : DropdownButton<ThemeMode>(
-                    value: ref.watch(themeModeProvider),
+                    value: ref.watch(settingsProvider).themeMode,
                     items: const [
                       DropdownMenuItem(
                         value: ThemeMode.system,
@@ -184,7 +185,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ],
                     onChanged: (mode) {
                       if (mode != null) {
-                        ref.read(themeModeProvider.notifier).state = mode;
+                        ref.read(settingsProvider.notifier).setThemeMode(mode);
                       }
                     },
                   ),

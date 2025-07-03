@@ -4,6 +4,7 @@ import 'package:easy_localization/easy_localization.dart';
 
 import 'core/providers/providers.dart';
 import 'core/providers/theme_provider.dart';
+import 'core/providers/settings_provider.dart';
 import 'features/auth/presentation/splash_screen.dart';
 import 'features/auth/presentation/login_screen.dart';
 import 'features/checklists/presentation/home_screen.dart';
@@ -21,7 +22,7 @@ class ChecklisterApp extends ConsumerWidget {
       title: 'Checklister',
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ref.watch(themeModeProvider),
+      themeMode: ref.watch(settingsProvider).themeMode,
       home: const SplashScreen(),
       debugShowCheckedModeBanner: false,
       localizationsDelegates: context.localizationDelegates,
