@@ -1,5 +1,7 @@
 #!/bin/bash
-APPNAME=checklister
+
+# Use first command line argument as APPNAME, or default to "checklister"
+APPNAME=${1:-checklister}
 
 # Announce usage
 echo "Creating ${APPNAME} directory .zip file for backup and chatgpt uploading"
@@ -11,6 +13,27 @@ echo
 echo "Run the script that will create the .zip file:"
 echo "sh ./${APPNAME}/scripts/make_${APPNAME}_zipfile.s"
 echo "Look for the .zip file with the command \"ls -al\""
+
+# Check for help flag
+if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+  echo "Usage: $0 [project_name]"
+  echo "       Default project_name is 'checklister'"
+  echo
+  echo "Examples:"
+  echo "  $0                    # Uses 'checklister'"
+  echo "  $0 myproject          # Uses 'myproject'"
+  echo
+  echo "Options:"
+  echo "  -h, --help           Show this help message"
+  exit 0
+fi
+
+# Validate that the directory exists
+if [ ! -d "$APPNAME" ]; then
+  echo "❌ Error: '$APPNAME' directory not found."
+  echo "Run '$0 --help' for usage information."
+  exit 1
+fi
 
 # Define project and output name with full timestamp
 PROJECT_DIR="${APPNAME}"
@@ -25,18 +48,102 @@ if [ ! -d "$PROJECT_DIR" ]; then
 fi
 
 # Check flutter clean status
-echo "Checking flutter clean status..."
-echo "@TODO automate flutter clean check. look for build directories"
+echo "Checking for build artifacts that indicate the project is not clean"
+# Check for build artifacts that indicate the project is not clean
+NEEDS_CLEAN=0
+ARTIFACTS=(
+  "${APPNAME}/app/build"
+  "${APPNAME}/app/.dart_tool"
+  "${APPNAME}/app/android/app/build"
+  "${APPNAME}/app/ios/Pods"
+  # Add more as needed
+)
+
+for artifact in "${ARTIFACTS[@]}"; do
+  if [ -e "$artifact" ]; then
+    echo "⚠️  Found build artifact: $artifact"
+    NEEDS_CLEAN=1
+  fi
+done
+
+if [ "$NEEDS_CLEAN" -eq 1 ]; then
+  echo
+  read -p "Build artifacts found. Would you like to run 'flutter clean' now? (Y/n): " clean_response
+  clean_response=$(printf '%s' "$clean_response" | tr '[:upper:]' '[:lower:]')
+  if [[ "$clean_response" == "y" || "$clean_response" == "yes" || "$clean_response" == "" ]]; then
+    (cd "${APPNAME}/app" && flutter clean)
+    echo "✅ Ran 'flutter clean'."
+  else
+    echo "⚠️  Proceeding without cleaning. Build artifacts may be included in the backup."
+  fi
+else
+  echo "✅ Project appears clean (no build artifacts found)."
+fi
+
+# Define sensitive files to check
+SENSITIVE_FILES=(
+  "${APPNAME}/scripts/firebase-admin/serviceAccountKey.json"
+  "${APPNAME}/app/android/app/google-services.json"
+  "${APPNAME}/app/ios/Runner/GoogleService-Info.plist"
+  "${APPNAME}/app/ios/Runner/GoogleService-Info-Dev.plist"
+  "${APPNAME}/app/ios/Runner/GoogleService-Info-Prod.plist"
+  "${APPNAME}/app/ios/Runner/GoogleService-Info-Staging.plist"
+  "${APPNAME}/app/ios/Runner/GoogleService-Info-Test.plist"
+  "${APPNAME}/app/ios/Runner/GoogleService-Info-UAT.plist"
+  "${APPNAME}/app/ios/Runner/GoogleService-Info-Prod.plist"
+)
+
+# Check for sensitive files
+INCLUDE_SENSITIVE=0
+FOUND_SENSITIVE=()
+
+# Check for each sensitive file
+for file in "${SENSITIVE_FILES[@]}"; do
+  if [ -f "$file" ]; then
+    FOUND_SENSITIVE+=("$file")
+  fi
+done
+
+# If any sensitive files were found, prompt the user
+if [ ${#FOUND_SENSITIVE[@]} -gt 0 ]; then
+  echo
+  echo "Found sensitive files:"
+  for file in "${FOUND_SENSITIVE[@]}"; do
+    echo "  - $file"
+  done
+  echo
+  read -p "Do you want to include these sensitive files in the archive? (y/N): " sensitive_response
+  sensitive_response=$(printf '%s' "$sensitive_response" | tr '[:upper:]' '[:lower:]')
+  if [[ "$sensitive_response" == "y" || "$sensitive_response" == "yes" ]]; then
+    INCLUDE_SENSITIVE=1
+    echo "⚠️  Sensitive files WILL be included in the archive."
+  else
+    INCLUDE_SENSITIVE=0
+    echo "🔒 Sensitive files will NOT be included in the archive."
+  fi
+else
+  echo "No sensitive files found."
+fi
+
+# Create the zip file name
+SUFFIX=""
+if [ "$INCLUDE_SENSITIVE" -eq 1 ]; then
+  SUFFIX="-SENSITIVE"
+fi
+
+ZIP_NAME="${APPNAME}_${TIMESTAMP}${SUFFIX}.zip"
+
+# Ask the user if they want to continue to create the ${ZIP_NAME}
 read -p "Do you want to continue to create the ${ZIP_NAME}? (Y/n): " response
 # Convert to lowercase for comparison
 response=$(printf '%s' "$response" | tr '[:upper:]' '[:lower:]')
 #response=${response,,}
 
 if [[ "$response" == "y" || "$response" == "yes" || "$response" == "" ]]; then
-    echo "You chose to continue."
+    echo "ℹ️  You chose to continue. Creating ${ZIP_NAME}..."
     # Place your continuation code here
 else
-    echo "You chose not to continue. Exiting..."
+    echo "❌ You chose not to continue. Exiting..."
     exit 1
 fi
 
@@ -73,8 +180,18 @@ done << EOF
 ${APPNAME}/app/.idea/
 \*.iml
 ./${APPNAME}/app/.vscode/\*
+\*/node_modules/\*
 EOF
-echo "Excluding these files:"
+
+# Add sensitive files to exclude list if user chose not to include them
+if [ "$INCLUDE_SENSITIVE" -eq 1 ]; then
+  #echo "ℹ️  Adding sensitive files to exclude list"
+  for file in "${FOUND_SENSITIVE[@]}"; do
+    EXCLUDES+=("$file")
+  done
+fi
+
+echo "ℹ️  Excluding these files:"
 echo ${EXCLUDES[@]}
 #exit
 #806  zip -rv ../${APPNAME}.zip .  -x app/build/\* app/.dart_tool/\* \*.git/\*  \*.github/\* app/android/.gradle/\* app/android/app/build/\* app/android/local.properties app/.idea/\* .idea/\* .vscode/\* |
@@ -95,7 +212,8 @@ echo "📦 Creating backup: $ZIP_NAME"
 
 # Confirm result
 if [ -f "$ZIP_NAME" ]; then
-  echo "✅ Backup created: $ZIP_NAME"
+  FILE_SIZE_HR=$(ls -lh "$ZIP_NAME" | awk '{print $5}')
+  echo "✅ Backup created: $ZIP_NAME (Size: $FILE_SIZE_HR)"
 else
   echo "❌ Failed to create backup."
   echo "   Check the above zip command for error."

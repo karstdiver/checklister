@@ -46,3 +46,22 @@ app.*.map.json
 app/android/app/google-services.json
 /android/app/google-services.json
 app/macos/Flutter/GeneratedPluginRegistrant.swift
+*GeneratedPluginRegistrant.swift
+*google-services.json*
+
+# Generated files
+app/ios/Runner/GoogleService-Info.plist
+app/ios/Runner/GoogleService-Info-Dev.plist
+app/ios/Runner/GoogleService-Info-Prod.plist
+app/ios/Runner/GoogleService-Info-Staging.plist
+app/ios/Runner/GoogleService-Info-Test.plist
+app/ios/Runner/GoogleService-Info-UAT.plist
+app/ios/Runner/GeneratedPluginRegistrant.swift
+app/ios/Runner/GoogleService-Info.plist
+app/ios/Runner/GoogleService-Info-Dev.plist
+
+# Firebase Admin SDK
+*serviceAccountKey*
+  
+# Node.js dependencies
+node_modules/
