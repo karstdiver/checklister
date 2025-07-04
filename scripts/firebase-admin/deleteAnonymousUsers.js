@@ -62,20 +62,64 @@ admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
 });
 
+async function discoverUserCollections(userId) {
+  try {
+    const db = admin.firestore();
+    const collections = await db.collection('users').doc(userId).listCollections();
+    
+    const collectionNames = collections.map(col => col.id);
+    console.log(`📋 Found collections for user ${userId}: ${collectionNames.join(', ')}`);
+    
+    return collectionNames;
+  } catch (error) {
+    console.log(`⚠️  Could not discover collections for user ${userId}: ${error.message}`);
+    return [];
+  }
+}
+
+async function confirmCollectionDeletion(userId, collectionName) {
+  return new Promise((resolve) => {
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout
+    });
+
+    rl.question(`🗂️  Delete collection '${collectionName}' for user ${userId}? (Y/n): `, (answer) => {
+      rl.close();
+      resolve(answer.toLowerCase() !== 'n' && answer.toLowerCase() !== 'no');
+    });
+  });
+}
+
 async function deleteUserData(userId) {
   try {
     const db = admin.firestore();
     
-    // Delete user's collections (add more as needed)
-    await db.collection('users').doc(userId).delete();
-    // Add other collections here when you create them:
-    // await db.collection('checklists').doc(userId).delete();
-    // await db.collection('items').doc(userId).delete();
+    // Discover what collections exist for this user
+    const collections = await discoverUserCollections(userId);
     
-    console.log(`✅ Deleted Firestore data for user: ${userId}`);
-    return true;
+    if (collections.length === 0) {
+      console.log(`ℹ️  No collections found for user ${userId}`);
+      return false;
+    }
+    
+    let deletedCount = 0;
+    
+    // Ask about each collection individually
+    for (const collectionName of collections) {
+      const shouldDelete = await confirmCollectionDeletion(userId, collectionName);
+      if (shouldDelete) {
+        await db.collection('users').doc(userId).collection(collectionName).delete();
+        console.log(`✅ Deleted collection '${collectionName}' for user: ${userId}`);
+        deletedCount++;
+      } else {
+        console.log(`⏭️  Skipped collection '${collectionName}' for user: ${userId}`);
+      }
+    }
+    
+    return deletedCount > 0;
   } catch (error) {
-    console.log(`⚠️  No Firestore data found for user: ${userId} (or error: ${error.message})`);
+    console.log(`⚠️  Error deleting data for user ${userId}: ${error.message}`);
     return false;
   }
 }
@@ -164,7 +208,7 @@ async function confirmDataDeletion(userId) {
 }
 
 async function main() {
-  console.log('�� Firebase Anonymous User Cleanup Script');
+  console.log('🔍 Firebase Anonymous User Cleanup Script');
   console.log('==========================================\n');
   
   const confirmed = await confirmDeletion();
