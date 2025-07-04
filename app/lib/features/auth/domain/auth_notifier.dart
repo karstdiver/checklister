@@ -168,26 +168,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       print('🔍 DEBUG: Starting email/password sign up for: $email');
       state = state.copyWith(status: AuthStatus.loading);
 
-      // Pre-check if email already exists
-      final signInMethods = await _auth.fetchSignInMethodsForEmail(email);
-      if (signInMethods.isNotEmpty) {
-        print('🔍 DEBUG: Email already exists with methods: $signInMethods');
-        String errorMessage;
-        if (signInMethods.contains('password')) {
-          errorMessage =
-              'An account with this email already exists. Please sign in instead.';
-        } else {
-          errorMessage =
-              'An account with this email already exists. Please sign in with ${signInMethods.first}.';
-        }
-        state = state.copyWith(
-          status: AuthStatus.error,
-          errorMessage: errorMessage,
-        );
-        return;
-      }
-
-      // Create the user account
+      // Create the user account (let Firebase handle duplicate emails)
       final userCredential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,

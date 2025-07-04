@@ -82,15 +82,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       _resetEmailController.text.trim(),
     );
 
-    // Close the dialog after sending
-    if (mounted) {
-      Navigator.of(context).pop();
-    }
+    // Don't close the dialog immediately - let user read the message
+    // Dialog will be closed when user clicks Cancel or after a delay
   }
 
   void _closeResetDialog() {
     Navigator.of(context).pop();
     ref.read(authNotifierProvider.notifier).clearError();
+  }
+
+  void _closeResetDialogAfterDelay() {
+    // Close dialog after 3 seconds to give user time to read the message
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted) {
+        Navigator.of(context).pop();
+        ref.read(authNotifierProvider.notifier).clearError();
+      }
+    });
   }
 
   @override
@@ -256,7 +264,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 }
 
 // Password Reset Dialog
-class _PasswordResetDialog extends StatelessWidget {
+class _PasswordResetDialog extends StatefulWidget {
   final TextEditingController emailController;
   final VoidCallback onSend;
   final VoidCallback onCancel;
@@ -272,60 +280,158 @@ class _PasswordResetDialog extends StatelessWidget {
   });
 
   @override
+  State<_PasswordResetDialog> createState() => _PasswordResetDialogState();
+}
+
+class _PasswordResetDialogState extends State<_PasswordResetDialog> {
+  bool _emailSent = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkForSuccessMessage();
+  }
+
+  @override
+  void didUpdateWidget(_PasswordResetDialog oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Check for success message when widget updates
+    if (oldWidget.errorMessage != widget.errorMessage) {
+      _checkForSuccessMessage();
+    }
+  }
+
+  void _checkForSuccessMessage() {
+    if (widget.errorMessage != null &&
+        widget.errorMessage!.contains(
+          'If an account exists with this email, a password reset link has been sent',
+        )) {
+      setState(() {
+        _emailSent = true;
+      });
+      // Auto-close after 3 seconds for success message
+      Future.delayed(const Duration(seconds: 3), () {
+        if (mounted) {
+          // Just close the dialog, don't call onCancel to avoid double pop
+          Navigator.of(context).pop();
+        }
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(tr('forgot_password')),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            tr('enter_email_for_reset'),
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-          const SizedBox(height: 16),
-          TextFormField(
-            controller: emailController,
-            keyboardType: TextInputType.emailAddress,
-            decoration: InputDecoration(
-              labelText: tr('email'),
-              border: const OutlineInputBorder(),
-              prefixIcon: const Icon(Icons.email),
-            ),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return tr('email_required');
-              }
-              if (!value.contains('@')) {
-                return tr('email_invalid');
-              }
-              return null;
-            },
-          ),
-          if (errorMessage != null) ...[
-            const SizedBox(height: 8),
+          if (!_emailSent) ...[
             Text(
-              errorMessage!,
-              style: const TextStyle(color: Colors.red),
-              textAlign: TextAlign.center,
+              tr('enter_email_for_reset'),
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: widget.emailController,
+              keyboardType: TextInputType.emailAddress,
+              decoration: InputDecoration(
+                labelText: tr('email'),
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.email),
+              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return tr('email_required');
+                }
+                if (!value.contains('@')) {
+                  return tr('email_invalid');
+                }
+                return null;
+              },
+            ),
+          ],
+          if (widget.errorMessage != null) ...[
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color:
+                    widget.errorMessage!.contains(
+                      'If an account exists with this email, a password reset link has been sent',
+                    )
+                    ? Colors.green.withOpacity(0.1)
+                    : Colors.red.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color:
+                      widget.errorMessage!.contains(
+                        'If an account exists with this email, a password reset link has been sent',
+                      )
+                      ? Colors.green.withOpacity(0.3)
+                      : Colors.red.withOpacity(0.3),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    widget.errorMessage!.contains(
+                          'If an account exists with this email, a password reset link has been sent',
+                        )
+                        ? Icons.check_circle
+                        : Icons.error,
+                    color:
+                        widget.errorMessage!.contains(
+                          'If an account exists with this email, a password reset link has been sent',
+                        )
+                        ? Colors.green
+                        : Colors.red,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      widget.errorMessage!,
+                      style: TextStyle(
+                        color:
+                            widget.errorMessage!.contains(
+                              'If an account exists with this email, a password reset link has been sent',
+                            )
+                            ? Colors.green.shade700
+                            : Colors.red.shade800,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ],
       ),
       actions: [
-        TextButton(
-          onPressed: isLoading ? null : onCancel,
-          child: Text(tr('cancel')),
-        ),
-        ElevatedButton(
-          onPressed: isLoading ? null : onSend,
-          child: isLoading
-              ? const SizedBox(
-                  height: 16,
-                  width: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : Text(tr('send_reset_email')),
-        ),
+        if (!_emailSent) ...[
+          TextButton(
+            onPressed: widget.isLoading ? null : widget.onCancel,
+            child: Text(tr('cancel')),
+          ),
+          ElevatedButton(
+            onPressed: widget.isLoading ? null : widget.onSend,
+            child: widget.isLoading
+                ? const SizedBox(
+                    height: 16,
+                    width: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : Text(tr('send_reset_email')),
+          ),
+        ] else ...[
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(tr('close')),
+          ),
+        ],
       ],
     );
   }

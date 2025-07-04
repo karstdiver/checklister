@@ -60,6 +60,9 @@ dependencies:
   easy_localization: ^3.0.3
   animated_text_kit: ^4.2.3
 
+  # persistence
+  shared_preferences: ^2.2.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

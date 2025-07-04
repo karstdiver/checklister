@@ -3,10 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../../../core/providers/providers.dart';
 import '../../../shared/widgets/logout_dialog.dart';
-import '../../../core/providers/theme_provider.dart';
+import '../../../core/providers/settings_provider.dart';
 import 'dart:io' show Platform;
 import 'package:flutter/cupertino.dart';
-import '../../../core/providers/settings_provider.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
