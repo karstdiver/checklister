@@ -110,9 +110,44 @@ class AuthNotifier extends StateNotifier<AuthState> {
       }
     } catch (e) {
       print('🔍 DEBUG: Email/password sign in failed: $e');
+
+      // Handle specific Firebase Auth errors
+      String userFriendlyMessage;
+      if (e is FirebaseAuthException) {
+        switch (e.code) {
+          case 'user-not-found':
+            userFriendlyMessage =
+                'No account found with this email. Please sign up instead.';
+            break;
+          case 'wrong-password':
+            userFriendlyMessage = 'Incorrect password. Please try again.';
+            break;
+          case 'invalid-email':
+            userFriendlyMessage = 'Please enter a valid email address.';
+            break;
+          case 'user-disabled':
+            userFriendlyMessage =
+                'This account has been disabled. Please contact support.';
+            break;
+          case 'too-many-requests':
+            userFriendlyMessage =
+                'Too many failed attempts. Please try again later.';
+            break;
+          case 'network-request-failed':
+            userFriendlyMessage =
+                'Network error. Please check your internet connection and try again.';
+            break;
+          default:
+            userFriendlyMessage =
+                'Sign in failed. Please check your credentials and try again.';
+        }
+      } else {
+        userFriendlyMessage = 'An unexpected error occurred. Please try again.';
+      }
+
       state = state.copyWith(
         status: AuthStatus.error,
-        errorMessage: e.toString(),
+        errorMessage: userFriendlyMessage,
       );
     }
   }
@@ -132,16 +167,77 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       print('🔍 DEBUG: Starting email/password sign up for: $email');
       state = state.copyWith(status: AuthStatus.loading);
-      await _auth.createUserWithEmailAndPassword(
+
+      // Pre-check if email already exists
+      final signInMethods = await _auth.fetchSignInMethodsForEmail(email);
+      if (signInMethods.isNotEmpty) {
+        print('🔍 DEBUG: Email already exists with methods: $signInMethods');
+        String errorMessage;
+        if (signInMethods.contains('password')) {
+          errorMessage =
+              'An account with this email already exists. Please sign in instead.';
+        } else {
+          errorMessage =
+              'An account with this email already exists. Please sign in with ${signInMethods.first}.';
+        }
+        state = state.copyWith(
+          status: AuthStatus.error,
+          errorMessage: errorMessage,
+        );
+        return;
+      }
+
+      // Create the user account
+      final userCredential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
       print('🔍 DEBUG: Email/password sign up completed successfully');
+
+      // TODO: Create user document in Firestore if not exists
+      if (userCredential.user != null) {
+        print(
+          '🔍 DEBUG: [TODO] Create user doc for UID: ${userCredential.user!.uid}',
+        );
+        // Here you would create the user document in Firestore
+        // await createUserDocument(userCredential.user!);
+      }
     } catch (e) {
       print('🔍 DEBUG: Email/password sign up failed: $e');
+
+      // Handle specific Firebase Auth errors
+      String userFriendlyMessage;
+      if (e is FirebaseAuthException) {
+        switch (e.code) {
+          case 'email-already-in-use':
+            userFriendlyMessage =
+                'An account with this email already exists. Please sign in instead.';
+            break;
+          case 'weak-password':
+            userFriendlyMessage =
+                'Password is too weak. Please choose a stronger password.';
+            break;
+          case 'invalid-email':
+            userFriendlyMessage = 'Please enter a valid email address.';
+            break;
+          case 'operation-not-allowed':
+            userFriendlyMessage =
+                'Email/password sign up is not enabled. Please contact support.';
+            break;
+          case 'network-request-failed':
+            userFriendlyMessage =
+                'Network error. Please check your internet connection and try again.';
+            break;
+          default:
+            userFriendlyMessage = 'Sign up failed. Please try again.';
+        }
+      } else {
+        userFriendlyMessage = 'An unexpected error occurred. Please try again.';
+      }
+
       state = state.copyWith(
         status: AuthStatus.error,
-        errorMessage: e.toString(),
+        errorMessage: userFriendlyMessage,
       );
     }
   }
@@ -214,5 +310,62 @@ class AuthNotifier extends StateNotifier<AuthState> {
       status: AuthStatus.unauthenticated,
       errorMessage: null,
     );
+  }
+
+  Future<void> sendPasswordResetEmail(String email) async {
+    if (_auth == null) {
+      print(
+        '🔍 DEBUG: Firebase Auth is null, cannot send password reset email',
+      );
+      state = state.copyWith(
+        status: AuthStatus.error,
+        errorMessage: 'Firebase not available',
+      );
+      return;
+    }
+
+    try {
+      print('🔍 DEBUG: Sending password reset email to: $email');
+      state = state.copyWith(status: AuthStatus.loading);
+
+      await _auth.sendPasswordResetEmail(email: email);
+
+      // Always show success message for security (prevents email enumeration)
+      print('🔍 DEBUG: Password reset email sent successfully');
+      state = state.copyWith(
+        status: AuthStatus.unauthenticated,
+        errorMessage:
+            'If an account exists with this email, a password reset link has been sent.',
+      );
+    } catch (e) {
+      print('🔍 DEBUG: Password reset email failed: $e');
+
+      // Only show errors for actual failures (network, invalid email format, etc.)
+      String userFriendlyMessage;
+      if (e is FirebaseAuthException) {
+        switch (e.code) {
+          case 'invalid-email':
+            userFriendlyMessage = 'Please enter a valid email address.';
+            break;
+          case 'network-request-failed':
+            userFriendlyMessage =
+                'Network error. Please check your connection and try again.';
+            break;
+          case 'too-many-requests':
+            userFriendlyMessage = 'Too many requests. Please try again later.';
+            break;
+          default:
+            userFriendlyMessage =
+                'Failed to send reset email. Please try again.';
+        }
+      } else {
+        userFriendlyMessage = 'An unexpected error occurred. Please try again.';
+      }
+
+      state = state.copyWith(
+        status: AuthStatus.error,
+        errorMessage: userFriendlyMessage,
+      );
+    }
   }
 }
