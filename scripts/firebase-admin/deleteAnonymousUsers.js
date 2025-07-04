@@ -62,11 +62,30 @@ admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
 });
 
+async function deleteUserData(userId) {
+  try {
+    const db = admin.firestore();
+    
+    // Delete user's collections (add more as needed)
+    await db.collection('users').doc(userId).delete();
+    // Add other collections here when you create them:
+    // await db.collection('checklists').doc(userId).delete();
+    // await db.collection('items').doc(userId).delete();
+    
+    console.log(`✅ Deleted Firestore data for user: ${userId}`);
+    return true;
+  } catch (error) {
+    console.log(`⚠️  No Firestore data found for user: ${userId} (or error: ${error.message})`);
+    return false;
+  }
+}
+
 async function deleteAnonymousUsers() {
   console.log('🔍 Starting to scan for anonymous users...');
   
   let deletedCount = 0;
   let errorCount = 0;
+  let dataDeletedCount = 0;
   let nextPageToken;
 
   try {
@@ -79,9 +98,20 @@ async function deleteAnonymousUsers() {
         // Anonymous users have no provider data
         if (userRecord.providerData.length === 0) {
           try {
+            // Delete the user from Firebase Auth
             await admin.auth().deleteUser(userRecord.uid);
             console.log(`✅ Deleted anonymous user: ${userRecord.uid}`);
             deletedCount++;
+            
+            // Ask if user wants to delete associated data
+            const shouldDeleteData = await confirmDataDeletion(userRecord.uid);
+            if (shouldDeleteData) {
+              const dataDeleted = await deleteUserData(userRecord.uid);
+              if (dataDeleted) {
+                dataDeletedCount++;
+              }
+            }
+            
           } catch (error) {
             console.error(`❌ Error deleting user ${userRecord.uid}:`, error.message);
             errorCount++;
@@ -94,6 +124,7 @@ async function deleteAnonymousUsers() {
 
     console.log('\n📊 Summary:');
     console.log(`✅ Successfully deleted: ${deletedCount} anonymous users`);
+    console.log(`🗂️  User data deleted: ${dataDeletedCount} users`);
     if (errorCount > 0) {
       console.log(`❌ Errors encountered: ${errorCount}`);
     }
@@ -117,8 +148,23 @@ async function confirmDeletion() {
   });
 }
 
+async function confirmDataDeletion(userId) {
+  return new Promise((resolve) => {
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout
+    });
+
+    rl.question(`🗂️  Delete associated data for user ${userId}? (Y/n): `, (answer) => {
+      rl.close();
+      // Default to 'yes' if user just presses Enter
+      resolve(answer.toLowerCase() !== 'n' && answer.toLowerCase() !== 'no');
+    });
+  });
+}
+
 async function main() {
-  console.log('🔍 Firebase Anonymous User Cleanup Script');
+  console.log('�� Firebase Anonymous User Cleanup Script');
   console.log('==========================================\n');
   
   const confirmed = await confirmDeletion();
@@ -136,4 +182,3 @@ main().catch((error) => {
   console.error('💥 Script failed:', error);
   process.exit(1);
 });
-
