@@ -57,8 +57,29 @@ admin.initializeApp({
 async function getUserCollections(userId) {
   try {
     const db = admin.firestore();
+    
+    // First, check if the user document exists
+    const userDoc = await db.collection('users').doc(userId).get();
+    
+    if (!userDoc.exists) {
+      console.log(`📄 User document does not exist for user ${userId}`);
+      return [];
+    }
+    
+    console.log(`📄 User document exists for user ${userId}`);
+    console.log(`📋 Document fields: ${Object.keys(userDoc.data()).join(', ')}`);
+    
+    // Then check for subcollections
     const collections = await db.collection('users').doc(userId).listCollections();
-    return collections.map(col => col.id);
+    const collectionNames = collections.map(col => col.id);
+    
+    if (collectionNames.length > 0) {
+      console.log(`📁 Subcollections: ${collectionNames.join(', ')}`);
+    } else {
+      console.log(`📁 No subcollections found`);
+    }
+    
+    return collectionNames;
   } catch (error) {
     console.log(`⚠️  Could not get collections for user ${userId}: ${error.message}`);
     return [];

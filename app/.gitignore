@@ -62,6 +62,7 @@ app/ios/Runner/GoogleService-Info-Dev.plist
 
 # Firebase Admin SDK
 *serviceAccountKey*
+app/scripts/firebase-admin/serviceAccountKey.json
 scripts/firebase-admin/serviceAccountKey.json
 *.json
   

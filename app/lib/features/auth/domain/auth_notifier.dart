@@ -2,9 +2,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'auth_state.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import '../data/user_repository.dart';
 
 class AuthNotifier extends StateNotifier<AuthState> {
   final FirebaseAuth? _auth;
+  final UserRepository _userRepository = UserRepository();
 
   AuthNotifier(this._auth) : super(const AuthState()) {
     // Only listen to auth state changes if Firebase is available
@@ -97,10 +99,18 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
       print('🔍 DEBUG: Email/password sign in completed successfully');
       if (userCredential.user != null) {
-        // TODO: Create user document in Firestore if not exists
+        // Create user document in Firestore if not exists
         print(
-          '🔍 DEBUG: [TODO] Create user doc for UID: ${userCredential.user!.uid}',
+          '🔍 DEBUG: Creating user doc for UID: ${userCredential.user!.uid}',
         );
+        try {
+          await _userRepository.createUserDocumentIfNotExists(
+            userCredential.user!,
+          );
+        } catch (e) {
+          print('🔍 DEBUG: Failed to create user document: $e');
+          // Don't fail the sign-in if Firestore fails
+        }
         // Manually update state to authenticated
         state = state.copyWith(
           status: AuthStatus.authenticated,
@@ -175,13 +185,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
       print('🔍 DEBUG: Email/password sign up completed successfully');
 
-      // TODO: Create user document in Firestore if not exists
+      // Create user document in Firestore if not exists
       if (userCredential.user != null) {
-        print(
-          '🔍 DEBUG: [TODO] Create user doc for UID: ${userCredential.user!.uid}',
-        );
+        print('🔍 DEBUG: Create user doc for UID: ${userCredential.user!.uid}');
         // Here you would create the user document in Firestore
-        // await createUserDocument(userCredential.user!);
+        await _userRepository.createUserDocumentIfNotExists(
+          userCredential.user!,
+        );
       }
     } catch (e) {
       print('🔍 DEBUG: Email/password sign up failed: $e');
@@ -274,6 +284,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
         // TODO: Create user document in Firestore if not exists
         print(
           '🔍 DEBUG: [TODO] Create user doc for UID: \\${userCredential.user!.uid}',
+        );
+        await _userRepository.createUserDocumentIfNotExists(
+          userCredential.user!,
         );
       }
     } catch (e) {
