@@ -99,6 +99,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
       print('🔍 DEBUG: Email/password sign in completed successfully');
       if (userCredential.user != null) {
+        // TODO: Add Firebase Analytics event
+        // FirebaseAnalytics.instance.logEvent(name: 'user_signed_in', parameters: {
+        //   'method': 'email_password',
+        //   'user_id': userCredential.user!.uid,
+        // });
         // Create user document in Firestore if not exists
         print(
           '🔍 DEBUG: Creating user doc for UID: ${userCredential.user!.uid}',
@@ -109,6 +114,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
           );
         } catch (e) {
           print('🔍 DEBUG: Failed to create user document: $e');
+          // TODO: Add Sentry error reporting
+          // Sentry.captureException(e, extras: {
+          //   'user_id': userCredential.user!.uid,
+          //   'operation': 'user_document_creation',
+          //   'auth_method': 'email_password',
+          // });
           // Don't fail the sign-in if Firestore fails
         }
         // Manually update state to authenticated
@@ -184,6 +195,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
         password: password,
       );
       print('🔍 DEBUG: Email/password sign up completed successfully');
+
+      // TODO: Add Firebase Analytics event
+      // FirebaseAnalytics.instance.logEvent(name: 'user_signed_up', parameters: {
+      //   'method': 'email_password',
+      //   'user_id': userCredential.user!.uid,
+      // });
 
       // Create user document in Firestore if not exists
       if (userCredential.user != null) {
@@ -281,9 +298,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final userCredential = await _auth.signInWithCredential(credential);
       print('🔍 DEBUG: Google sign in completed successfully');
       if (userCredential.user != null) {
-        // TODO: Create user document in Firestore if not exists
+        // TODO: Add Firebase Analytics event
+        // FirebaseAnalytics.instance.logEvent(name: 'user_signed_in', parameters: {
+        //   'method': 'google',
+        //   'user_id': userCredential.user!.uid,
+        // });
+
+        // Create user document in Firestore if not exists
         print(
-          '🔍 DEBUG: [TODO] Create user doc for UID: \\${userCredential.user!.uid}',
+          '🔍 DEBUG: Create user doc for UID: \\${userCredential.user!.uid}',
         );
         await _userRepository.createUserDocumentIfNotExists(
           userCredential.user!,

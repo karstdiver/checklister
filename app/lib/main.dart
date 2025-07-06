@@ -30,6 +30,13 @@ void main() async {
       error: details.exception,
       stackTrace: details.stack,
     );
+
+    // TODO: Add Sentry error reporting
+    // Sentry.captureException(
+    //   details.exception,
+    //   stackTrace: details.stack,
+    //   extras: {'source': 'flutter_error_handler'},
+    // );
   };
 
   // Handle widget build errors
@@ -85,6 +92,21 @@ void main() async {
       options: DefaultFirebaseOptions.currentPlatform,
     );
     logger.i('Firebase initialized successfully');
+
+    // TODO: Initialize Firebase Analytics
+    // import 'package:firebase_analytics/firebase_analytics.dart';
+    // FirebaseAnalytics analytics = FirebaseAnalytics.instance;
+    // await analytics.setAnalyticsCollectionEnabled(true);
+
+    // TODO: Initialize Sentry
+    // import 'package:sentry_flutter/sentry_flutter.dart';
+    // await SentryFlutter.init(
+    //   (options) {
+    //     options.dsn = 'YOUR_SENTRY_DSN';
+    //     options.tracesSampleRate = 1.0;
+    //     options.enableAutoSessionTracking = true;
+    //   },
+    // );
   } catch (e) {
     if (e.toString().contains('duplicate-app')) {
       logger.i('Firebase already initialized (duplicate app error handled)');

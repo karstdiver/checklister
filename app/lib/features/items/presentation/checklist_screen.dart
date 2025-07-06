@@ -99,6 +99,11 @@ class ChecklistScreen extends ConsumerWidget {
                         ElevatedButton.icon(
                           onPressed: () {
                             // TODO: Mark as skipped
+                            // TODO: Add Firebase Analytics event
+                            // FirebaseAnalytics.instance.logEvent(name: 'item_skipped', parameters: {
+                            //   'checklist_id': checklistId,
+                            //   'item_id': 'current_item_id',
+                            // });
                           },
                           icon: const Icon(Icons.skip_next),
                           label: Text(tr('skip')),
@@ -112,6 +117,11 @@ class ChecklistScreen extends ConsumerWidget {
                         ElevatedButton.icon(
                           onPressed: () {
                             // TODO: Mark as complete
+                            // TODO: Add Firebase Analytics event
+                            // FirebaseAnalytics.instance.logEvent(name: 'item_completed', parameters: {
+                            //   'checklist_id': checklistId,
+                            //   'item_id': 'current_item_id',
+                            // });
                           },
                           icon: const Icon(Icons.check),
                           label: Text(tr('complete')),

@@ -119,6 +119,10 @@ class HomeScreen extends ConsumerWidget {
                 TextButton.icon(
                   onPressed: () {
                     // TODO: Navigate to create checklist
+                    // TODO: Add Firebase Analytics event
+                    // FirebaseAnalytics.instance.logEvent(name: 'create_checklist_clicked', parameters: {
+                    //   'source': 'header_button',
+                    // });
                   },
                   icon: const Icon(Icons.add),
                   label: Text(tr('create_new')),
