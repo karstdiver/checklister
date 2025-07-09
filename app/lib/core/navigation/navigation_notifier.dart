@@ -18,6 +18,7 @@ class NavigationNotifier extends StateNotifier<NavigationState> {
   void navigateToSettings() => navigateTo(NavigationRoute.settings);
   void navigateToProfileOverview() =>
       navigateTo(NavigationRoute.profileOverview);
+  void navigateToProfileEdit() => navigateTo(NavigationRoute.profileEdit);
 
   void goBack() {
     // Simple back navigation - could be enhanced with a navigation stack
@@ -33,6 +34,7 @@ class NavigationNotifier extends StateNotifier<NavigationState> {
       case NavigationRoute.help:
       case NavigationRoute.settings:
       case NavigationRoute.profileOverview:
+      case NavigationRoute.profileEdit:
         navigateToSplash();
         break;
       case NavigationRoute.splash:

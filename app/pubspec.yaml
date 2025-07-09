@@ -61,7 +61,7 @@ dependencies:
   # localizations
   flutter_localizations:
     sdk: flutter
-  easy_localization: ^3.0.3
+  easy_localization: ^3.0.7+1
   animated_text_kit: ^4.2.3
 
   # persistence

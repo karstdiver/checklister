@@ -4,9 +4,59 @@ import 'package:easy_localization/easy_localization.dart';
 import '../../../core/providers/providers.dart';
 import '../../../shared/widgets/logout_dialog.dart';
 import '../../../core/services/analytics_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
+
+  Widget _buildWelcomeText(User? currentUser) {
+    if (currentUser == null) {
+      print('No currentUser, using anonymous');
+      return Text(
+        tr('welcome_user', args: [tr('anonymous')]),
+        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+      );
+    }
+    return FutureBuilder<DocumentSnapshot>(
+      future: FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser.uid)
+          .get(),
+      builder: (context, snapshot) {
+        String displayName = currentUser.email ?? tr('anonymous');
+        if (snapshot.hasData && snapshot.data!.exists) {
+          final data = snapshot.data!.data() as Map<String, dynamic>;
+          print('Firestore user doc: ${data.toString()}');
+          if (data['displayName'] != null &&
+              data['displayName'].toString().isNotEmpty) {
+            print('Using Firestore displayName: ${data['displayName']}');
+            displayName = data['displayName'];
+          } else if (currentUser.displayName != null &&
+              currentUser.displayName!.isNotEmpty) {
+            print('Using Auth displayName: ${currentUser.displayName}');
+            displayName = currentUser.displayName!;
+          } else {
+            print('Using email: ${currentUser.email}');
+          }
+        } else if (currentUser.displayName != null &&
+            currentUser.displayName!.isNotEmpty) {
+          print(
+            'No Firestore doc or displayName, using Auth displayName: ${currentUser.displayName}',
+          );
+          displayName = currentUser.displayName!;
+        } else {
+          print(
+            'No Firestore or Auth displayName, using email: ${currentUser.email}',
+          );
+        }
+        return Text(
+          tr('welcome_user', args: [displayName]),
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -101,10 +151,7 @@ class HomeScreen extends ConsumerWidget {
             const SizedBox(height: 16),
 
             // Welcome message
-            Text(
-              tr('welcome_user', args: [currentUser?.email ?? tr('anonymous')]),
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
+            _buildWelcomeText(currentUser),
             const SizedBox(height: 24),
 
             // Checklists section

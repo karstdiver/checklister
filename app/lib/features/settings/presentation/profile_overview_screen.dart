@@ -80,7 +80,7 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
         actions: [
           IconButton(
             onPressed: () {
-              // TODO: Navigate to profile edit screen
+              Navigator.pushNamed(context, '/profile/edit');
             },
             icon: const Icon(Icons.edit),
           ),
@@ -303,7 +303,7 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
             ),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
             onTap: () {
-              // TODO: Navigate to profile edit screen
+              Navigator.pushNamed(context, '/profile/edit');
             },
           ),
           const Divider(height: 1),

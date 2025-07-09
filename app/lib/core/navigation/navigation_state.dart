@@ -7,6 +7,7 @@ enum NavigationRoute {
   help,
   settings,
   profileOverview,
+  profileEdit,
 }
 
 class NavigationState {
@@ -46,6 +47,8 @@ class NavigationState {
         return '/settings';
       case NavigationRoute.profileOverview:
         return '/profile';
+      case NavigationRoute.profileEdit:
+        return '/profile/edit';
     }
   }
 }
