@@ -8,6 +8,7 @@ import 'features/auth/presentation/splash_screen.dart';
 import 'features/auth/presentation/login_screen.dart';
 import 'features/checklists/presentation/home_screen.dart';
 import 'features/settings/presentation/settings_screen.dart';
+import 'features/settings/presentation/profile_overview_screen.dart';
 import 'shared/themes/app_theme.dart';
 
 class ChecklisterApp extends ConsumerWidget {
@@ -15,8 +16,6 @@ class ChecklisterApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final authState = ref.watch(authStateProvider);
-
     return MaterialApp(
       title: 'Checklister',
       theme: AppTheme.lightTheme,
@@ -32,6 +31,7 @@ class ChecklisterApp extends ConsumerWidget {
         '/login': (context) => const LoginScreen(),
         '/home': (context) => const HomeScreen(),
         '/settings': (context) => const SettingsScreen(),
+        '/profile': (context) => const ProfileOverviewScreen(),
       },
     );
   }

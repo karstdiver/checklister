@@ -24,7 +24,7 @@ class HomeScreen extends ConsumerWidget {
             onSelected: (value) async {
               switch (value) {
                 case 'profile':
-                  // TODO: Navigate to profile
+                  Navigator.pushNamed(context, '/profile');
                   break;
                 case 'settings':
                   Navigator.pushNamed(context, '/settings');

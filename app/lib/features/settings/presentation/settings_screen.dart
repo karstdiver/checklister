@@ -123,7 +123,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   title: Text(tr('profile')),
                   trailing: const Icon(Icons.arrow_forward_ios),
                   onTap: () {
-                    // TODO: Navigate to profile
+                    Navigator.pushNamed(context, '/profile');
                   },
                 ),
                 const Divider(height: 1),
