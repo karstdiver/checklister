@@ -80,6 +80,8 @@
   "english": "Inglés",
   "theme": "Tema",
   "system_default": "Predeterminado del Sistema",
+  "light": "Claro",
+  "dark": "Oscuro",
   "notifications": "Notificaciones",
   "enabled": "Habilitado",
   "profile_updated_successfully": "Perfil actualizado exitosamente"

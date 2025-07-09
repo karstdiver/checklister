@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/providers/providers.dart';
 import '../../../core/providers/settings_provider.dart';
 import '../../../shared/widgets/app_card.dart';
+import '../../../features/settings/presentation/language_screen.dart';
 
 class ProfileEditScreen extends ConsumerStatefulWidget {
   const ProfileEditScreen({super.key});
@@ -390,58 +391,62 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                 color: textColor,
               ),
               onTap: () {
-                // TODO: Navigate to language selection
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const LanguageScreen(),
+                  ),
+                );
               },
             ),
             const Divider(height: 1),
             // Theme Preference
-            ListTile(
-              dense: true,
-              leading: Icon(Icons.palette, size: 20, color: textColor),
-              title: Text(
-                tr('theme'),
-                style: TextStyle(fontSize: 14, color: textColor),
-              ),
-              subtitle: Text(
-                _selectedThemeMode == ThemeMode.light
-                    ? tr('light')
-                    : _selectedThemeMode == ThemeMode.dark
-                    ? tr('dark')
-                    : tr('system_default'),
-                style: TextStyle(
-                  fontSize: 12,
-                  color: textColor.withOpacity(0.7),
-                ),
-              ),
-              trailing: DropdownButton<ThemeMode>(
-                value: _selectedThemeMode,
-                dropdownColor: Theme.of(context).cardColor,
-                style: TextStyle(color: textColor),
-                items: [
-                  DropdownMenuItem(
-                    value: ThemeMode.system,
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Row(
+                children: [
+                  Icon(Icons.palette, size: 20, color: textColor),
+                  const SizedBox(width: 12),
+                  Expanded(
                     child: Text(
-                      tr('system_default'),
-                      style: TextStyle(color: textColor),
+                      tr('theme'),
+                      style: TextStyle(fontSize: 14, color: textColor),
                     ),
                   ),
-                  DropdownMenuItem(
-                    value: ThemeMode.light,
-                    child: Text(
-                      tr('light'),
-                      style: TextStyle(color: textColor),
-                    ),
-                  ),
-                  DropdownMenuItem(
-                    value: ThemeMode.dark,
-                    child: Text(tr('dark'), style: TextStyle(color: textColor)),
+                  DropdownButton<ThemeMode>(
+                    value: _selectedThemeMode,
+                    dropdownColor: Theme.of(context).cardColor,
+                    style: TextStyle(color: textColor),
+                    items: [
+                      DropdownMenuItem(
+                        value: ThemeMode.system,
+                        child: Text(
+                          tr('system_default'),
+                          style: TextStyle(color: textColor),
+                        ),
+                      ),
+                      DropdownMenuItem(
+                        value: ThemeMode.light,
+                        child: Text(
+                          tr('light'),
+                          style: TextStyle(color: textColor),
+                        ),
+                      ),
+                      DropdownMenuItem(
+                        value: ThemeMode.dark,
+                        child: Text(
+                          tr('dark'),
+                          style: TextStyle(color: textColor),
+                        ),
+                      ),
+                    ],
+                    onChanged: (mode) {
+                      setState(() {
+                        _selectedThemeMode = mode;
+                      });
+                    },
                   ),
                 ],
-                onChanged: (mode) {
-                  setState(() {
-                    _selectedThemeMode = mode;
-                  });
-                },
               ),
             ),
             const Divider(height: 1),
