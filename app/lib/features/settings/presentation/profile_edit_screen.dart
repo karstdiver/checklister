@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/providers/providers.dart';
+import '../../../core/providers/settings_provider.dart';
 import '../../../shared/widgets/app_card.dart';
 
 class ProfileEditScreen extends ConsumerStatefulWidget {
@@ -21,11 +22,13 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   bool _isLoading = true;
   bool _isSaving = false;
   String? _error;
+  ThemeMode? _selectedThemeMode;
 
   @override
   void initState() {
     super.initState();
     _loadUserData();
+    _selectedThemeMode = ref.read(settingsProvider).themeMode;
   }
 
   @override
@@ -108,6 +111,11 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
             'email': _emailController.text.trim(),
             'updatedAt': FieldValue.serverTimestamp(),
           });
+
+      // Update theme mode in provider
+      if (_selectedThemeMode != null) {
+        ref.read(settingsProvider.notifier).setThemeMode(_selectedThemeMode!);
+      }
 
       // Show success message
       if (mounted) {
@@ -273,6 +281,8 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   }
 
   Widget _buildBasicInformationSection() {
+    final textColor = Theme.of(context).colorScheme.onSurface;
+    final hintColor = Theme.of(context).hintColor;
     return AppCard(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -281,18 +291,24 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
           children: [
             Text(
               tr('basic_information'),
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: textColor,
+              ),
             ),
             const SizedBox(height: 16),
-
             // Display Name Field
             TextFormField(
               controller: _displayNameController,
+              style: TextStyle(color: textColor),
               decoration: InputDecoration(
                 labelText: tr('display_name'),
+                labelStyle: TextStyle(color: textColor.withOpacity(0.8)),
                 hintText: tr('enter_display_name'),
+                hintStyle: TextStyle(color: hintColor),
                 border: const OutlineInputBorder(),
-                prefixIcon: const Icon(Icons.person),
+                prefixIcon: Icon(Icons.person, color: textColor),
               ),
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
@@ -305,15 +321,17 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
               },
             ),
             const SizedBox(height: 16),
-
             // Email Field
             TextFormField(
               controller: _emailController,
+              style: TextStyle(color: textColor),
               decoration: InputDecoration(
                 labelText: tr('email'),
+                labelStyle: TextStyle(color: textColor.withOpacity(0.8)),
                 hintText: tr('enter_email'),
+                hintStyle: TextStyle(color: hintColor),
                 border: const OutlineInputBorder(),
-                prefixIcon: const Icon(Icons.email),
+                prefixIcon: Icon(Icons.email, color: textColor),
               ),
               keyboardType: TextInputType.emailAddress,
               validator: (value) {
@@ -335,6 +353,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   }
 
   Widget _buildPreferencesSection() {
+    final textColor = Theme.of(context).colorScheme.onSurface;
     return AppCard(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -343,55 +362,109 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
           children: [
             Text(
               tr('preferences'),
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: textColor,
+              ),
             ),
             const SizedBox(height: 16),
-
             // Language Preference
             ListTile(
               dense: true,
-              leading: const Icon(Icons.language, size: 20),
-              title: Text(tr('language'), style: const TextStyle(fontSize: 14)),
+              leading: Icon(Icons.language, size: 20, color: textColor),
+              title: Text(
+                tr('language'),
+                style: TextStyle(fontSize: 14, color: textColor),
+              ),
               subtitle: Text(
                 tr('english'),
-                style: const TextStyle(fontSize: 12),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: textColor.withOpacity(0.7),
+                ),
               ),
-              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+              trailing: Icon(
+                Icons.arrow_forward_ios,
+                size: 16,
+                color: textColor,
+              ),
               onTap: () {
                 // TODO: Navigate to language selection
               },
             ),
             const Divider(height: 1),
-
             // Theme Preference
             ListTile(
               dense: true,
-              leading: const Icon(Icons.palette, size: 20),
-              title: Text(tr('theme'), style: const TextStyle(fontSize: 14)),
-              subtitle: Text(
-                tr('system_default'),
-                style: const TextStyle(fontSize: 12),
+              leading: Icon(Icons.palette, size: 20, color: textColor),
+              title: Text(
+                tr('theme'),
+                style: TextStyle(fontSize: 14, color: textColor),
               ),
-              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-              onTap: () {
-                // TODO: Navigate to theme selection
-              },
+              subtitle: Text(
+                _selectedThemeMode == ThemeMode.light
+                    ? tr('light')
+                    : _selectedThemeMode == ThemeMode.dark
+                    ? tr('dark')
+                    : tr('system_default'),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: textColor.withOpacity(0.7),
+                ),
+              ),
+              trailing: DropdownButton<ThemeMode>(
+                value: _selectedThemeMode,
+                dropdownColor: Theme.of(context).cardColor,
+                style: TextStyle(color: textColor),
+                items: [
+                  DropdownMenuItem(
+                    value: ThemeMode.system,
+                    child: Text(
+                      tr('system_default'),
+                      style: TextStyle(color: textColor),
+                    ),
+                  ),
+                  DropdownMenuItem(
+                    value: ThemeMode.light,
+                    child: Text(
+                      tr('light'),
+                      style: TextStyle(color: textColor),
+                    ),
+                  ),
+                  DropdownMenuItem(
+                    value: ThemeMode.dark,
+                    child: Text(tr('dark'), style: TextStyle(color: textColor)),
+                  ),
+                ],
+                onChanged: (mode) {
+                  setState(() {
+                    _selectedThemeMode = mode;
+                  });
+                },
+              ),
             ),
             const Divider(height: 1),
-
             // Notifications
             ListTile(
               dense: true,
-              leading: const Icon(Icons.notifications, size: 20),
+              leading: Icon(Icons.notifications, size: 20, color: textColor),
               title: Text(
                 tr('notifications'),
-                style: const TextStyle(fontSize: 14),
+                style: TextStyle(fontSize: 14, color: textColor),
               ),
               subtitle: Text(
                 tr('enabled'),
-                style: const TextStyle(fontSize: 12),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: textColor.withOpacity(0.7),
+                ),
               ),
-              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+              trailing: Icon(
+                Icons.arrow_forward_ios,
+                size: 16,
+                color: textColor,
+              ),
               onTap: () {
                 // TODO: Navigate to notification settings
               },

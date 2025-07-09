@@ -93,5 +93,7 @@
   "system_default": "System Default",
   "notifications": "Notifications",
   "enabled": "Enabled",
-  "profile_updated_successfully": "Profile updated successfully"
+  "profile_updated_successfully": "Profile updated successfully",
+  "light": "Light",
+  "dark": "Dark"
 }

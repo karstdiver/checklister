@@ -150,6 +150,7 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
   }
 
   Widget _buildProfileHeader(User? currentUser) {
+    final textColor = Theme.of(context).colorScheme.onSurface;
     return AppCard(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -180,7 +181,11 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
             // User Name
             Text(
               currentUser?.displayName ?? currentUser?.email ?? tr('anonymous'),
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: textColor,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 6),
@@ -209,6 +214,7 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
   }
 
   Widget _buildQuickStats(Map<String, dynamic> stats) {
+    final textColor = Theme.of(context).colorScheme.onSurface;
     return AppCard(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -217,7 +223,11 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
           children: [
             Text(
               tr('statistics'),
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: textColor,
+              ),
             ),
             const SizedBox(height: 12),
             Row(
@@ -227,6 +237,7 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
                     icon: Icons.checklist,
                     label: tr('total_checklists'),
                     value: '${stats['totalChecklists'] ?? 0}',
+                    textColor: textColor,
                   ),
                 ),
                 Expanded(
@@ -234,6 +245,7 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
                     icon: Icons.check_circle,
                     label: tr('completed_checklists'),
                     value: '${stats['completedChecklists'] ?? 0}',
+                    textColor: textColor,
                   ),
                 ),
               ],
@@ -246,6 +258,7 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
                     icon: Icons.list,
                     label: tr('total_items'),
                     value: '${stats['totalItems'] ?? 0}',
+                    textColor: textColor,
                   ),
                 ),
                 Expanded(
@@ -253,6 +266,7 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
                     icon: Icons.done_all,
                     label: tr('completed_items'),
                     value: '${stats['completedItems'] ?? 0}',
+                    textColor: textColor,
                   ),
                 ),
               ],
@@ -267,6 +281,7 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
     required IconData icon,
     required String label,
     required String value,
+    required Color textColor,
   }) {
     return Column(
       children: [
@@ -274,16 +289,16 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
         const SizedBox(height: 6),
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: Colors.blue,
+            color: textColor,
           ),
         ),
         const SizedBox(height: 3),
         Text(
           label,
-          style: const TextStyle(fontSize: 11, color: Colors.grey),
+          style: TextStyle(fontSize: 11, color: textColor.withOpacity(0.7)),
           textAlign: TextAlign.center,
         ),
       ],
@@ -291,6 +306,7 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
   }
 
   Widget _buildProfileActions(NavigationNotifier navigationNotifier) {
+    final textColor = Theme.of(context).colorScheme.onSurface;
     return AppCard(
       child: Column(
         children: [
@@ -299,7 +315,7 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
             leading: const Icon(Icons.edit, color: Colors.blue, size: 20),
             title: Text(
               tr('edit_profile'),
-              style: const TextStyle(fontSize: 14),
+              style: TextStyle(fontSize: 14, color: textColor),
             ),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
             onTap: () {
@@ -312,7 +328,7 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
             leading: const Icon(Icons.analytics, color: Colors.green, size: 20),
             title: Text(
               tr('detailed_statistics'),
-              style: const TextStyle(fontSize: 14),
+              style: TextStyle(fontSize: 14, color: textColor),
             ),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
             onTap: () {
@@ -329,7 +345,7 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
             ),
             title: Text(
               tr('achievements'),
-              style: const TextStyle(fontSize: 14),
+              style: TextStyle(fontSize: 14, color: textColor),
             ),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
             onTap: () {
@@ -345,6 +361,7 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
     User? currentUser,
     Map<String, dynamic> preferences,
   ) {
+    final textColor = Theme.of(context).colorScheme.onSurface;
     return AppCard(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -353,28 +370,37 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
           children: [
             Text(
               tr('account_information'),
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: textColor,
+              ),
             ),
             const SizedBox(height: 12),
             _buildInfoRow(
               tr('email'),
               currentUser?.email ?? tr('not_available'),
+              textColor,
             ),
             _buildInfoRow(
               tr('user_id'),
               currentUser?.uid ?? tr('not_available'),
+              textColor,
             ),
             _buildInfoRow(
               tr('email_verified'),
               currentUser?.emailVerified == true ? tr('yes') : tr('no'),
+              textColor,
             ),
             _buildInfoRow(
               tr('account_created'),
               _formatTimestamp(_userData?['createdAt']),
+              textColor,
             ),
             _buildInfoRow(
               tr('last_updated'),
               _formatTimestamp(_userData?['updatedAt']),
+              textColor,
             ),
           ],
         ),
@@ -382,7 +408,7 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
+  Widget _buildInfoRow(String label, String value, Color textColor) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
@@ -392,9 +418,9 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
             width: 100,
             child: Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.w500,
-                color: Colors.grey,
+                color: textColor.withOpacity(0.7),
                 fontSize: 13,
               ),
             ),
@@ -402,7 +428,11 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
+              style: TextStyle(
+                fontWeight: FontWeight.w500,
+                fontSize: 13,
+                color: textColor,
+              ),
             ),
           ),
         ],
@@ -411,6 +441,7 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
   }
 
   Widget _buildAdvancedFeatures(NavigationNotifier navigationNotifier) {
+    final textColor = Theme.of(context).colorScheme.onSurface;
     return AppCard(
       child: Column(
         children: [
@@ -419,7 +450,7 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
             leading: const Icon(Icons.settings, color: Colors.grey, size: 20),
             title: Text(
               tr('account_settings'),
-              style: const TextStyle(fontSize: 14),
+              style: TextStyle(fontSize: 14, color: textColor),
             ),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
             onTap: () {
@@ -432,7 +463,7 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
             leading: const Icon(Icons.security, color: Colors.grey, size: 20),
             title: Text(
               tr('privacy_security'),
-              style: const TextStyle(fontSize: 14),
+              style: TextStyle(fontSize: 14, color: textColor),
             ),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
             onTap: () {
@@ -445,7 +476,7 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
             leading: const Icon(Icons.help, color: Colors.grey, size: 20),
             title: Text(
               tr('help_support'),
-              style: const TextStyle(fontSize: 14),
+              style: TextStyle(fontSize: 14, color: textColor),
             ),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
             onTap: () => navigationNotifier.navigateToHelp(),
