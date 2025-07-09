@@ -1,1 +1,2 @@
-Contains utility scripts for tasks like syncing data or setup operations.
+Contains utility scripts for Project-level tasks like syncing data or setup operations.
+See also ../app/scripts for application-level scripts.
