@@ -3,12 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../../../core/providers/providers.dart';
 import '../../../shared/widgets/logout_dialog.dart';
+import '../../../core/services/analytics_service.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final analytics = AnalyticsService();
     final currentUser = ref.watch(currentUserProvider);
     final authState = ref.watch(authStateProvider);
     final authNotifier = ref.read(authNotifierProvider.notifier);
@@ -117,12 +119,12 @@ class HomeScreen extends ConsumerWidget {
                   ),
                 ),
                 TextButton.icon(
-                  onPressed: () {
+                  onPressed: () async {
                     // TODO: Navigate to create checklist
-                    // TODO: Add Firebase Analytics event
-                    // FirebaseAnalytics.instance.logEvent(name: 'create_checklist_clicked', parameters: {
-                    //   'source': 'header_button',
-                    // });
+                    await analytics.logCustomEvent(
+                      name: 'create_checklist_clicked',
+                      parameters: {'source': 'header_button'},
+                    );
                   },
                   icon: const Icon(Icons.add),
                   label: Text(tr('create_new')),

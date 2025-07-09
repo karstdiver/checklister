@@ -3,10 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'auth_state.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../data/user_repository.dart';
+import 'package:checklister/core/services/analytics_service.dart';
 
 class AuthNotifier extends StateNotifier<AuthState> {
   final FirebaseAuth? _auth;
   final UserRepository _userRepository = UserRepository();
+  final AnalyticsService _analytics = AnalyticsService();
 
   AuthNotifier(this._auth) : super(const AuthState()) {
     // Only listen to auth state changes if Firebase is available
@@ -99,11 +101,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
       print('🔍 DEBUG: Email/password sign in completed successfully');
       if (userCredential.user != null) {
-        // TODO: Add Firebase Analytics event
-        // FirebaseAnalytics.instance.logEvent(name: 'user_signed_in', parameters: {
-        //   'method': 'email_password',
-        //   'user_id': userCredential.user!.uid,
-        // });
+        // Log analytics event
+        await _analytics.logLogin(method: 'email_password');
+        await _analytics.setUserId(userId: userCredential.user!.uid);
+
         // Create user document in Firestore if not exists
         print(
           '🔍 DEBUG: Creating user doc for UID: ${userCredential.user!.uid}',
@@ -196,14 +197,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
       print('🔍 DEBUG: Email/password sign up completed successfully');
 
-      // TODO: Add Firebase Analytics event
-      // FirebaseAnalytics.instance.logEvent(name: 'user_signed_up', parameters: {
-      //   'method': 'email_password',
-      //   'user_id': userCredential.user!.uid,
-      // });
-
-      // Create user document in Firestore if not exists
+      // Log analytics event
       if (userCredential.user != null) {
+        await _analytics.logSignUp(method: 'email_password');
+        await _analytics.setUserId(userId: userCredential.user!.uid);
+
+        // Create user document in Firestore if not exists
         print('🔍 DEBUG: Create user doc for UID: ${userCredential.user!.uid}');
         // Here you would create the user document in Firestore
         await _userRepository.createUserDocumentIfNotExists(
@@ -261,6 +260,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
     try {
       await _auth.signOut();
+      // Log analytics event
+      await _analytics.logLogout();
     } catch (e) {
       state = state.copyWith(
         status: AuthStatus.error,
@@ -298,11 +299,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final userCredential = await _auth.signInWithCredential(credential);
       print('🔍 DEBUG: Google sign in completed successfully');
       if (userCredential.user != null) {
-        // TODO: Add Firebase Analytics event
-        // FirebaseAnalytics.instance.logEvent(name: 'user_signed_in', parameters: {
-        //   'method': 'google',
-        //   'user_id': userCredential.user!.uid,
-        // });
+        // Log analytics event
+        await _analytics.logLogin(method: 'google');
+        await _analytics.setUserId(userId: userCredential.user!.uid);
 
         // Create user document in Firestore if not exists
         print(

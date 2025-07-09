@@ -11,8 +11,10 @@ import 'checklister_app.dart';
 
 // imports for google firebase backend
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 //import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart';
+import 'core/services/analytics_service.dart';
 
 final Logger logger = Logger();
 
@@ -93,10 +95,19 @@ void main() async {
     );
     logger.i('Firebase initialized successfully');
 
-    // TODO: Initialize Firebase Analytics
-    // import 'package:firebase_analytics/firebase_analytics.dart';
-    // FirebaseAnalytics analytics = FirebaseAnalytics.instance;
-    // await analytics.setAnalyticsCollectionEnabled(true);
+    // TODO: Fix Firebase Analytics channel error
+    // Initialize Firebase Analytics with error handling
+    try {
+      FirebaseAnalytics analytics = FirebaseAnalytics.instance;
+      await analytics.setAnalyticsCollectionEnabled(true);
+      logger.i('Firebase Analytics initialized successfully');
+
+      // Initialize AnalyticsService
+      await AnalyticsService().initialize();
+    } catch (analyticsError) {
+      logger.w('Firebase Analytics initialization failed: $analyticsError');
+      logger.i('App will continue without Analytics');
+    }
 
     // TODO: Initialize Sentry
     // import 'package:sentry_flutter/sentry_flutter.dart';

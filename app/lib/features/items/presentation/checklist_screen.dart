@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../../../core/providers/providers.dart';
+import '../../../core/services/analytics_service.dart';
 
 class ChecklistScreen extends ConsumerWidget {
   const ChecklistScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final analytics = AnalyticsService();
     final navigationState = ref.watch(navigationStateProvider);
     final navigationNotifier = ref.read(navigationNotifierProvider.notifier);
 
@@ -97,13 +99,15 @@ class ChecklistScreen extends ConsumerWidget {
                       children: [
                         // Skip button
                         ElevatedButton.icon(
-                          onPressed: () {
+                          onPressed: () async {
                             // TODO: Mark as skipped
-                            // TODO: Add Firebase Analytics event
-                            // FirebaseAnalytics.instance.logEvent(name: 'item_skipped', parameters: {
-                            //   'checklist_id': checklistId,
-                            //   'item_id': 'current_item_id',
-                            // });
+                            await analytics.logCustomEvent(
+                              name: 'item_skipped',
+                              parameters: {
+                                'checklist_id': checklistId,
+                                'item_id': 'current_item_id',
+                              },
+                            );
                           },
                           icon: const Icon(Icons.skip_next),
                           label: Text(tr('skip')),
@@ -115,13 +119,15 @@ class ChecklistScreen extends ConsumerWidget {
 
                         // Complete button
                         ElevatedButton.icon(
-                          onPressed: () {
+                          onPressed: () async {
                             // TODO: Mark as complete
-                            // TODO: Add Firebase Analytics event
-                            // FirebaseAnalytics.instance.logEvent(name: 'item_completed', parameters: {
-                            //   'checklist_id': checklistId,
-                            //   'item_id': 'current_item_id',
-                            // });
+                            await analytics.logCustomEvent(
+                              name: 'item_completed',
+                              parameters: {
+                                'checklist_id': checklistId,
+                                'item_id': 'current_item_id',
+                              },
+                            );
                           },
                           icon: const Icon(Icons.check),
                           label: Text(tr('complete')),
