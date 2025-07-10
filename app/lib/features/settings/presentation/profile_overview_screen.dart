@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../../core/providers/providers.dart';
 import '../../../core/navigation/navigation_notifier.dart';
 import '../../../shared/widgets/app_card.dart';
+import '../../../features/auth/presentation/widgets/profile_image_picker.dart';
 
 class ProfileOverviewScreen extends ConsumerStatefulWidget {
   const ProfileOverviewScreen({super.key});
@@ -157,24 +158,14 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
         child: Column(
           children: [
             // Profile Picture
-            CircleAvatar(
-              radius: 40,
-              backgroundColor: Colors.blue,
-              backgroundImage: currentUser?.photoURL != null
-                  ? NetworkImage(currentUser!.photoURL!)
-                  : null,
-              child: currentUser?.photoURL == null
-                  ? Text(
-                      currentUser?.email?.isNotEmpty == true
-                          ? currentUser!.email!.substring(0, 1).toUpperCase()
-                          : 'U',
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    )
-                  : null,
+            ProfileImagePicker(
+              currentImageUrl:
+                  _userData?['profileImageUrl'] ?? currentUser?.photoURL,
+              size: 80,
+              onImageChanged: () {
+                // Reload user data to get the updated profile image
+                _loadUserData();
+              },
             ),
             const SizedBox(height: 12),
 

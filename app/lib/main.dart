@@ -12,6 +12,7 @@ import 'checklister_app.dart';
 // imports for google firebase backend
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 //import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart';
 import 'core/services/analytics_service.dart';
@@ -96,6 +97,22 @@ void main() async {
     logger.i('Firebase initialized successfully');
 
     // TODO: Fix Firebase Analytics channel error
+    // Initialize Firebase App Check (disabled for development)
+    // TODO: Enable App Check for production
+    /*
+    try {
+      await FirebaseAppCheck.instance.activate(
+        androidProvider: AndroidProvider.debug,
+        appleProvider: AppleProvider.debug,
+      );
+      logger.i('Firebase App Check initialized successfully');
+    } catch (appCheckError) {
+      logger.w('Firebase App Check initialization failed: $appCheckError');
+      logger.i('App will continue without App Check');
+    }
+    */
+    logger.i('Firebase App Check disabled for development');
+
     // Initialize Firebase Analytics with error handling
     try {
       FirebaseAnalytics analytics = FirebaseAnalytics.instance;

@@ -6,6 +6,7 @@ import '../../../core/providers/providers.dart';
 import '../../../core/providers/settings_provider.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../features/settings/presentation/language_screen.dart';
+import '../../../features/auth/presentation/widgets/profile_image_picker.dart';
 
 class ProfileEditScreen extends ConsumerStatefulWidget {
   const ProfileEditScreen({super.key});
@@ -219,6 +220,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
 
   Widget _buildProfilePictureSection() {
     final currentUser = ref.watch(currentUserProvider);
+    final userData = _userData;
 
     return AppCard(
       child: Padding(
@@ -227,53 +229,29 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
           children: [
             Text(
               tr('profile_picture'),
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
             ),
-            const SizedBox(height: 12),
-            Stack(
-              alignment: Alignment.bottomRight,
-              children: [
-                CircleAvatar(
-                  radius: 50,
-                  backgroundColor: Colors.blue,
-                  backgroundImage: currentUser?.photoURL != null
-                      ? NetworkImage(currentUser!.photoURL!)
-                      : null,
-                  child: currentUser?.photoURL == null
-                      ? Text(
-                          currentUser?.email?.isNotEmpty == true
-                              ? currentUser!.email!
-                                    .substring(0, 1)
-                                    .toUpperCase()
-                              : 'U',
-                          style: const TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        )
-                      : null,
-                ),
-                Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: const BoxDecoration(
-                    color: Colors.blue,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.camera_alt,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            TextButton(
-              onPressed: () {
-                // TODO: Implement photo upload functionality
+            const SizedBox(height: 16),
+            ProfileImagePicker(
+              currentImageUrl:
+                  userData?['profileImageUrl'] ?? currentUser?.photoURL,
+              size: 100,
+              onImageChanged: () {
+                // Reload user data to get the updated profile image
+                _loadUserData();
               },
-              child: Text(tr('change_photo')),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              tr('change_photo'),
+              style: TextStyle(
+                fontSize: 14,
+                color: Theme.of(context).colorScheme.primary,
+              ),
             ),
           ],
         ),

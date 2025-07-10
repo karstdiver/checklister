@@ -1,7 +1,9 @@
 {
   "app_title": "Listador",
   "welcome_title": "Bienvenido a Listador",
-  "welcome_subtitle": "Tu aplicación de gestión de tareas basada en listas",
+  "xwelcome_subtitle": "Tu aplicación de gestión de tareas basada en listas",
+  "welcome_subtitle": "Controla tu vida con listas de verificación",
+  "checklists": "LISTAS DE VERIFICACIÓN",
   "login": "Iniciar sesión",
   "signup": "Registrarse",
   "create_account": "Crear cuenta",
@@ -84,5 +86,8 @@
   "dark": "Oscuro",
   "notifications": "Notificaciones",
   "enabled": "Habilitado",
-  "profile_updated_successfully": "Perfil actualizado exitosamente"
+  "profile_updated_successfully": "Perfil actualizado exitosamente",
+  "select_image_source": "Seleccionar Fuente de Imagen",
+  "gallery": "Galería",
+  "camera": "Cámara"
 }

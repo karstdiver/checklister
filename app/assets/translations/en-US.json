@@ -95,5 +95,8 @@
   "enabled": "Enabled",
   "profile_updated_successfully": "Profile updated successfully",
   "light": "Light",
-  "dark": "Dark"
+  "dark": "Dark",
+  "select_image_source": "Select Image Source",
+  "gallery": "Gallery",
+  "camera": "Camera"
 }
