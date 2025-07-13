@@ -110,8 +110,10 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            alignment: WrapAlignment.spaceEvenly,
             children: [
               _buildStatChip('Completed', session.completedItems, Colors.green),
               _buildStatChip('Skipped', session.skippedItems, Colors.orange),
@@ -238,8 +240,10 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            alignment: WrapAlignment.spaceEvenly,
             children: [
               _buildSwipeInstruction('←', tr('complete'), Colors.green),
               _buildSwipeInstruction('→', tr('review'), Colors.blue),
@@ -290,34 +294,49 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           // Previous button
-          ElevatedButton.icon(
-            onPressed: session.canGoPrevious
-                ? () => sessionNotifier.handleSwipeRight()
-                : null,
-            icon: const Icon(Icons.arrow_back),
-            label: Text(tr('previous')),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4.0),
+              child: ElevatedButton.icon(
+                onPressed: session.canGoPrevious
+                    ? () => sessionNotifier.handleSwipeRight()
+                    : null,
+                icon: const Icon(Icons.arrow_back),
+                label: Text(tr('previous')),
+              ),
+            ),
           ),
 
           // Pause/Resume button
-          ElevatedButton.icon(
-            onPressed: () {
-              if (session.isPaused) {
-                sessionNotifier.resumeSession();
-              } else {
-                sessionNotifier.handleSwipeDown();
-              }
-            },
-            icon: Icon(session.isPaused ? Icons.play_arrow : Icons.pause),
-            label: Text(session.isPaused ? tr('resume') : tr('pause')),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4.0),
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  if (session.isPaused) {
+                    sessionNotifier.resumeSession();
+                  } else {
+                    sessionNotifier.handleSwipeDown();
+                  }
+                },
+                icon: Icon(session.isPaused ? Icons.play_arrow : Icons.pause),
+                label: Text(session.isPaused ? tr('resume') : tr('pause')),
+              ),
+            ),
           ),
 
           // Next button
-          ElevatedButton.icon(
-            onPressed: session.canGoNext
-                ? () => sessionNotifier.handleSwipeLeft()
-                : null,
-            icon: const Icon(Icons.arrow_forward),
-            label: Text(tr('next')),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4.0),
+              child: ElevatedButton.icon(
+                onPressed: session.canGoNext
+                    ? () => sessionNotifier.handleSwipeLeft()
+                    : null,
+                icon: const Icon(Icons.arrow_forward),
+                label: Text(tr('next')),
+              ),
+            ),
           ),
         ],
       ),
