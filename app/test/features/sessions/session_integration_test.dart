@@ -241,5 +241,93 @@ void main() {
 
       expect(outOfBoundsSession.currentItem, null);
     });
+
+    test('should handle session restart scenario', () {
+      // Create a session with some progress
+      final itemsWithProgress = [
+        ChecklistItem(
+          id: 'item_1',
+          text: 'Test item 1',
+          status: ItemStatus.completed,
+        ),
+        ChecklistItem(
+          id: 'item_2',
+          text: 'Test item 2',
+          status: ItemStatus.skipped,
+        ),
+        ChecklistItem(
+          id: 'item_3',
+          text: 'Test item 3',
+          status: ItemStatus.pending,
+        ),
+      ];
+
+      final sessionWithProgress = SessionState(
+        sessionId: 'test_session',
+        checklistId: 'test_checklist',
+        userId: 'test_user',
+        status: SessionStatus.inProgress,
+        items: itemsWithProgress,
+        currentItemIndex: 2,
+        startedAt: DateTime.now(),
+        totalDuration: Duration.zero,
+        activeDuration: Duration.zero,
+        metadata: {},
+      );
+
+      // Verify the session has progress
+      expect(sessionWithProgress.completedItems, 1);
+      expect(sessionWithProgress.skippedItems, 1);
+      expect(sessionWithProgress.currentItemIndex, 2);
+      expect(sessionWithProgress.progressPercentage, 1 / 3);
+
+      // Simulate restart by creating fresh items
+      final freshItems = [
+        ChecklistItem(
+          id: 'item_1',
+          text: 'Test item 1',
+          status: ItemStatus.pending,
+        ),
+        ChecklistItem(
+          id: 'item_2',
+          text: 'Test item 2',
+          status: ItemStatus.pending,
+        ),
+        ChecklistItem(
+          id: 'item_3',
+          text: 'Test item 3',
+          status: ItemStatus.pending,
+        ),
+      ];
+
+      // Create a new session with fresh items (simulating restart)
+      final restartedSession = SessionState(
+        sessionId: 'new_session_${DateTime.now().millisecondsSinceEpoch}',
+        checklistId: 'test_checklist',
+        userId: 'test_user',
+        status: SessionStatus.inProgress,
+        items: freshItems,
+        currentItemIndex: 0,
+        startedAt: DateTime.now(),
+        totalDuration: Duration.zero,
+        activeDuration: Duration.zero,
+        metadata: {},
+      );
+
+      // Verify the restarted session is reset
+      expect(restartedSession.completedItems, 0);
+      expect(restartedSession.skippedItems, 0);
+      expect(restartedSession.currentItemIndex, 0);
+      expect(restartedSession.progressPercentage, 0.0);
+      expect(restartedSession.currentItem?.text, 'Test item 1');
+      expect(restartedSession.isActive, true);
+
+      // Verify all items are back to pending status
+      for (final item in restartedSession.items) {
+        expect(item.status, ItemStatus.pending);
+        expect(item.completedAt, null);
+        expect(item.skippedAt, null);
+      }
+    });
   });
 }
