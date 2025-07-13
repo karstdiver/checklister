@@ -68,30 +68,39 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final currentUser = ref.watch(currentUserProvider);
-    final navigationNotifier = ref.read(navigationNotifierProvider.notifier);
+    return Consumer(
+      builder: (context, ref, child) {
+        final currentUser = ref.watch(currentUserProvider);
+        final navigationNotifier = ref.read(
+          navigationNotifierProvider.notifier,
+        );
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(tr('profile')),
-        leading: IconButton(
-          onPressed: () => Navigator.of(context).pop(),
-          icon: const Icon(Icons.arrow_back),
-        ),
-        actions: [
-          IconButton(
-            onPressed: () {
-              Navigator.pushNamed(context, '/profile/edit');
-            },
-            icon: const Icon(Icons.edit),
+        // Watch the current locale to trigger rebuilds when language changes
+        final currentLocale = context.locale;
+
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(tr('profile')),
+            leading: IconButton(
+              onPressed: () => Navigator.of(context).pop(),
+              icon: const Icon(Icons.arrow_back),
+            ),
+            actions: [
+              IconButton(
+                onPressed: () {
+                  Navigator.pushNamed(context, '/profile/edit');
+                },
+                icon: const Icon(Icons.edit),
+              ),
+            ],
           ),
-        ],
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-          ? _buildErrorWidget()
-          : _buildProfileContent(currentUser, navigationNotifier),
+          body: _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : _error != null
+              ? _buildErrorWidget()
+              : _buildProfileContent(currentUser, navigationNotifier),
+        );
+      },
     );
   }
 

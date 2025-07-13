@@ -141,32 +141,39 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(tr('edit_profile')),
-        leading: IconButton(
-          onPressed: () => Navigator.of(context).pop(),
-          icon: const Icon(Icons.arrow_back),
-        ),
-        actions: [
-          if (!_isLoading && _error == null)
-            TextButton(
-              onPressed: _isSaving ? null : _saveProfile,
-              child: _isSaving
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : Text(tr('save')),
+    return Consumer(
+      builder: (context, ref, child) {
+        // Watch the current locale to trigger rebuilds when language changes
+        final currentLocale = context.locale;
+
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(tr('edit_profile')),
+            leading: IconButton(
+              onPressed: () => Navigator.of(context).pop(),
+              icon: const Icon(Icons.arrow_back),
             ),
-        ],
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-          ? _buildErrorWidget()
-          : _buildEditForm(),
+            actions: [
+              if (!_isLoading && _error == null)
+                TextButton(
+                  onPressed: _isSaving ? null : _saveProfile,
+                  child: _isSaving
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Text(tr('save')),
+                ),
+            ],
+          ),
+          body: _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : _error != null
+              ? _buildErrorWidget()
+              : _buildEditForm(),
+        );
+      },
     );
   }
 
