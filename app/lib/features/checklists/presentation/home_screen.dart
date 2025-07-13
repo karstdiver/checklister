@@ -6,6 +6,8 @@ import '../../../shared/widgets/logout_dialog.dart';
 import '../../../core/services/analytics_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../sessions/domain/session_state.dart';
+import '../../sessions/presentation/session_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -154,6 +156,41 @@ class HomeScreen extends ConsumerWidget {
             _buildWelcomeText(currentUser),
             const SizedBox(height: 24),
 
+            // Test Session Feature Button
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '🧪 Test Session Feature',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Test the new session management system with sample checklist items',
+                      style: const TextStyle(fontSize: 14, color: Colors.grey),
+                    ),
+                    const SizedBox(height: 12),
+                    ElevatedButton.icon(
+                      onPressed: () => _startTestSession(context),
+                      icon: const Icon(Icons.play_arrow),
+                      label: const Text('Start Test Session'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+
             // Checklists section
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -222,6 +259,45 @@ class HomeScreen extends ConsumerWidget {
           // TODO: Navigate to create checklist
         },
         child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  void _startTestSession(BuildContext context) {
+    // Create sample checklist items for testing
+    final testItems = [
+      ChecklistItem(
+        id: 'item_1',
+        text: 'Check engine oil level',
+        status: ItemStatus.pending,
+      ),
+      ChecklistItem(
+        id: 'item_2',
+        text: 'Inspect brake fluid',
+        status: ItemStatus.pending,
+      ),
+      ChecklistItem(
+        id: 'item_3',
+        text: 'Test windshield wipers',
+        status: ItemStatus.pending,
+      ),
+      ChecklistItem(
+        id: 'item_4',
+        text: 'Check tire pressure',
+        status: ItemStatus.pending,
+      ),
+      ChecklistItem(
+        id: 'item_5',
+        text: 'Verify all lights are working',
+        status: ItemStatus.pending,
+      ),
+    ];
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            SessionScreen(checklistId: 'test_checklist', items: testItems),
       ),
     );
   }
