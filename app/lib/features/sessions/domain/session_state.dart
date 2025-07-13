@@ -1,0 +1,123 @@
+enum SessionStatus { notStarted, inProgress, paused, completed, abandoned }
+
+enum ItemStatus { pending, completed, skipped, reviewed }
+
+class ChecklistItem {
+  final String id;
+  final String text;
+  final String? imageUrl;
+  final ItemStatus status;
+  final DateTime? completedAt;
+  final DateTime? skippedAt;
+  final String? notes;
+
+  const ChecklistItem({
+    required this.id,
+    required this.text,
+    this.imageUrl,
+    required this.status,
+    this.completedAt,
+    this.skippedAt,
+    this.notes,
+  });
+
+  ChecklistItem copyWith({
+    String? id,
+    String? text,
+    String? imageUrl,
+    ItemStatus? status,
+    DateTime? completedAt,
+    DateTime? skippedAt,
+    String? notes,
+  }) {
+    return ChecklistItem(
+      id: id ?? this.id,
+      text: text ?? this.text,
+      imageUrl: imageUrl ?? this.imageUrl,
+      status: status ?? this.status,
+      completedAt: completedAt ?? this.completedAt,
+      skippedAt: skippedAt ?? this.skippedAt,
+      notes: notes ?? this.notes,
+    );
+  }
+}
+
+class SessionState {
+  final String sessionId;
+  final String checklistId;
+  final String userId;
+  final SessionStatus status;
+  final List<ChecklistItem> items;
+  final int currentItemIndex;
+  final DateTime startedAt;
+  final DateTime? pausedAt;
+  final DateTime? completedAt;
+  final Duration totalDuration;
+  final Duration activeDuration;
+  final Map<String, dynamic> metadata;
+
+  const SessionState({
+    required this.sessionId,
+    required this.checklistId,
+    required this.userId,
+    required this.status,
+    required this.items,
+    required this.currentItemIndex,
+    required this.startedAt,
+    this.pausedAt,
+    this.completedAt,
+    required this.totalDuration,
+    required this.activeDuration,
+    required this.metadata,
+  });
+
+  bool get isActive => status == SessionStatus.inProgress;
+  bool get isCompleted => status == SessionStatus.completed;
+  bool get isPaused => status == SessionStatus.paused;
+
+  int get totalItems => items.length;
+  int get completedItems =>
+      items.where((item) => item.status == ItemStatus.completed).length;
+  int get skippedItems =>
+      items.where((item) => item.status == ItemStatus.skipped).length;
+  double get progressPercentage =>
+      totalItems > 0 ? completedItems / totalItems : 0.0;
+
+  ChecklistItem? get currentItem =>
+      currentItemIndex >= 0 && currentItemIndex < items.length
+      ? items[currentItemIndex]
+      : null;
+
+  bool get canGoNext => currentItemIndex < items.length - 1;
+  bool get canGoPrevious => currentItemIndex > 0;
+
+  SessionState copyWith({
+    String? sessionId,
+    String? checklistId,
+    String? userId,
+    SessionStatus? status,
+    List<ChecklistItem>? items,
+    int? currentItemIndex,
+    DateTime? startedAt,
+    DateTime? pausedAt,
+    DateTime? completedAt,
+    Duration? totalDuration,
+    Duration? activeDuration,
+    Map<String, dynamic>? metadata,
+  }) {
+    return SessionState(
+      sessionId: sessionId ?? this.sessionId,
+      checklistId: checklistId ?? this.checklistId,
+      userId: userId ?? this.userId,
+      status: status ?? this.status,
+      items: items ?? this.items,
+      currentItemIndex: currentItemIndex ?? this.currentItemIndex,
+      startedAt: startedAt ?? this.startedAt,
+      pausedAt: pausedAt ?? this.pausedAt,
+      completedAt: completedAt ?? this.completedAt,
+      totalDuration: totalDuration ?? this.totalDuration,
+      activeDuration: activeDuration ?? this.activeDuration,
+      metadata: metadata ?? this.metadata,
+    );
+  }
+}
