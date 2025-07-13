@@ -98,5 +98,15 @@
   "dark": "Dark",
   "select_image_source": "Select Image Source",
   "gallery": "Gallery",
-  "camera": "Camera"
+  "camera": "Camera",
+  "session": "Session",
+  "swipe_instructions": "Swipe Instructions",
+  "complete": "Complete",
+  "review": "Review",
+  "skip": "Skip",
+  "pause": "Pause",
+  "resume": "Resume",
+  "restart_session": "Restart Session",
+  "abandon_session": "Abandon Session",
+  "close": "Close"
 }

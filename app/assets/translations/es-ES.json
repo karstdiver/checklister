@@ -89,5 +89,15 @@
   "profile_updated_successfully": "Perfil actualizado exitosamente",
   "select_image_source": "Seleccionar Fuente de Imagen",
   "gallery": "Galería",
-  "camera": "Cámara"
+  "camera": "Cámara",
+  "session": "Sesión",
+  "swipe_instructions": "Instrucciones de Deslizamiento",
+  "complete": "Completar",
+  "review": "Revisar",
+  "skip": "Saltar",
+  "pause": "Pausar",
+  "resume": "Reanudar",
+  "restart_session": "Reiniciar Sesión",
+  "abandon_session": "Abandonar Sesión",
+  "close": "Cerrar"
 }
