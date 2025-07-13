@@ -44,7 +44,7 @@
   "no_checklists_yet": "No checklists yet",
   "create_first_checklist": "Create your first checklist to get started",
   "create_checklist": "Create Checklist",
-  "progress": "Progress: {0} of {1}",
+  "progress": "Progress: {current} of {total}",
   "sample_item_title": "Sample Checklist Item",
   "sample_item_description": "This is a sample item description. Replace with actual content.",
   "skip": "Skip",
@@ -108,5 +108,6 @@
   "resume": "Resume",
   "restart_session": "Restart Session",
   "abandon_session": "Abandon Session",
-  "close": "Close"
+  "close": "Close",
+  "finish": "Finish"
 }

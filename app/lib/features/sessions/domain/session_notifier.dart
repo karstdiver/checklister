@@ -13,7 +13,9 @@ class SessionNotifier extends StateNotifier<SessionState?> {
 
   SessionNotifier(this._repository)
     : _analytics = AnalyticsService(),
-      super(null);
+      super(null) {
+    print('SessionNotifier created: ${DateTime.now()}');
+  }
 
   // Initialize a new session
   Future<void> startSession({
@@ -24,6 +26,7 @@ class SessionNotifier extends StateNotifier<SessionState?> {
     final sessionId =
         'session_${DateTime.now().millisecondsSinceEpoch}_${_random.nextInt(10000)}';
     final now = DateTime.now();
+    print('Starting new session: $sessionId at $now');
 
     final sessionState = SessionState(
       sessionId: sessionId,
@@ -122,6 +125,7 @@ class SessionNotifier extends StateNotifier<SessionState?> {
 
   // Skip current item
   Future<void> _skipCurrentItem() async {
+    print('Skip current item called at index: ${state?.currentItemIndex}');
     if (state == null || state!.currentItem == null) return;
 
     final currentIndex = state!.currentItemIndex;

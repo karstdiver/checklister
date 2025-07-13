@@ -80,8 +80,19 @@ class SessionState {
       items.where((item) => item.status == ItemStatus.completed).length;
   int get skippedItems =>
       items.where((item) => item.status == ItemStatus.skipped).length;
-  double get progressPercentage =>
-      totalItems > 0 ? completedItems / totalItems : 0.0;
+  double get progressPercentage {
+    if (totalItems == 0) return 0.0;
+
+    // If session is completed, show 100%
+    if (isCompleted) return 1.0;
+
+    // If we're at the last item and it's completed, show 100%
+    if (currentItemIndex >= totalItems && completedItems == totalItems)
+      return 1.0;
+
+    // Otherwise, show completed items percentage
+    return completedItems / totalItems;
+  }
 
   ChecklistItem? get currentItem =>
       currentItemIndex >= 0 && currentItemIndex < items.length

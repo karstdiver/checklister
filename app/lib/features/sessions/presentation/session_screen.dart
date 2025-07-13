@@ -12,26 +12,32 @@ class SessionScreen extends ConsumerStatefulWidget {
   final List<ChecklistItem> items;
 
   const SessionScreen({
-    super.key,
+    Key? key,
     required this.checklistId,
     required this.items,
-  });
+  }) : super(key: key);
 
   @override
   ConsumerState<SessionScreen> createState() => _SessionScreenState();
 }
 
 class _SessionScreenState extends ConsumerState<SessionScreen> {
+  DateTime? _lastSwipeTime;
+  static const Duration _swipeDebounceTime = Duration(milliseconds: 500);
+
   @override
   void initState() {
     super.initState();
-    _initializeSession();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeSession();
+    });
   }
 
   Future<void> _initializeSession() async {
     final currentUser = ref.read(currentUserProvider);
+    final sessionNotifier = ref.read(sessionNotifierProvider.notifier);
+    sessionNotifier.clearSession(); // Ensure session state is reset
     if (currentUser != null) {
-      final sessionNotifier = ref.read(sessionNotifierProvider.notifier);
       await sessionNotifier.startSession(
         checklistId: widget.checklistId,
         userId: currentUser.uid,
@@ -54,6 +60,11 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
     if (session == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    // Show completion screen if session is completed
+    if (session.isCompleted) {
+      return _buildCompletionScreen(session, context);
     }
 
     return Scaffold(
@@ -102,10 +113,10 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           Text(
             tr(
               'progress',
-              args: [
-                session.completedItems.toString(),
-                session.totalItems.toString(),
-              ],
+              namedArgs: {
+                'current': session.completedItems.toString(),
+                'total': session.totalItems.toString(),
+              },
             ),
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
           ),
@@ -288,6 +299,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     SessionState session,
     SessionNotifier sessionNotifier,
   ) {
+    final isLastItem = session.currentItemIndex == session.totalItems - 1;
     return Container(
       padding: const EdgeInsets.all(16.0),
       child: Row(
@@ -325,16 +337,18 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
             ),
           ),
 
-          // Next button
+          // Next/Finish button
           Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4.0),
               child: ElevatedButton.icon(
-                onPressed: session.canGoNext
+                onPressed: session.currentItem != null
                     ? () => sessionNotifier.handleSwipeLeft()
                     : null,
-                icon: const Icon(Icons.arrow_forward),
-                label: Text(tr('next')),
+                icon: isLastItem
+                    ? const Icon(Icons.check)
+                    : const Icon(Icons.arrow_forward),
+                label: Text(isLastItem ? tr('finish') : tr('next')),
               ),
             ),
           ),
@@ -349,22 +363,37 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   ) {
     const double swipeThreshold = 50.0;
 
+    // Check if enough time has passed since the last swipe
+    final now = DateTime.now();
+    if (_lastSwipeTime != null &&
+        now.difference(_lastSwipeTime!) < _swipeDebounceTime) {
+      return; // Ignore this swipe - too soon after the last one
+    }
+
     if (details.delta.dx.abs() > details.delta.dy.abs()) {
       // Horizontal swipe
       if (details.delta.dx > swipeThreshold) {
         // Swipe right
+        print('🔄 Swipe RIGHT detected');
+        _lastSwipeTime = now;
         sessionNotifier.handleSwipeRight();
       } else if (details.delta.dx < -swipeThreshold) {
         // Swipe left
+        print('🔄 Swipe LEFT detected');
+        _lastSwipeTime = now;
         sessionNotifier.handleSwipeLeft();
       }
     } else {
       // Vertical swipe
       if (details.delta.dy < -swipeThreshold) {
         // Swipe up
+        print('⬆️ Swipe UP detected');
+        _lastSwipeTime = now;
         sessionNotifier.handleSwipeUp();
       } else if (details.delta.dy > swipeThreshold) {
         // Swipe down
+        print('⬇️ Swipe DOWN detected');
+        _lastSwipeTime = now;
         sessionNotifier.handleSwipeDown();
       }
     }
@@ -404,5 +433,158 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildCompletionScreen(SessionState session, BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(tr('session')),
+        leading: IconButton(
+          onPressed: () => Navigator.of(context).pop(),
+          icon: const Icon(Icons.arrow_back),
+        ),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Success icon
+            Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                color: Colors.green.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.green, width: 3),
+              ),
+              child: const Icon(
+                Icons.check_circle,
+                size: 80,
+                color: Colors.green,
+              ),
+            ),
+            const SizedBox(height: 32),
+
+            // Completion message
+            Text(
+              'Session Completed!',
+              style: const TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Colors.green,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+
+            Text(
+              'Great job! You\'ve completed all checklist items.',
+              style: const TextStyle(fontSize: 16, color: Colors.grey),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 32),
+
+            // Final statistics
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  children: [
+                    Text(
+                      'Session Summary',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _buildStatChip(
+                          'Completed',
+                          session.completedItems,
+                          Colors.green,
+                        ),
+                        _buildStatChip(
+                          'Skipped',
+                          session.skippedItems,
+                          Colors.orange,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Total Duration: ${_formatDuration(session.totalDuration)}',
+                      style: const TextStyle(fontSize: 14, color: Colors.grey),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 32),
+
+            // Action buttons
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      // Pop to home first
+                      Navigator.of(context).popUntil((route) => route.isFirst);
+                      // Then push a new session after a short delay
+                      Future.delayed(const Duration(milliseconds: 100), () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => ProviderScope(
+                              key: UniqueKey(),
+                              child: SessionScreen(
+                                key: UniqueKey(), // Force new widget instance
+                                checklistId: session.checklistId,
+                                items: session.items
+                                    .map(
+                                      (item) => ChecklistItem(
+                                        id: item.id,
+                                        text: item.text,
+                                        imageUrl: item.imageUrl,
+                                        status: ItemStatus.pending,
+                                      ),
+                                    )
+                                    .toList(),
+                              ),
+                            ),
+                          ),
+                        );
+                      });
+                    },
+                    icon: const Icon(Icons.refresh),
+                    label: Text(tr('restart_session')),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.home),
+                    label: const Text('Back to Home'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatDuration(Duration duration) {
+    final minutes = duration.inMinutes;
+    final seconds = duration.inSeconds % 60;
+    return ' {minutes}m  {seconds}s';
   }
 }

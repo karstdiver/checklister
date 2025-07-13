@@ -10,7 +10,7 @@ final sessionRepositoryProvider = Provider<SessionRepository>((ref) {
 
 // Session notifier provider
 final sessionNotifierProvider =
-    StateNotifierProvider<SessionNotifier, SessionState?>((ref) {
+    StateNotifierProvider.autoDispose<SessionNotifier, SessionState?>((ref) {
       final repository = ref.watch(sessionRepositoryProvider);
       return SessionNotifier(repository);
     });
