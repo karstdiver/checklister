@@ -10,11 +10,13 @@ import '../../../shared/widgets/app_card.dart';
 class SessionScreen extends ConsumerStatefulWidget {
   final String checklistId;
   final List<ChecklistItem> items;
+  final bool forceNewSession;
 
   const SessionScreen({
     Key? key,
     required this.checklistId,
     required this.items,
+    this.forceNewSession = false,
   }) : super(key: key);
 
   @override
@@ -36,13 +38,39 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   Future<void> _initializeSession() async {
     final currentUser = ref.read(currentUserProvider);
     final sessionNotifier = ref.read(sessionNotifierProvider.notifier);
-    sessionNotifier.clearSession(); // Ensure session state is reset
+
     if (currentUser != null) {
-      await sessionNotifier.startSession(
-        checklistId: widget.checklistId,
-        userId: currentUser.uid,
-        items: widget.items,
-      );
+      if (widget.forceNewSession) {
+        // Force start a new session
+        sessionNotifier.clearSession(); // Ensure session state is reset
+        await sessionNotifier.startSession(
+          checklistId: widget.checklistId,
+          userId: currentUser.uid,
+          items: widget.items,
+        );
+        print('Force started new session for checklist: ${widget.checklistId}');
+      } else {
+        // First, try to load an existing active session
+        final activeSession = await sessionNotifier.getActiveSession(
+          currentUser.uid,
+          widget.checklistId,
+        );
+
+        if (activeSession != null) {
+          // Load the existing session
+          await sessionNotifier.loadSession(activeSession.sessionId);
+          print('Resumed existing session: ${activeSession.sessionId}');
+        } else {
+          // Start a new session
+          sessionNotifier.clearSession(); // Ensure session state is reset
+          await sessionNotifier.startSession(
+            checklistId: widget.checklistId,
+            userId: currentUser.uid,
+            items: widget.items,
+          );
+          print('Started new session for checklist: ${widget.checklistId}');
+        }
+      }
     }
   }
 

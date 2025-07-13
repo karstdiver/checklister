@@ -330,4 +330,33 @@ class SessionNotifier extends StateNotifier<SessionState?> {
     _sessionStartTime = null;
     _lastActiveTime = null;
   }
+
+  // Check if there's an active session for a user
+  Future<SessionState?> getActiveSession(
+    String userId,
+    String checklistId,
+  ) async {
+    try {
+      final sessions = await _repository.getUserSessions(userId);
+      // Find active sessions for this specific checklist
+      final activeSession = sessions
+          .where(
+            (session) =>
+                session.checklistId == checklistId &&
+                (session.status == SessionStatus.inProgress ||
+                    session.status == SessionStatus.paused),
+          )
+          .toList();
+
+      if (activeSession.isNotEmpty) {
+        // Return the most recent active session
+        activeSession.sort((a, b) => b.startedAt.compareTo(a.startedAt));
+        return activeSession.first;
+      }
+      return null;
+    } catch (e) {
+      print('Error checking for active session: $e');
+      return null;
+    }
+  }
 }

@@ -36,12 +36,16 @@ class SessionRepository {
       final querySnapshot = await _firestore
           .collection('sessions')
           .where('userId', isEqualTo: userId)
-          .orderBy('startedAt', descending: true)
           .get();
 
-      return querySnapshot.docs
+      final sessions = querySnapshot.docs
           .map((doc) => _mapToSession(doc.data()))
           .toList();
+
+      // Sort by startedAt descending in memory
+      sessions.sort((a, b) => b.startedAt.compareTo(a.startedAt));
+
+      return sessions;
     } catch (e) {
       throw Exception('Failed to get user sessions: $e');
     }
@@ -54,12 +58,16 @@ class SessionRepository {
           .collection('sessions')
           .where('checklistId', isEqualTo: checklistId)
           .where('status', whereIn: ['inProgress', 'paused'])
-          .orderBy('startedAt', descending: true)
           .get();
 
-      return querySnapshot.docs
+      final sessions = querySnapshot.docs
           .map((doc) => _mapToSession(doc.data()))
           .toList();
+
+      // Sort by startedAt descending in memory
+      sessions.sort((a, b) => b.startedAt.compareTo(a.startedAt));
+
+      return sessions;
     } catch (e) {
       throw Exception('Failed to get checklist sessions: $e');
     }

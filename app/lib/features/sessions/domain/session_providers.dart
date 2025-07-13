@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'session_notifier.dart';
 import 'session_state.dart';
 import '../data/session_repository.dart';
+import '../../../core/providers/providers.dart';
 
 // Repository provider
 final sessionRepositoryProvider = Provider<SessionRepository>((ref) {
@@ -64,3 +65,19 @@ final sessionNavigationProvider =
         canGoPrevious: session.canGoPrevious,
       );
     });
+
+// Active session provider for a specific checklist
+final activeSessionProvider = Provider.family<SessionState?, String>((
+  ref,
+  checklistId,
+) {
+  final currentSession = ref.watch(currentSessionProvider);
+
+  // If there's a current session for this checklist, return it
+  if (currentSession != null && currentSession.checklistId == checklistId) {
+    return currentSession;
+  }
+
+  // Otherwise, return null (no active session)
+  return null;
+});
