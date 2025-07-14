@@ -291,13 +291,27 @@ class SessionNotifier extends StateNotifier<SessionState?> {
       logger.i('🔄 Loading session: $sessionId');
       final session = await _repository.getSession(sessionId);
       if (session != null) {
-        state = session;
-        logger.i('🔄 Session loaded successfully: ${session.sessionId}');
+        logger.i('🔄 Session found in database: ${session.sessionId}');
         logger.i('🔄 Session status: ${session.status}');
         logger.i(
           '🔄 Completed items: ${session.completedItems}/${session.totalItems}',
         );
         logger.i('🔄 Current item index: ${session.currentItemIndex}');
+
+        state = session;
+        logger.i('🔄 Session state updated in notifier');
+
+        // Verify the state was set correctly
+        if (state != null) {
+          logger.i('🔄 State verification - Session ID: ${state!.sessionId}');
+          logger.i(
+            '🔄 State verification - Completed items: ${state!.completedItems}/${state!.totalItems}',
+          );
+        } else {
+          logger.e(
+            '🔄 State verification failed - state is null after setting',
+          );
+        }
       } else {
         logger.e('🔄 Session not found: $sessionId');
       }
