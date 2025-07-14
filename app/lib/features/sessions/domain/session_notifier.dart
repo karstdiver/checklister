@@ -69,7 +69,7 @@ class SessionNotifier extends StateNotifier<SessionState?> {
     }
   }
 
-  void completeCurrentItem() {
+  Future<void> completeCurrentItem() async {
     if (state == null) return;
 
     final currentIndex = state!.currentItemIndex;
@@ -84,6 +84,12 @@ class SessionNotifier extends StateNotifier<SessionState?> {
 
       state = newState;
 
+      // Save to database immediately
+      await _repository.saveSession(newState);
+      logger.i(
+        '💾 Saved completed item to database: ${newState.completedItems}/${newState.totalItems}',
+      );
+
       // Check if session is complete
       if (newState.completedItems + newState.skippedItems >=
           newState.totalItems) {
@@ -92,7 +98,7 @@ class SessionNotifier extends StateNotifier<SessionState?> {
     }
   }
 
-  void skipCurrentItem() {
+  Future<void> skipCurrentItem() async {
     if (state == null) return;
 
     final currentIndex = state!.currentItemIndex;
@@ -106,6 +112,12 @@ class SessionNotifier extends StateNotifier<SessionState?> {
       final newState = state!.copyWith(items: updatedItems);
 
       state = newState;
+
+      // Save to database immediately
+      await _repository.saveSession(newState);
+      logger.i(
+        '💾 Saved skipped item to database: ${newState.skippedItems}/${newState.totalItems}',
+      );
 
       // Check if session is complete
       if (newState.completedItems + newState.skippedItems >=
@@ -230,11 +242,11 @@ class SessionNotifier extends StateNotifier<SessionState?> {
   }
 
   // Swipe gesture handlers
-  void handleSwipeLeft() {
+  Future<void> handleSwipeLeft() async {
     if (state == null) return;
 
     logger.i('👈 Swipe LEFT - Completing current item');
-    completeCurrentItem();
+    await completeCurrentItem();
 
     // Move to next item if available
     if (state != null && state!.canGoNext) {
@@ -259,11 +271,11 @@ class SessionNotifier extends StateNotifier<SessionState?> {
     }
   }
 
-  void handleSwipeUp() {
+  Future<void> handleSwipeUp() async {
     if (state == null) return;
 
     logger.i('⬆️ Swipe UP - Skipping current item');
-    skipCurrentItem();
+    await skipCurrentItem();
 
     // Move to next item if available
     if (state != null && state!.canGoNext) {

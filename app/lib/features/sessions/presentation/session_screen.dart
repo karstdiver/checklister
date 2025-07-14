@@ -402,7 +402,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 4.0),
               child: ElevatedButton.icon(
                 onPressed: session.currentItem != null
-                    ? () => sessionNotifier.handleSwipeLeft()
+                    ? () async => await sessionNotifier.handleSwipeLeft()
                     : null,
                 icon: isLastItem
                     ? const Icon(Icons.check)
@@ -416,10 +416,10 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     );
   }
 
-  void _handleSwipe(
+  Future<void> _handleSwipe(
     DragUpdateDetails details,
     SessionNotifier sessionNotifier,
-  ) {
+  ) async {
     const double swipeThreshold = 50.0;
 
     // Check if enough time has passed since the last swipe
@@ -440,7 +440,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         // Swipe left
         logger.d('🔄 Swipe LEFT detected');
         _lastSwipeTime = now;
-        sessionNotifier.handleSwipeLeft();
+        await sessionNotifier.handleSwipeLeft();
       }
     } else {
       // Vertical swipe
@@ -448,7 +448,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         // Swipe up
         logger.d('⬆️ Swipe UP detected');
         _lastSwipeTime = now;
-        sessionNotifier.handleSwipeUp();
+        await sessionNotifier.handleSwipeUp();
       } else if (details.delta.dy > swipeThreshold) {
         // Swipe down
         logger.d('⬇️ Swipe DOWN detected');
