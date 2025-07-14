@@ -611,35 +611,11 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: () {
-                          // Pop to home first
-                          Navigator.of(
-                            context,
-                          ).popUntil((route) => route.isFirst);
-                          // Then push a new session after a short delay
-                          Future.delayed(const Duration(milliseconds: 100), () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => ProviderScope(
-                                  key: UniqueKey(),
-                                  child: SessionScreen(
-                                    key:
-                                        UniqueKey(), // Force new widget instance
-                                    checklistId: session.checklistId,
-                                    items: session.items
-                                        .map(
-                                          (item) => ChecklistItem(
-                                            id: item.id,
-                                            text: item.text,
-                                            imageUrl: item.imageUrl,
-                                            status: ItemStatus.pending,
-                                          ),
-                                        )
-                                        .toList(),
-                                  ),
-                                ),
-                              ),
-                            );
-                          });
+                          // Use the existing restart session method
+                          final sessionNotifier = ref.read(
+                            sessionNotifierProvider.notifier,
+                          );
+                          _restartSession(sessionNotifier);
                         },
                         icon: const Icon(Icons.refresh),
                         label: Text(tr('restart_session')),
