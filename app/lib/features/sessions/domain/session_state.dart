@@ -1,6 +1,21 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 enum SessionStatus { notStarted, inProgress, paused, completed, abandoned }
 
 enum ItemStatus { pending, completed, skipped, reviewed }
+
+// Helper function to safely convert Firestore timestamps to DateTime
+DateTime _parseTimestamp(dynamic timestamp) {
+  if (timestamp is Timestamp) {
+    return timestamp.toDate();
+  } else if (timestamp is String) {
+    return DateTime.parse(timestamp);
+  } else {
+    throw FormatException(
+      'Invalid timestamp format: $timestamp (type: ${timestamp.runtimeType})',
+    );
+  }
+}
 
 class ChecklistItem {
   final String id;
@@ -38,6 +53,39 @@ class ChecklistItem {
       completedAt: completedAt ?? this.completedAt,
       skippedAt: skippedAt ?? this.skippedAt,
       notes: notes ?? this.notes,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'text': text,
+      'imageUrl': imageUrl,
+      'status': status.name,
+      'completedAt': completedAt != null
+          ? completedAt!.toIso8601String()
+          : null,
+      'skippedAt': skippedAt != null ? skippedAt!.toIso8601String() : null,
+      'notes': notes,
+    };
+  }
+
+  factory ChecklistItem.fromMap(Map<String, dynamic> map) {
+    return ChecklistItem(
+      id: map['id'],
+      text: map['text'],
+      imageUrl: map['imageUrl'],
+      status: ItemStatus.values.firstWhere(
+        (e) => e.name == map['status'],
+        orElse: () => ItemStatus.pending,
+      ),
+      completedAt: map['completedAt'] != null
+          ? _parseTimestamp(map['completedAt'])
+          : null,
+      skippedAt: map['skippedAt'] != null
+          ? _parseTimestamp(map['skippedAt'])
+          : null,
+      notes: map['notes'],
     );
   }
 }
@@ -130,6 +178,49 @@ class SessionState {
       totalDuration: totalDuration ?? this.totalDuration,
       activeDuration: activeDuration ?? this.activeDuration,
       metadata: metadata ?? this.metadata,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'sessionId': sessionId,
+      'checklistId': checklistId,
+      'userId': userId,
+      'status': status.name,
+      'items': items.map((item) => item.toMap()).toList(),
+      'currentItemIndex': currentItemIndex,
+      'startedAt': startedAt.toIso8601String(),
+      'pausedAt': pausedAt?.toIso8601String(),
+      'completedAt': completedAt?.toIso8601String(),
+      'totalDuration': totalDuration.inMilliseconds,
+      'activeDuration': activeDuration.inMilliseconds,
+      'metadata': metadata,
+    };
+  }
+
+  factory SessionState.fromMap(Map<String, dynamic> map) {
+    return SessionState(
+      sessionId: map['sessionId'],
+      checklistId: map['checklistId'],
+      userId: map['userId'],
+      status: SessionStatus.values.firstWhere(
+        (e) => e.name == map['status'],
+        orElse: () => SessionStatus.notStarted,
+      ),
+      items: (map['items'] as List)
+          .map((item) => ChecklistItem.fromMap(item))
+          .toList(),
+      currentItemIndex: map['currentItemIndex'],
+      startedAt: _parseTimestamp(map['startedAt']),
+      pausedAt: map['pausedAt'] != null
+          ? _parseTimestamp(map['pausedAt'])
+          : null,
+      completedAt: map['completedAt'] != null
+          ? _parseTimestamp(map['completedAt'])
+          : null,
+      totalDuration: Duration(milliseconds: map['totalDuration']),
+      activeDuration: Duration(milliseconds: map['activeDuration']),
+      metadata: Map<String, dynamic>.from(map['metadata']),
     );
   }
 }

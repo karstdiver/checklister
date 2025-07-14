@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:logger/logger.dart';
 import '../domain/session_providers.dart';
 import '../domain/session_state.dart';
 import '../domain/session_notifier.dart';
 import '../../../core/providers/providers.dart';
 import '../../../shared/widgets/app_card.dart';
+
+final logger = Logger();
 
 class SessionScreen extends ConsumerStatefulWidget {
   final String checklistId;
@@ -58,7 +61,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           userId: currentUser.uid,
           items: widget.items,
         );
-        print('Force started new session for checklist: ${widget.checklistId}');
+        logger.i(
+          '🚀 Force started new session for checklist: ${widget.checklistId}',
+        );
       } else {
         // First, try to load an existing active session
         final activeSession = await sessionNotifier.getActiveSession(
@@ -69,7 +74,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         if (activeSession != null && !widget.startNewIfActive) {
           // Load the existing session
           await sessionNotifier.loadSession(activeSession.sessionId);
-          print('Resumed existing session: ${activeSession.sessionId}');
+          logger.i('🔄 Resumed existing session: ${activeSession.sessionId}');
         } else {
           // Start a new session (either no active session or startNewIfActive is true)
           sessionNotifier.clearSession(); // Ensure session state is reset
@@ -78,7 +83,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
             userId: currentUser.uid,
             items: widget.items,
           );
-          print('Started new session for checklist: ${widget.checklistId}');
+          logger.i(
+            '🚀 Started new session for checklist: ${widget.checklistId}',
+          );
         }
       }
     }
@@ -420,12 +427,12 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       // Horizontal swipe
       if (details.delta.dx > swipeThreshold) {
         // Swipe right
-        print('🔄 Swipe RIGHT detected');
+        logger.d('🔄 Swipe RIGHT detected');
         _lastSwipeTime = now;
         sessionNotifier.handleSwipeRight();
       } else if (details.delta.dx < -swipeThreshold) {
         // Swipe left
-        print('🔄 Swipe LEFT detected');
+        logger.d('🔄 Swipe LEFT detected');
         _lastSwipeTime = now;
         sessionNotifier.handleSwipeLeft();
       }
@@ -433,12 +440,12 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       // Vertical swipe
       if (details.delta.dy < -swipeThreshold) {
         // Swipe up
-        print('⬆️ Swipe UP detected');
+        logger.d('⬆️ Swipe UP detected');
         _lastSwipeTime = now;
         sessionNotifier.handleSwipeUp();
       } else if (details.delta.dy > swipeThreshold) {
         // Swipe down
-        print('⬇️ Swipe DOWN detected');
+        logger.d('⬇️ Swipe DOWN detected');
         _lastSwipeTime = now;
         sessionNotifier.handleSwipeDown();
       }
@@ -446,15 +453,15 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   }
 
   void _restartSession(SessionNotifier sessionNotifier) async {
-    print('🔄 Restarting session...');
+    logger.i('🔄 Restarting session...');
 
     // First, abandon the current session if it exists
     await sessionNotifier.abandonSession();
-    print('✅ Old session abandoned');
+    logger.d('✅ Old session abandoned');
 
     // Clear the current session
     sessionNotifier.clearSession();
-    print('✅ Session cleared');
+    logger.d('✅ Session cleared');
 
     // Create fresh items with pending status
     final freshItems = widget.items
@@ -476,11 +483,11 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         userId: currentUser.uid,
         items: freshItems,
       );
-      print('✅ New session started with fresh items');
+      logger.i('✅ New session started with fresh items');
 
       // Force a rebuild by calling setState
       setState(() {});
-      print('✅ setState called');
+      logger.d('✅ setState called');
     }
   }
 
