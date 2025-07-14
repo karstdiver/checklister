@@ -160,134 +160,57 @@ class ChecklistCard extends ConsumerWidget {
                       activeSessionProgressProvider(checklist.id),
                     );
 
-                    return sessionProgress.when(
-                      data: (progress) {
-                        // Use session progress if available, otherwise use checklist progress
-                        final completed =
-                            progress?.completed ?? checklist.completedItems;
-                        final total = progress?.total ?? checklist.totalItems;
-                        final hasActiveSession =
-                            progress?.hasActiveSession ?? false;
-                        final progressValue = total > 0
-                            ? completed / total
-                            : 0.0;
+                    // Use session progress if available, otherwise use checklist progress
+                    final completed =
+                        sessionProgress?.completed ?? checklist.completedItems;
+                    final total =
+                        sessionProgress?.total ?? checklist.totalItems;
+                    final hasActiveSession =
+                        sessionProgress?.hasActiveSession ?? false;
+                    final progressValue = total > 0 ? completed / total : 0.0;
 
-                        return Row(
-                          children: [
-                            Expanded(
-                              child: Container(
-                                height: 8,
-                                decoration: BoxDecoration(
-                                  color: colorScheme.surfaceVariant,
-                                  borderRadius: BorderRadius.circular(4),
-                                  border: Border.all(
-                                    color: colorScheme.outline.withOpacity(0.3),
-                                    width: 1,
-                                  ),
-                                ),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(4),
-                                  child: LinearProgressIndicator(
-                                    value: progressValue,
-                                    backgroundColor: Colors.transparent,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      hasActiveSession
-                                          ? Colors.blue
-                                          : (checklist.isComplete
-                                                ? Colors.green
-                                                : colorScheme.primary),
-                                    ),
-                                  ),
-                                ),
+                    return Row(
+                      children: [
+                        Expanded(
+                          child: Container(
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: colorScheme.surfaceVariant,
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(
+                                color: colorScheme.outline.withOpacity(0.3),
+                                width: 1,
                               ),
                             ),
-                            const SizedBox(width: 12),
-                            Text(
-                              '$completed/$total',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: hasActiveSession
-                                    ? Colors.blue
-                                    : colorScheme.onSurface.withOpacity(0.7),
-                                fontWeight: hasActiveSession
-                                    ? FontWeight.bold
-                                    : FontWeight.normal,
-                              ),
-                            ),
-                          ],
-                        );
-                      },
-                      loading: () => Row(
-                        children: [
-                          Expanded(
-                            child: Container(
-                              height: 8,
-                              decoration: BoxDecoration(
-                                color: colorScheme.surfaceVariant,
-                                borderRadius: BorderRadius.circular(4),
-                                border: Border.all(
-                                  color: colorScheme.outline.withOpacity(0.3),
-                                  width: 1,
-                                ),
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(4),
-                                child: LinearProgressIndicator(
-                                  value: checklist.completionPercentage,
-                                  backgroundColor: Colors.transparent,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    checklist.isComplete
-                                        ? Colors.green
-                                        : colorScheme.primary,
-                                  ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: LinearProgressIndicator(
+                                value: progressValue,
+                                backgroundColor: Colors.transparent,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  hasActiveSession
+                                      ? Colors.blue
+                                      : (checklist.isComplete
+                                            ? Colors.green
+                                            : colorScheme.primary),
                                 ),
                               ),
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          Text(
-                            '${checklist.completedItems}/${checklist.totalItems}',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: colorScheme.onSurface.withOpacity(0.7),
-                            ),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          '$completed/$total',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: hasActiveSession
+                                ? Colors.blue
+                                : colorScheme.onSurface.withOpacity(0.7),
+                            fontWeight: hasActiveSession
+                                ? FontWeight.bold
+                                : FontWeight.normal,
                           ),
-                        ],
-                      ),
-                      error: (error, stack) => Row(
-                        children: [
-                          Expanded(
-                            child: Container(
-                              height: 8,
-                              decoration: BoxDecoration(
-                                color: colorScheme.surfaceVariant,
-                                borderRadius: BorderRadius.circular(4),
-                                border: Border.all(
-                                  color: colorScheme.outline.withOpacity(0.3),
-                                  width: 1,
-                                ),
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(4),
-                                child: LinearProgressIndicator(
-                                  value: checklist.completionPercentage,
-                                  backgroundColor: Colors.transparent,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    checklist.isComplete
-                                        ? Colors.green
-                                        : colorScheme.primary,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            '${checklist.completedItems}/${checklist.totalItems}',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: colorScheme.onSurface.withOpacity(0.7),
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     );
                   },
                 ),

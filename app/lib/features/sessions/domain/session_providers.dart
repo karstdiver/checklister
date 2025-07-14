@@ -86,28 +86,28 @@ final activeSessionProvider = Provider.family<SessionState?, String>((
 
 // Active session progress provider for a specific checklist
 final activeSessionProgressProvider =
-    FutureProvider.family<
+    Provider.family<
       ({int completed, int total, bool hasActiveSession})?,
       String
-    >((ref, checklistId) async {
+    >((ref, checklistId) {
       final currentUser = ref.watch(currentUserProvider);
       if (currentUser == null) return null;
 
-      final sessionNotifier = ref.read(sessionNotifierProvider.notifier);
-      final activeSession = await sessionNotifier.getActiveSession(
-        currentUser.uid,
-        checklistId,
-      );
+      // Watch the current session state to make this reactive
+      final currentSession = ref.watch(sessionNotifierProvider);
 
-      if (activeSession != null &&
-          (activeSession.status == SessionStatus.inProgress ||
-              activeSession.status == SessionStatus.paused)) {
-        return (
-          completed: activeSession.completedItems,
-          total: activeSession.totalItems,
-          hasActiveSession: true,
-        );
+      // If there's a current session for this checklist, use it
+      if (currentSession != null && currentSession.checklistId == checklistId) {
+        if (currentSession.status == SessionStatus.inProgress ||
+            currentSession.status == SessionStatus.paused) {
+          return (
+            completed: currentSession.completedItems,
+            total: currentSession.totalItems,
+            hasActiveSession: true,
+          );
+        }
       }
 
+      // Otherwise, return null - the checklist's own progress will be shown
       return null;
     });
