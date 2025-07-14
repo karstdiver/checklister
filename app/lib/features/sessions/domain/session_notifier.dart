@@ -192,6 +192,9 @@ class SessionNotifier extends StateNotifier<SessionState?> {
     logger.i('🎯 Saving completed session to database...');
     await _repository.saveSession(newState);
     logger.i('🎯 Completed session saved successfully');
+
+    // Clean up any other active sessions for the same checklist
+    await _cleanupOtherActiveSessions(state!.checklistId, state!.sessionId);
   }
 
   Future<void> abandonSession() async {
@@ -337,6 +340,37 @@ class SessionNotifier extends StateNotifier<SessionState?> {
     } catch (e) {
       logger.e('Error checking for active session: $e');
       return null;
+    }
+  }
+
+  Future<void> _cleanupOtherActiveSessions(
+    String checklistId,
+    String currentSessionId,
+  ) async {
+    try {
+      logger.i(
+        '🧹 Cleaning up other active sessions for checklist: $checklistId',
+      );
+
+      final sessions = await _repository.getUserSessions(state!.userId);
+
+      for (final session in sessions) {
+        if (session.sessionId != currentSessionId &&
+            session.checklistId == checklistId &&
+            (session.status == SessionStatus.inProgress ||
+                session.status == SessionStatus.paused)) {
+          logger.i('🧹 Abandoning other active session: ${session.sessionId}');
+          await _repository.saveSession(
+            session.copyWith(
+              status: SessionStatus.abandoned,
+              completedAt: DateTime.now(),
+            ),
+          );
+          logger.i('🧹 Session ${session.sessionId} marked as abandoned');
+        }
+      }
+    } catch (e) {
+      logger.e('Error cleaning up other active sessions: $e');
     }
   }
 
