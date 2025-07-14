@@ -9,6 +9,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../sessions/domain/session_state.dart' as sessions;
 import '../../sessions/domain/session_providers.dart';
 import '../../sessions/presentation/session_screen.dart';
+import '../../sessions/data/session_repository.dart';
 import '../domain/checklist_providers.dart';
 import '../domain/checklist.dart';
 import 'widgets/checklist_card.dart';
@@ -512,7 +513,96 @@ void _navigateToCreateChecklist(BuildContext context) {
   );
 }
 
-void _navigateToChecklist(BuildContext context, Checklist checklist) {
+void _navigateToChecklist(BuildContext context, Checklist checklist) async {
+  final currentUser = FirebaseAuth.instance.currentUser;
+  if (currentUser == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(tr('error_user_not_authenticated')),
+        backgroundColor: Colors.red,
+      ),
+    );
+    return;
+  }
+
+  // Check if there's an active session for this checklist
+  final sessionNotifier = ProviderScope.containerOf(
+    context,
+  ).read(sessionNotifierProvider.notifier);
+  final activeSession = await sessionNotifier.getActiveSession(
+    currentUser.uid,
+    checklist.id,
+  );
+
+  print('🔍 Checking for active session for checklist: ${checklist.id}');
+  print('🔍 Active session found: ${activeSession != null}');
+  if (activeSession != null) {
+    print('🔍 Session status: ${activeSession.status}');
+    print('🔍 Session ID: ${activeSession.sessionId}');
+    print(
+      '🔍 Completed items: ${activeSession.completedItems}/${activeSession.totalItems}',
+    );
+  }
+
+  if (activeSession != null &&
+      (activeSession.status == sessions.SessionStatus.inProgress ||
+          activeSession.status == sessions.SessionStatus.paused)) {
+    // Show dialog to choose between resume or new session
+    final choice = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(tr('session_in_progress')),
+        content: Text(
+          tr(
+            'session_in_progress_message',
+            args: [
+              checklist.title,
+              activeSession.completedItems.toString(),
+              activeSession.totalItems.toString(),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop('resume'),
+            child: Text(tr('resume_session')),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop('new'),
+            child: Text(tr('start_new_session')),
+          ),
+        ],
+      ),
+    );
+
+    if (choice == 'resume') {
+      // Resume existing session
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => SessionScreen(
+            checklistId: checklist.id,
+            checklistTitle: checklist.title,
+            items: activeSession.items,
+            forceNewSession: false,
+          ),
+        ),
+      );
+    } else if (choice == 'new') {
+      // Start new session
+      _startNewChecklistSession(context, checklist, startNewIfActive: true);
+    }
+  } else {
+    // No active session, start new one directly
+    _startNewChecklistSession(context, checklist);
+  }
+}
+
+void _startNewChecklistSession(
+  BuildContext context,
+  Checklist checklist, {
+  bool startNewIfActive = false,
+}) {
   // Convert checklist items to sessions domain ChecklistItem
   final sessionItems = checklist.items
       .map(
@@ -535,7 +625,8 @@ void _navigateToChecklist(BuildContext context, Checklist checklist) {
         checklistId: checklist.id,
         checklistTitle: checklist.title,
         items: sessionItems,
-        forceNewSession: true,
+        forceNewSession: false, // Let the SessionScreen handle session logic
+        startNewIfActive: startNewIfActive,
       ),
     ),
   );

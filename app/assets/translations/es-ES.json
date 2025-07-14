@@ -138,5 +138,9 @@
   "yesterday": "Ayer",
   "days_ago": "días atrás",
   "weeks_ago": "semanas atrás",
-  "public": "Pública"
+  "public": "Pública",
+  "session_in_progress": "Sesión en Progreso",
+  "session_in_progress_message": "Tienes una sesión activa para '{}' con {} de {} elementos completados. ¿Te gustaría reanudar o iniciar una nueva sesión?",
+  "resume_session": "Reanudar Sesión",
+  "start_new_session": "Iniciar Nueva Sesión"
 }

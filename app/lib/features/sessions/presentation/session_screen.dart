@@ -12,6 +12,8 @@ class SessionScreen extends ConsumerStatefulWidget {
   final String? checklistTitle;
   final List<ChecklistItem> items;
   final bool forceNewSession;
+  final bool
+  startNewIfActive; // New parameter to start new session even if active exists
 
   const SessionScreen({
     Key? key,
@@ -19,6 +21,7 @@ class SessionScreen extends ConsumerStatefulWidget {
     this.checklistTitle,
     required this.items,
     this.forceNewSession = false,
+    this.startNewIfActive = false, // Default to false
   }) : super(key: key);
 
   @override
@@ -28,6 +31,7 @@ class SessionScreen extends ConsumerStatefulWidget {
 class _SessionScreenState extends ConsumerState<SessionScreen> {
   DateTime? _lastSwipeTime;
   static const Duration _swipeDebounceTime = Duration(milliseconds: 500);
+  bool _isInitializing = true;
 
   @override
   void initState() {
@@ -38,6 +42,10 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   }
 
   Future<void> _initializeSession() async {
+    setState(() {
+      _isInitializing = true;
+    });
+
     final currentUser = ref.read(currentUserProvider);
     final sessionNotifier = ref.read(sessionNotifierProvider.notifier);
 
@@ -58,12 +66,12 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           widget.checklistId,
         );
 
-        if (activeSession != null) {
+        if (activeSession != null && !widget.startNewIfActive) {
           // Load the existing session
           await sessionNotifier.loadSession(activeSession.sessionId);
           print('Resumed existing session: ${activeSession.sessionId}');
         } else {
-          // Start a new session
+          // Start a new session (either no active session or startNewIfActive is true)
           sessionNotifier.clearSession(); // Ensure session state is reset
           await sessionNotifier.startSession(
             checklistId: widget.checklistId,
@@ -74,6 +82,10 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         }
       }
     }
+
+    setState(() {
+      _isInitializing = false;
+    });
   }
 
   @override
@@ -88,12 +100,12 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       );
     }
 
-    if (session == null) {
+    if (session == null || _isInitializing) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    // Show completion screen if session is completed
-    if (session.isCompleted) {
+    // Show completion screen if session is completed (but not during initialization)
+    if (session.isCompleted && !_isInitializing) {
       return _buildCompletionScreen(session, context);
     }
 
@@ -438,6 +450,12 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
   void _restartSession(SessionNotifier sessionNotifier) async {
     print('🔄 Restarting session...');
+
+    // First, abandon the current session if it exists
+    if (sessionNotifier.state != null) {
+      await sessionNotifier.abandonSession();
+      print('✅ Old session abandoned');
+    }
 
     // Clear the current session
     sessionNotifier.clearSession();

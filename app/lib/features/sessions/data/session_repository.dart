@@ -7,11 +7,16 @@ class SessionRepository {
   // Save session to Firestore
   Future<void> saveSession(SessionState session) async {
     try {
+      print(
+        '💾 Saving session to Firestore: ${session.sessionId} with status: ${session.status}',
+      );
       await _firestore
           .collection('sessions')
           .doc(session.sessionId)
           .set(_sessionToMap(session));
+      print('💾 Session saved successfully to Firestore');
     } catch (e) {
+      print('💾 Error saving session to Firestore: $e');
       throw Exception('Failed to save session: $e');
     }
   }

@@ -23,6 +23,9 @@ class SessionNotifier extends StateNotifier<SessionState?> {
     required String userId,
     required List<ChecklistItem> items,
   }) async {
+    // Clean up old incomplete sessions for this checklist
+    await _cleanupOldSessions(checklistId, userId);
+
     final sessionId =
         'session_${DateTime.now().millisecondsSinceEpoch}_${_random.nextInt(10000)}';
     final now = DateTime.now();
@@ -239,6 +242,8 @@ class SessionNotifier extends StateNotifier<SessionState?> {
   Future<void> _completeSession() async {
     if (state == null) return;
 
+    print('🎯 Completing session: ${state!.sessionId}');
+
     final now = DateTime.now();
     final totalDuration = _sessionStartTime != null
         ? now.difference(_sessionStartTime!)
@@ -251,6 +256,7 @@ class SessionNotifier extends StateNotifier<SessionState?> {
     );
 
     state = newState;
+    print('🎯 Session status updated to: ${newState.status}');
 
     // Log analytics
     await _analytics.logCustomEvent(
@@ -264,7 +270,9 @@ class SessionNotifier extends StateNotifier<SessionState?> {
       },
     );
 
+    print('🎯 Saving completed session to database...');
     await _repository.saveSession(newState);
+    print('🎯 Completed session saved successfully');
   }
 
   // Abandon session
@@ -338,6 +346,8 @@ class SessionNotifier extends StateNotifier<SessionState?> {
   ) async {
     try {
       final sessions = await _repository.getUserSessions(userId);
+      print('🔍 Found ${sessions.length} total sessions for user $userId');
+
       // Find active sessions for this specific checklist
       final activeSession = sessions
           .where(
@@ -348,15 +358,89 @@ class SessionNotifier extends StateNotifier<SessionState?> {
           )
           .toList();
 
-      if (activeSession.isNotEmpty) {
-        // Return the most recent active session
-        activeSession.sort((a, b) => b.startedAt.compareTo(a.startedAt));
-        return activeSession.first;
+      print(
+        '🔍 Found ${activeSession.length} active sessions for checklist $checklistId',
+      );
+      for (final session in activeSession) {
+        print(
+          '🔍 Active session: ${session.sessionId} - Status: ${session.status} - Completed: ${session.completedItems}/${session.totalItems}',
+        );
+
+        // Check if this session should actually be completed
+        if (session.completedItems + session.skippedItems >=
+            session.totalItems) {
+          print(
+            '🔍 Session ${session.sessionId} should be completed - marking as completed',
+          );
+          final completedSession = session.copyWith(
+            status: SessionStatus.completed,
+            completedAt: DateTime.now(),
+          );
+          await _repository.saveSession(completedSession);
+          print('🔍 Session ${session.sessionId} marked as completed');
+        }
       }
+
+      // Re-filter after potential updates
+      final updatedSessions = await _repository.getUserSessions(userId);
+      final trulyActiveSessions = updatedSessions
+          .where(
+            (session) =>
+                session.checklistId == checklistId &&
+                (session.status == SessionStatus.inProgress ||
+                    session.status == SessionStatus.paused),
+          )
+          .toList();
+
+      print(
+        '🔍 After cleanup: Found ${trulyActiveSessions.length} truly active sessions',
+      );
+
+      if (trulyActiveSessions.isNotEmpty) {
+        // Return the most recent active session
+        trulyActiveSessions.sort((a, b) => b.startedAt.compareTo(a.startedAt));
+        final mostRecent = trulyActiveSessions.first;
+        print(
+          '🔍 Returning most recent active session: ${mostRecent.sessionId}',
+        );
+        return mostRecent;
+      }
+      print('🔍 No active sessions found for checklist $checklistId');
       return null;
     } catch (e) {
       print('Error checking for active session: $e');
       return null;
+    }
+  }
+
+  // Clean up old incomplete sessions for a checklist
+  Future<void> _cleanupOldSessions(String checklistId, String userId) async {
+    try {
+      final sessions = await _repository.getUserSessions(userId);
+      final incompleteSessions = sessions
+          .where(
+            (session) =>
+                session.checklistId == checklistId &&
+                (session.status == SessionStatus.inProgress ||
+                    session.status == SessionStatus.paused),
+          )
+          .toList();
+
+      print(
+        '🧹 Found ${incompleteSessions.length} incomplete sessions to clean up',
+      );
+
+      for (final session in incompleteSessions) {
+        print('🧹 Abandoning old session: ${session.sessionId}');
+        final abandonedSession = session.copyWith(
+          status: SessionStatus.abandoned,
+          completedAt: DateTime.now(),
+        );
+        await _repository.saveSession(abandonedSession);
+        print('🧹 Session ${session.sessionId} marked as abandoned');
+      }
+    } catch (e) {
+      print('Error cleaning up old sessions: $e');
     }
   }
 }

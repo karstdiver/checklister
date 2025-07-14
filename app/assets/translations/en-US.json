@@ -147,5 +147,9 @@
   "yesterday": "Yesterday",
   "days_ago": "days ago",
   "weeks_ago": "weeks ago",
-  "public": "Public"
+  "public": "Public",
+  "session_in_progress": "Session in Progress",
+  "session_in_progress_message": "You have an active session for '{}' with {} of {} items completed. Would you like to resume or start a new session?",
+  "resume_session": "Resume Session",
+  "start_new_session": "Start New Session"
 }
