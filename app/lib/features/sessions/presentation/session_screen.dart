@@ -73,6 +73,12 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
         if (activeSession != null && !widget.startNewIfActive) {
           // Load the existing session
+          logger.i(
+            '🔄 About to load existing session: ${activeSession.sessionId}',
+          );
+          logger.i(
+            '🔄 Active session completed items: ${activeSession.completedItems}/${activeSession.totalItems}',
+          );
           await sessionNotifier.loadSession(activeSession.sessionId);
           logger.i('🔄 Resumed existing session: ${activeSession.sessionId}');
         } else {

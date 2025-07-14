@@ -288,9 +288,18 @@ class SessionNotifier extends StateNotifier<SessionState?> {
 
   Future<void> loadSession(String sessionId) async {
     try {
+      logger.i('🔄 Loading session: $sessionId');
       final session = await _repository.getSession(sessionId);
       if (session != null) {
         state = session;
+        logger.i('🔄 Session loaded successfully: ${session.sessionId}');
+        logger.i('🔄 Session status: ${session.status}');
+        logger.i(
+          '🔄 Completed items: ${session.completedItems}/${session.totalItems}',
+        );
+        logger.i('🔄 Current item index: ${session.currentItemIndex}');
+      } else {
+        logger.e('🔄 Session not found: $sessionId');
       }
     } catch (e) {
       logger.e('Error loading session: $e');
