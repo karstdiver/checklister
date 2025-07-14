@@ -9,12 +9,14 @@ import '../../../shared/widgets/app_card.dart';
 
 class SessionScreen extends ConsumerStatefulWidget {
   final String checklistId;
+  final String? checklistTitle;
   final List<ChecklistItem> items;
   final bool forceNewSession;
 
   const SessionScreen({
     Key? key,
     required this.checklistId,
+    this.checklistTitle,
     required this.items,
     this.forceNewSession = false,
   }) : super(key: key);
@@ -102,7 +104,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
         return Scaffold(
           appBar: AppBar(
-            title: Text(tr('session')),
+            title: Text(widget.checklistTitle ?? tr('session')),
             leading: IconButton(
               onPressed: () => Navigator.of(context).pop(),
               icon: const Icon(Icons.arrow_back),
@@ -513,7 +515,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
         return Scaffold(
           appBar: AppBar(
-            title: Text(tr('session')),
+            title: Text(widget.checklistTitle ?? tr('session')),
             leading: IconButton(
               onPressed: () => Navigator.of(context).pop(),
               icon: const Icon(Icons.arrow_back),

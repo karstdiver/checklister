@@ -513,10 +513,31 @@ void _navigateToCreateChecklist(BuildContext context) {
 }
 
 void _navigateToChecklist(BuildContext context, Checklist checklist) {
-  // TODO: Navigate to checklist view/session screen
-  // For now, just show a snackbar
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text('Opening checklist: ${checklist.title}')),
+  // Convert checklist items to sessions domain ChecklistItem
+  final sessionItems = checklist.items
+      .map(
+        (item) => sessions.ChecklistItem(
+          id: item.id,
+          text: item.text,
+          imageUrl: item.imageUrl,
+          status: sessions.ItemStatus.pending,
+          completedAt: null,
+          skippedAt: null,
+          notes: item.notes,
+        ),
+      )
+      .toList();
+
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => SessionScreen(
+        checklistId: checklist.id,
+        checklistTitle: checklist.title,
+        items: sessionItems,
+        forceNewSession: true,
+      ),
+    ),
   );
 }
 
