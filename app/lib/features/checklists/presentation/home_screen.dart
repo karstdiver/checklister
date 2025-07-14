@@ -358,6 +358,9 @@ void _navigateToChecklist(BuildContext context, Checklist checklist) async {
     print(
       '🔍 Completed items: ${activeSession.completedItems}/${activeSession.totalItems}',
     );
+    print(
+      '🔍 Will show dialog: ${activeSession.status == sessions.SessionStatus.inProgress || activeSession.status == sessions.SessionStatus.paused}',
+    );
   }
 
   if (activeSession != null &&

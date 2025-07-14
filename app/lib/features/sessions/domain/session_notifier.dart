@@ -301,7 +301,7 @@ class SessionNotifier extends StateNotifier<SessionState?> {
     try {
       final sessions = await _repository.getUserSessions(userId);
 
-      // Filter for active sessions for this checklist
+      // Filter for active sessions for this checklist (exclude completed and abandoned)
       final activeSessions = sessions
           .where(
             (session) =>
