@@ -91,9 +91,6 @@ final activeSessionProgressProvider =
       final currentUser = ref.watch(currentUserProvider);
       if (currentUser == null) return null;
 
-      // Watch the current session to trigger refresh when it changes
-      final currentSession = ref.watch(currentSessionProvider);
-
       final sessionNotifier = ref.read(sessionNotifierProvider.notifier);
       final activeSession = await sessionNotifier.getActiveSession(
         currentUser.uid,

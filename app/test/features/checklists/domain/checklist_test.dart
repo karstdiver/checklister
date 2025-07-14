@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:checklister/features/checklists/domain/checklist.dart';
 
 void main() {

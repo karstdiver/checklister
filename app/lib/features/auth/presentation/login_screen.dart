@@ -91,16 +91,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     ref.read(authNotifierProvider.notifier).clearError();
   }
 
-  void _closeResetDialogAfterDelay() {
-    // Close dialog after 3 seconds to give user time to read the message
-    Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) {
-        Navigator.of(context).pop();
-        ref.read(authNotifierProvider.notifier).clearError();
-      }
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authStateProvider);

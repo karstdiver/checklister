@@ -36,7 +36,7 @@ class LanguageScreen extends ConsumerWidget {
           body: ListView.separated(
             padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
             itemCount: _languages.length,
-            separatorBuilder: (_, __) => const Divider(height: 1),
+            separatorBuilder: (context, index) => const Divider(height: 1),
             itemBuilder: (context, index) {
               final lang = _languages[index];
               final isSelected = lang.locale == currentLocale;

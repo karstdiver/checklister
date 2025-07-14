@@ -16,13 +16,13 @@ class SessionScreen extends ConsumerStatefulWidget {
   startNewIfActive; // New parameter to start new session even if active exists
 
   const SessionScreen({
-    Key? key,
+    super.key,
     required this.checklistId,
     this.checklistTitle,
     required this.items,
     this.forceNewSession = false,
     this.startNewIfActive = false, // Default to false
-  }) : super(key: key);
+  });
 
   @override
   ConsumerState<SessionScreen> createState() => _SessionScreenState();
@@ -111,9 +111,6 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
     return Consumer(
       builder: (context, ref, child) {
-        // Watch the current locale to trigger rebuilds when language changes
-        final currentLocale = context.locale;
-
         return Scaffold(
           appBar: AppBar(
             title: Text(widget.checklistTitle ?? tr('session')),
@@ -452,10 +449,8 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     print('🔄 Restarting session...');
 
     // First, abandon the current session if it exists
-    if (sessionNotifier.state != null) {
-      await sessionNotifier.abandonSession();
-      print('✅ Old session abandoned');
-    }
+    await sessionNotifier.abandonSession();
+    print('✅ Old session abandoned');
 
     // Clear the current session
     sessionNotifier.clearSession();
@@ -528,9 +523,6 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   Widget _buildCompletionScreen(SessionState session, BuildContext context) {
     return Consumer(
       builder: (context, ref, child) {
-        // Watch the current locale to trigger rebuilds when language changes
-        final currentLocale = context.locale;
-
         return Scaffold(
           appBar: AppBar(
             title: Text(widget.checklistTitle ?? tr('session')),
@@ -669,8 +661,6 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   }
 
   String _formatDuration(Duration duration) {
-    final minutes = duration.inMinutes;
-    final seconds = duration.inSeconds % 60;
-    return ' {minutes}m  {seconds}s';
+    return '${duration.inMinutes}m ${duration.inSeconds % 60}s';
   }
 }

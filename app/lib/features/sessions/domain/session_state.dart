@@ -87,8 +87,9 @@ class SessionState {
     if (isCompleted) return 1.0;
 
     // If we're at the last item and it's completed, show 100%
-    if (currentItemIndex >= totalItems && completedItems == totalItems)
+    if (currentItemIndex >= totalItems && completedItems == totalItems) {
       return 1.0;
+    }
 
     // Otherwise, show completed items percentage
     return completedItems / totalItems;

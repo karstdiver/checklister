@@ -31,9 +31,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         );
         final authNotifier = ref.read(authNotifierProvider.notifier);
 
-        // Watch the current locale to trigger rebuilds when language changes
-        final currentLocale = context.locale;
-
         return Scaffold(
           appBar: AppBar(
             title: Text(tr('settings')),

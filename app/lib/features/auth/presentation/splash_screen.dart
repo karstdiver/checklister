@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../../../core/providers/providers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../checklists/presentation/home_screen.dart';
 import 'dart:async';
 import '../../../shared/widgets/app_pulse_animation.dart';
 //import 'package:animated_text_kit/animated_text_kit.dart';
@@ -22,81 +21,26 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    if (false) {
-      // Check if user is already authenticated when screen loads
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _checkExistingAuth();
-        // Start a timer to periodically check for authentication
-        _authCheckTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-          _checkForAuthentication();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final firebaseAuth = FirebaseAuth.instance;
+      final currentUser = firebaseAuth.currentUser;
+      if (currentUser != null && mounted) {
+        Navigator.pushReplacementNamed(context, '/home');
+      } else if (mounted) {
+        // Add a short delay for branding effect
+        Future.delayed(widget.delay, () {
+          if (mounted) {
+            Navigator.pushReplacementNamed(context, '/login');
+          }
         });
-      });
-    } else {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        final firebaseAuth = FirebaseAuth.instance;
-        final currentUser = firebaseAuth.currentUser;
-        if (currentUser != null && mounted) {
-          Navigator.pushReplacementNamed(context, '/home');
-        } else if (mounted) {
-          // Add a short delay for branding effect
-          Future.delayed(widget.delay, () {
-            if (mounted) {
-              Navigator.pushReplacementNamed(context, '/login');
-            }
-          });
-        }
-      });
-    }
+      }
+    });
   }
 
   @override
   void dispose() {
     _authCheckTimer?.cancel();
     super.dispose();
-  }
-
-  void _checkExistingAuth() {
-    try {
-      final firebaseAuth = FirebaseAuth.instance;
-      final currentUser = firebaseAuth.currentUser;
-      print(
-        '🔍 DEBUG: Checking existing auth - Current user: ${currentUser?.uid}',
-      );
-
-      if (currentUser != null && mounted) {
-        print('🔍 DEBUG: User already authenticated, navigating to home');
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-          (route) => false,
-        );
-      }
-    } catch (e) {
-      print('🔍 DEBUG: Error checking existing auth: $e');
-    }
-  }
-
-  void _checkForAuthentication() {
-    try {
-      final firebaseAuth = FirebaseAuth.instance;
-      final currentUser = firebaseAuth.currentUser;
-
-      if (currentUser != null && mounted) {
-        print(
-          '🔍 DEBUG: Timer detected authenticated user, navigating to home',
-        );
-        _authCheckTimer?.cancel();
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-          (route) => false,
-        );
-      } else {
-        print('🔍 DEBUG: Timer check - no authenticated user found');
-      }
-    } catch (e) {
-      print('🔍 DEBUG: Error in timer auth check: $e');
-    }
   }
 
   @override

@@ -143,9 +143,6 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   Widget build(BuildContext context) {
     return Consumer(
       builder: (context, ref, child) {
-        // Watch the current locale to trigger rebuilds when language changes
-        final currentLocale = context.locale;
-
         return Scaffold(
           appBar: AppBar(
             title: Text(tr('edit_profile')),

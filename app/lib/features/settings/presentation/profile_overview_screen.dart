@@ -75,9 +75,6 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
           navigationNotifierProvider.notifier,
         );
 
-        // Watch the current locale to trigger rebuilds when language changes
-        final currentLocale = context.locale;
-
         return Scaffold(
           appBar: AppBar(
             title: Text(tr('profile')),

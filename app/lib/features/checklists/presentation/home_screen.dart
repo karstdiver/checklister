@@ -9,7 +9,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../sessions/domain/session_state.dart' as sessions;
 import '../../sessions/domain/session_providers.dart';
 import '../../sessions/presentation/session_screen.dart';
-import '../../sessions/data/session_repository.dart';
 import '../domain/checklist_providers.dart';
 import '../domain/checklist.dart';
 import 'widgets/checklist_card.dart';

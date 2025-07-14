@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:checklister/checklister_app.dart';
 
 // Test-specific app wrapper that doesn't require Firebase
 class TestChecklisterApp extends StatelessWidget {
