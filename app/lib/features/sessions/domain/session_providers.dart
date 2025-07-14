@@ -81,3 +81,34 @@ final activeSessionProvider = Provider.family<SessionState?, String>((
   // Otherwise, return null (no active session)
   return null;
 });
+
+// Active session progress provider for a specific checklist
+final activeSessionProgressProvider =
+    FutureProvider.family<
+      ({int completed, int total, bool hasActiveSession})?,
+      String
+    >((ref, checklistId) async {
+      final currentUser = ref.watch(currentUserProvider);
+      if (currentUser == null) return null;
+
+      // Watch the current session to trigger refresh when it changes
+      final currentSession = ref.watch(currentSessionProvider);
+
+      final sessionNotifier = ref.read(sessionNotifierProvider.notifier);
+      final activeSession = await sessionNotifier.getActiveSession(
+        currentUser.uid,
+        checklistId,
+      );
+
+      if (activeSession != null &&
+          (activeSession.status == SessionStatus.inProgress ||
+              activeSession.status == SessionStatus.paused)) {
+        return (
+          completed: activeSession.completedItems,
+          total: activeSession.totalItems,
+          hasActiveSession: true,
+        );
+      }
+
+      return null;
+    });

@@ -646,7 +646,14 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                     const SizedBox(width: 16),
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: () => Navigator.of(context).pop(),
+                        onPressed: () {
+                          // Clear the session state when returning to home
+                          final sessionNotifier = ref.read(
+                            sessionNotifierProvider.notifier,
+                          );
+                          sessionNotifier.clearSession();
+                          Navigator.of(context).pop();
+                        },
                         icon: const Icon(Icons.home),
                         label: const Text('Back to Home'),
                       ),
