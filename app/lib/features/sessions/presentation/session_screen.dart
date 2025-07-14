@@ -55,7 +55,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     if (currentUser != null) {
       if (widget.forceNewSession) {
         // Force start a new session
-        sessionNotifier.clearSession(); // Ensure session state is reset
+        sessionNotifier.clearSession();
         await sessionNotifier.startSession(
           checklistId: widget.checklistId,
           userId: currentUser.uid,
@@ -65,7 +65,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           '🚀 Force started new session for checklist: ${widget.checklistId}',
         );
       } else {
-        // First, try to load an existing active session
+        // Try to load an existing active session
         final activeSession = await sessionNotifier.getActiveSession(
           currentUser.uid,
           widget.checklistId,

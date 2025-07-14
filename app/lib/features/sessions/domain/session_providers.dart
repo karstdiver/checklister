@@ -10,8 +10,10 @@ final sessionRepositoryProvider = Provider<SessionRepository>((ref) {
 });
 
 // Session notifier provider
+// Note: Using StateNotifierProvider (not autoDispose) to persist session state across navigation
+// This ensures sessions are not lost when navigating back to home screen
 final sessionNotifierProvider =
-    StateNotifierProvider.autoDispose<SessionNotifier, SessionState?>((ref) {
+    StateNotifierProvider<SessionNotifier, SessionState?>((ref) {
       final repository = ref.watch(sessionRepositoryProvider);
       return SessionNotifier(repository);
     });
