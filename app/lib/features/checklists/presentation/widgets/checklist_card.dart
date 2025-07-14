@@ -175,15 +175,29 @@ class ChecklistCard extends ConsumerWidget {
                         return Row(
                           children: [
                             Expanded(
-                              child: LinearProgressIndicator(
-                                value: progressValue,
-                                backgroundColor: colorScheme.surfaceVariant,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  hasActiveSession
-                                      ? Colors.blue
-                                      : (checklist.isComplete
-                                            ? Colors.green
-                                            : colorScheme.primary),
+                              child: Container(
+                                height: 8,
+                                decoration: BoxDecoration(
+                                  color: colorScheme.surfaceVariant,
+                                  borderRadius: BorderRadius.circular(4),
+                                  border: Border.all(
+                                    color: colorScheme.outline.withOpacity(0.3),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(4),
+                                  child: LinearProgressIndicator(
+                                    value: progressValue,
+                                    backgroundColor: Colors.transparent,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      hasActiveSession
+                                          ? Colors.blue
+                                          : (checklist.isComplete
+                                                ? Colors.green
+                                                : colorScheme.primary),
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
@@ -205,13 +219,27 @@ class ChecklistCard extends ConsumerWidget {
                       loading: () => Row(
                         children: [
                           Expanded(
-                            child: LinearProgressIndicator(
-                              value: checklist.completionPercentage,
-                              backgroundColor: colorScheme.surfaceVariant,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                checklist.isComplete
-                                    ? Colors.green
-                                    : colorScheme.primary,
+                            child: Container(
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: colorScheme.surfaceVariant,
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(
+                                  color: colorScheme.outline.withOpacity(0.3),
+                                  width: 1,
+                                ),
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(4),
+                                child: LinearProgressIndicator(
+                                  value: checklist.completionPercentage,
+                                  backgroundColor: Colors.transparent,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    checklist.isComplete
+                                        ? Colors.green
+                                        : colorScheme.primary,
+                                  ),
+                                ),
                               ),
                             ),
                           ),
@@ -227,13 +255,27 @@ class ChecklistCard extends ConsumerWidget {
                       error: (error, stack) => Row(
                         children: [
                           Expanded(
-                            child: LinearProgressIndicator(
-                              value: checklist.completionPercentage,
-                              backgroundColor: colorScheme.surfaceVariant,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                checklist.isComplete
-                                    ? Colors.green
-                                    : colorScheme.primary,
+                            child: Container(
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: colorScheme.surfaceVariant,
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(
+                                  color: colorScheme.outline.withOpacity(0.3),
+                                  width: 1,
+                                ),
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(4),
+                                child: LinearProgressIndicator(
+                                  value: checklist.completionPercentage,
+                                  backgroundColor: Colors.transparent,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    checklist.isComplete
+                                        ? Colors.green
+                                        : colorScheme.primary,
+                                  ),
+                                ),
                               ),
                             ),
                           ),
