@@ -6,12 +6,34 @@ import '../../../shared/widgets/logout_dialog.dart';
 import '../../../core/services/analytics_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../sessions/domain/session_state.dart';
+import '../../sessions/domain/session_state.dart' as sessions;
 import '../../sessions/domain/session_providers.dart';
 import '../../sessions/presentation/session_screen.dart';
+import '../domain/checklist_providers.dart';
+import '../domain/checklist.dart';
+import 'widgets/checklist_card.dart';
+import 'checklist_editor_screen.dart';
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser != null) {
+      Future.microtask(
+        () => ref
+            .read(checklistNotifierProvider.notifier)
+            .loadUserChecklists(currentUser.uid),
+      );
+    }
+  }
 
   Widget _buildWelcomeText(User? currentUser) {
     if (currentUser == null) {
@@ -62,233 +84,231 @@ class HomeScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final analytics = AnalyticsService();
     final currentUser = ref.watch(currentUserProvider);
     final authState = ref.watch(authStateProvider);
     final authNotifier = ref.read(authNotifierProvider.notifier);
+    final checklistsAsync = ref.watch(checklistNotifierProvider);
 
-    return Consumer(
-      builder: (context, ref, child) {
-        // Watch the current locale to trigger rebuilds when language changes
-        final currentLocale = context.locale;
-
-        return Scaffold(
-          appBar: AppBar(
-            title: Text(tr('home')),
-            actions: [
-              // User menu
-              PopupMenuButton<String>(
-                onSelected: (value) async {
-                  switch (value) {
-                    case 'profile':
-                      Navigator.pushNamed(context, '/profile');
-                      break;
-                    case 'settings':
-                      Navigator.pushNamed(context, '/settings');
-                      break;
-                    case 'logout':
-                      await LogoutDialog.show(context, authNotifier, ref);
-                      break;
-                  }
-                },
-                itemBuilder: (context) => [
-                  PopupMenuItem(
-                    value: 'profile',
-                    child: Row(
-                      children: [
-                        const Icon(Icons.person),
-                        const SizedBox(width: 8),
-                        Text(tr('profile')),
-                      ],
-                    ),
-                  ),
-                  PopupMenuItem(
-                    value: 'settings',
-                    child: Row(
-                      children: [
-                        const Icon(Icons.settings),
-                        const SizedBox(width: 8),
-                        Text(tr('settings')),
-                      ],
-                    ),
-                  ),
-                  const PopupMenuDivider(),
-                  PopupMenuItem(
-                    value: 'logout',
-                    child: Row(
-                      children: [
-                        const Icon(Icons.logout),
-                        const SizedBox(width: 8),
-                        Text(tr('logout')),
-                      ],
-                    ),
-                  ),
-                ],
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: CircleAvatar(
-                    backgroundColor: Colors.blue,
-                    child: Text(
-                      //currentUser?.email?.substring(0, 1).toUpperCase() ?? 'U',
-                      currentUser?.email?.isNotEmpty == true
-                          ? currentUser!.email!.substring(0, 1).toUpperCase()
-                          : 'U',
-                      style: const TextStyle(color: Colors.white),
-                    ),
-                  ),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(tr('home')),
+        actions: [
+          // User menu
+          PopupMenuButton<String>(
+            onSelected: (value) async {
+              switch (value) {
+                case 'profile':
+                  Navigator.pushNamed(context, '/profile');
+                  break;
+                case 'settings':
+                  Navigator.pushNamed(context, '/settings');
+                  break;
+                case 'logout':
+                  await LogoutDialog.show(context, authNotifier, ref);
+                  break;
+              }
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'profile',
+                child: Row(
+                  children: [
+                    const Icon(Icons.person),
+                    const SizedBox(width: 8),
+                    Text(tr('profile')),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'settings',
+                child: Row(
+                  children: [
+                    const Icon(Icons.settings),
+                    const SizedBox(width: 8),
+                    Text(tr('settings')),
+                  ],
+                ),
+              ),
+              const PopupMenuDivider(),
+              PopupMenuItem(
+                value: 'logout',
+                child: Row(
+                  children: [
+                    const Icon(Icons.logout),
+                    const SizedBox(width: 8),
+                    Text(tr('logout')),
+                  ],
                 ),
               ),
             ],
-          ),
-          body: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Debug info
-                Text(
-                  'Auth Status: ${authState.status}',
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: CircleAvatar(
+                backgroundColor: Colors.blue,
+                child: Text(
+                  //currentUser?.email?.substring(0, 1).toUpperCase() ?? 'U',
+                  currentUser?.email?.isNotEmpty == true
+                      ? currentUser!.email!.substring(0, 1).toUpperCase()
+                      : 'U',
+                  style: const TextStyle(color: Colors.white),
                 ),
-                if (currentUser != null)
-                  Text(
-                    'User: ${currentUser.uid}',
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
-                  ),
-                const SizedBox(height: 16),
+              ),
+            ),
+          ),
+        ],
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: ListView(
+          children: [
+            // Debug info
+            Text(
+              'Auth Status: ${authState.status}',
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+            if (currentUser != null)
+              Text(
+                'User: ${currentUser.uid}',
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+            const SizedBox(height: 16),
 
-                // Welcome message
-                _buildWelcomeText(currentUser),
-                const SizedBox(height: 24),
+            // Welcome message
+            _buildWelcomeText(currentUser),
+            const SizedBox(height: 24),
 
-                // Test Session Feature Section
-                Consumer(
-                  builder: (context, ref, child) {
-                    final activeSession = ref.watch(
-                      activeSessionProvider('test_checklist'),
-                    );
+            // Test Session Feature Section
+            Consumer(
+              builder: (context, ref, child) {
+                final activeSession = ref.watch(
+                  activeSessionProvider('test_checklist'),
+                );
 
-                    return Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '🧪 Test Session Feature',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
+                return Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '🧪 Test Session Feature',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Test the new session management system with sample checklist items',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+
+                        // Show active session info if available
+                        if (activeSession != null) ...[
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: Colors.blue.withValues(alpha: 0.3),
                               ),
                             ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Test the new session management system with sample checklist items',
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey,
-                              ),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.pause_circle,
+                                  color: Colors.blue,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Session in Progress',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.blue,
+                                        ),
+                                      ),
+                                      Text(
+                                        '${activeSession.completedItems} completed, ${activeSession.skippedItems} skipped',
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 12),
-
-                            // Show active session info if available
-                            if (activeSession != null) ...[
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: Colors.blue.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: Colors.blue.withValues(alpha: 0.3),
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  onPressed: () => _resumeTestSession(
+                                    context,
+                                    activeSession,
+                                  ),
+                                  icon: const Icon(Icons.play_arrow),
+                                  label: const Text('Resume Session'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.blue,
+                                    foregroundColor: Colors.white,
                                   ),
                                 ),
-                                child: Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.pause_circle,
-                                      color: Colors.blue,
-                                      size: 20,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            'Session in Progress',
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.blue,
-                                            ),
-                                          ),
-                                          Text(
-                                            '${activeSession.completedItems} completed, ${activeSession.skippedItems} skipped',
-                                            style: const TextStyle(
-                                              fontSize: 12,
-                                              color: Colors.grey,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
                               ),
-                              const SizedBox(height: 12),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: ElevatedButton.icon(
-                                      onPressed: () => _resumeTestSession(
-                                        context,
-                                        activeSession,
-                                      ),
-                                      icon: const Icon(Icons.play_arrow),
-                                      label: const Text('Resume Session'),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.blue,
-                                        foregroundColor: Colors.white,
-                                      ),
-                                    ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: () => _startTestSession(
+                                    context,
+                                    forceNew: true,
                                   ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: OutlinedButton.icon(
-                                      onPressed: () => _startTestSession(
-                                        context,
-                                        forceNew: true,
-                                      ),
-                                      icon: const Icon(Icons.refresh),
-                                      label: const Text('Start New'),
-                                      style: OutlinedButton.styleFrom(
-                                        foregroundColor: Colors.green,
-                                      ),
-                                    ),
+                                  icon: const Icon(Icons.refresh),
+                                  label: const Text('Start New'),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: Colors.green,
                                   ),
-                                ],
-                              ),
-                            ] else ...[
-                              ElevatedButton.icon(
-                                onPressed: () => _startTestSession(context),
-                                icon: const Icon(Icons.play_arrow),
-                                label: const Text('Start Test Session'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.green,
-                                  foregroundColor: Colors.white,
                                 ),
                               ),
                             ],
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 24),
+                          ),
+                        ] else ...[
+                          ElevatedButton.icon(
+                            onPressed: () => _startTestSession(context),
+                            icon: const Icon(Icons.play_arrow),
+                            label: const Text('Start Test Session'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+                              foregroundColor: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 24),
 
-                // Checklists section
+            // Checklists section
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -301,11 +321,11 @@ class HomeScreen extends ConsumerWidget {
                     ),
                     TextButton.icon(
                       onPressed: () async {
-                        // TODO: Navigate to create checklist
                         await analytics.logCustomEvent(
                           name: 'create_checklist_clicked',
                           parameters: {'source': 'header_button'},
                         );
+                        _navigateToCreateChecklist(context);
                       },
                       icon: const Icon(Icons.add),
                       label: Text(tr('create_new')),
@@ -313,42 +333,100 @@ class HomeScreen extends ConsumerWidget {
                   ],
                 ),
                 const SizedBox(height: 16),
+                checklistsAsync.when(
+                  data: (checklists) {
+                    if (checklists.isEmpty) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.checklist_outlined,
+                              size: 64,
+                              color: Colors.grey,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              tr('no_checklists_yet'),
+                              style: const TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              tr('create_first_checklist'),
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 24),
+                            ElevatedButton.icon(
+                              onPressed: () =>
+                                  _navigateToCreateChecklist(context),
+                              icon: const Icon(Icons.add),
+                              label: Text(tr('create_checklist')),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
 
-                // Placeholder for checklists list
-                Expanded(
-                  child: Center(
+                    return ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: checklists.length,
+                      itemBuilder: (context, index) {
+                        final checklist = checklists[index];
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: ChecklistCard(
+                            checklist: checklist,
+                            onTap: () =>
+                                _navigateToChecklist(context, checklist),
+                            onEdit: () =>
+                                _navigateToEditChecklist(context, checklist),
+                            onDelete: () =>
+                                _deleteChecklist(context, checklist),
+                            onDuplicate: () =>
+                                _duplicateChecklist(context, checklist),
+                            onShare: () => _shareChecklist(context, checklist),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (error, stack) => Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Icon(
-                          Icons.checklist_outlined,
+                          Icons.error_outline,
                           size: 64,
-                          color: Colors.grey,
+                          color: Colors.red,
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          tr('no_checklists_yet'),
+                          tr('error_loading_checklists'),
                           style: const TextStyle(
                             fontSize: 16,
-                            color: Colors.grey,
+                            color: Colors.red,
                           ),
                         ),
                         const SizedBox(height: 8),
-                        Text(
-                          tr('create_first_checklist'),
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 24),
-                        ElevatedButton.icon(
+                        ElevatedButton(
                           onPressed: () {
-                            // TODO: Navigate to create checklist
+                            if (currentUser != null) {
+                              ref
+                                  .read(checklistNotifierProvider.notifier)
+                                  .loadUserChecklists(currentUser.uid);
+                            }
                           },
-                          icon: const Icon(Icons.add),
-                          label: Text(tr('create_checklist')),
+                          child: Text(tr('retry')),
                         ),
                       ],
                     ),
@@ -356,69 +434,192 @@ class HomeScreen extends ConsumerWidget {
                 ),
               ],
             ),
-          ),
-          floatingActionButton: FloatingActionButton(
-            onPressed: () {
-              // TODO: Navigate to create checklist
-            },
-            child: const Icon(Icons.add),
-          ),
-        );
-      },
-    );
-  }
-
-  void _startTestSession(BuildContext context, {bool forceNew = false}) {
-    // Create sample checklist items for testing
-    final testItems = [
-      ChecklistItem(
-        id: 'item_1',
-        text: 'Check engine oil level',
-        status: ItemStatus.pending,
-      ),
-      ChecklistItem(
-        id: 'item_2',
-        text: 'Inspect brake fluid',
-        status: ItemStatus.pending,
-      ),
-      ChecklistItem(
-        id: 'item_3',
-        text: 'Test windshield wipers',
-        status: ItemStatus.pending,
-      ),
-      ChecklistItem(
-        id: 'item_4',
-        text: 'Check tire pressure',
-        status: ItemStatus.pending,
-      ),
-      ChecklistItem(
-        id: 'item_5',
-        text: 'Verify all lights are working',
-        status: ItemStatus.pending,
-      ),
-    ];
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => SessionScreen(
-          checklistId: 'test_checklist',
-          items: testItems,
-          forceNewSession: forceNew,
+          ],
         ),
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _navigateToCreateChecklist(context),
+        child: const Icon(Icons.add),
+      ),
     );
+  } //,
+
+  //);
+}
+
+void _startTestSession(BuildContext context, {bool forceNew = false}) {
+  // Create sample checklist items for testing using sessions domain
+  final testItems = [
+    const sessions.ChecklistItem(
+      id: 'item_1',
+      text: 'Check engine oil level',
+      status: sessions.ItemStatus.pending,
+    ),
+    const sessions.ChecklistItem(
+      id: 'item_2',
+      text: 'Inspect brake fluid',
+      status: sessions.ItemStatus.pending,
+    ),
+    const sessions.ChecklistItem(
+      id: 'item_3',
+      text: 'Test windshield wipers',
+      status: sessions.ItemStatus.pending,
+    ),
+    const sessions.ChecklistItem(
+      id: 'item_4',
+      text: 'Check tire pressure',
+      status: sessions.ItemStatus.pending,
+    ),
+    const sessions.ChecklistItem(
+      id: 'item_5',
+      text: 'Verify all lights are working',
+      status: sessions.ItemStatus.pending,
+    ),
+  ];
+
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => SessionScreen(
+        checklistId: 'test_checklist',
+        items: testItems,
+        forceNewSession: forceNew,
+      ),
+    ),
+  );
+}
+
+void _resumeTestSession(
+  BuildContext context,
+  sessions.SessionState activeSession,
+) {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => SessionScreen(
+        checklistId: activeSession.checklistId,
+        items: activeSession.items,
+      ),
+    ),
+  );
+}
+
+// Checklist CRUD methods
+void _navigateToCreateChecklist(BuildContext context) {
+  Navigator.push(
+    context,
+    MaterialPageRoute(builder: (context) => const ChecklistEditorScreen()),
+  );
+}
+
+void _navigateToChecklist(BuildContext context, Checklist checklist) {
+  // TODO: Navigate to checklist view/session screen
+  // For now, just show a snackbar
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text('Opening checklist: ${checklist.title}')),
+  );
+}
+
+void _navigateToEditChecklist(BuildContext context, Checklist checklist) {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => ChecklistEditorScreen(checklist: checklist),
+    ),
+  );
+}
+
+Future<void> _deleteChecklist(BuildContext context, Checklist checklist) async {
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text(tr('delete_checklist')),
+      content: Text(
+        tr('delete_checklist_confirmation', args: [checklist.title]),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(false),
+          child: Text(tr('cancel')),
+        ),
+        ElevatedButton(
+          onPressed: () => Navigator.of(context).pop(true),
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+          child: Text(tr('delete')),
+        ),
+      ],
+    ),
+  );
+
+  if (confirmed == true) {
+    final notifier = ProviderScope.containerOf(
+      context,
+    ).read(checklistNotifierProvider.notifier);
+    final success = await notifier.deleteChecklist(checklist.id);
+
+    if (success && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(tr('checklist_deleted')),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } else if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(tr('error_deleting_checklist')),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+}
+
+Future<void> _duplicateChecklist(
+  BuildContext context,
+  Checklist checklist,
+) async {
+  final currentUser = FirebaseAuth.instance.currentUser;
+  if (currentUser == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(tr('error_user_not_authenticated')),
+        backgroundColor: Colors.red,
+      ),
+    );
+    return;
   }
 
-  void _resumeTestSession(BuildContext context, SessionState activeSession) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => SessionScreen(
-          checklistId: activeSession.checklistId,
-          items: activeSession.items,
-        ),
+  final notifier = ProviderScope.containerOf(
+    context,
+  ).read(checklistNotifierProvider.notifier);
+  final duplicatedChecklist = await notifier.duplicateChecklist(
+    checklist.id,
+    currentUser.uid,
+  );
+
+  if (duplicatedChecklist != null && context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(tr('checklist_duplicated')),
+        backgroundColor: Colors.green,
+      ),
+    );
+  } else if (context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(tr('error_duplicating_checklist')),
+        backgroundColor: Colors.red,
       ),
     );
   }
 }
+
+void _shareChecklist(BuildContext context, Checklist checklist) {
+  // TODO: Implement sharing functionality
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text('Sharing checklist: ${checklist.title}')),
+  );
+}
+
+//}
