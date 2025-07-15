@@ -64,7 +64,7 @@ app/ios/Runner/GoogleService-Info-Dev.plist
 *serviceAccountKey*
 app/scripts/firebase-admin/serviceAccountKey.json
 scripts/firebase-admin/serviceAccountKey.json
-*.json
+*serviceAccountKey*.json
   
 # Node.js dependencies
 node_modules/
