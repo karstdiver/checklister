@@ -41,6 +41,7 @@ class SessionNotifier extends StateNotifier<SessionState?> {
     );
 
     state = session;
+    print('DEBUG: startSession - session state set to: $state');
 
     // Save session to database
     try {

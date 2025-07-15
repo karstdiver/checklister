@@ -5,6 +5,7 @@ import '../../../core/providers/providers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:async';
 import '../../../shared/widgets/app_pulse_animation.dart';
+import '../../../core/services/translation_service.dart';
 //import 'package:animated_text_kit/animated_text_kit.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
@@ -45,6 +46,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Watch the translation provider to trigger rebuilds when language changes
+    ref.watch(translationProvider);
     final authState = ref.watch(authStateProvider);
 
     return Scaffold(
@@ -96,7 +99,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
               ),
               const SizedBox(height: 24),
               // Animated CHECKLISTS (custom scale from 0.1x to 2.0x)
-              _ChecklistsScaleText(),
+              const _ChecklistsScaleText(),
               const SizedBox(height: 32),
               // The rest of the splash content (centered vertically)
               Expanded(
@@ -109,7 +112,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                       children: [
                         // Subtitle
                         Text(
-                          tr('welcome_subtitle'),
+                          TranslationService.translate('welcome_subtitle'),
                           style: const TextStyle(
                             fontSize: 18,
                             color: Colors.white70,
@@ -126,7 +129,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                           const SizedBox(height: 24),
                         ],
                         Text(
-                          'Auth Status: ${authState.status}',
+                          'Auth Status:  {authState.status}',
                           style: const TextStyle(
                             fontSize: 12,
                             color: Colors.white70,
@@ -144,7 +147,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                         if (authState.hasError) ...[
                           const SizedBox(height: 16),
                           Text(
-                            authState.errorMessage ?? tr('error_unknown'),
+                            authState.errorMessage ??
+                                TranslationService.translate('error_unknown'),
                             style: const TextStyle(
                               color: Colors.redAccent,
                               fontWeight: FontWeight.bold,
@@ -162,7 +166,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                               backgroundColor: Colors.white,
                               foregroundColor: Colors.blue,
                             ),
-                            child: Text(tr('retry')),
+                            child: Text(TranslationService.translate('retry')),
                           ),
                         ],
                       ],
@@ -179,6 +183,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 }
 
 class _ChecklistsScaleText extends StatefulWidget {
+  const _ChecklistsScaleText();
   @override
   State<_ChecklistsScaleText> createState() => _ChecklistsScaleTextState();
 }
@@ -198,7 +203,6 @@ class _ChecklistsScaleTextState extends State<_ChecklistsScaleText>
     _scaleAnim = Tween<double>(
       begin: 0.1,
       end: 1.5,
-      //).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutExpo));
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.bounceOut));
     _controller.forward();
   }
@@ -211,20 +215,26 @@ class _ChecklistsScaleTextState extends State<_ChecklistsScaleText>
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _scaleAnim,
-      builder: (context, child) {
-        return Transform.scale(
-          scale: _scaleAnim.value,
-          child: Text(
-            tr('checklists'),
-            style: const TextStyle(
-              fontSize: 36,
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
-              letterSpacing: 2.0,
-            ),
-          ),
+    return Consumer(
+      builder: (context, ref, child) {
+        // Watch the translation provider to trigger rebuilds when language changes
+        ref.watch(translationProvider);
+        return AnimatedBuilder(
+          animation: _scaleAnim,
+          builder: (context, child) {
+            return Transform.scale(
+              scale: _scaleAnim.value,
+              child: Text(
+                TranslationService.translate('checklists'),
+                style: const TextStyle(
+                  fontSize: 36,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                  letterSpacing: 2.0,
+                ),
+              ),
+            );
+          },
         );
       },
     );

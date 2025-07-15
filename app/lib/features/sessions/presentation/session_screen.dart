@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:easy_localization/easy_localization.dart';
 import 'package:logger/logger.dart';
 import '../domain/session_providers.dart';
 import '../domain/session_state.dart';
 import '../domain/session_notifier.dart';
 import '../../../core/providers/providers.dart';
+import '../../../core/services/translation_service.dart';
 import '../../../shared/widgets/app_card.dart';
 
 final logger = Logger();
@@ -14,6 +14,7 @@ class SessionScreen extends ConsumerStatefulWidget {
   final String checklistId;
   final String? checklistTitle;
   final List<ChecklistItem> items;
+  final int totalChecklistItems;
   final bool forceNewSession;
   final bool
   startNewIfActive; // New parameter to start new session even if active exists
@@ -23,6 +24,7 @@ class SessionScreen extends ConsumerStatefulWidget {
     required this.checklistId,
     this.checklistTitle,
     required this.items,
+    required this.totalChecklistItems,
     this.forceNewSession = false,
     this.startNewIfActive = false, // Default to false
   });
@@ -52,6 +54,11 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     final currentUser = ref.read(currentUserProvider);
     final sessionNotifier = ref.read(sessionNotifierProvider.notifier);
 
+    print(
+      'DEBUG: _initializeSession - widget.items.length = ${widget.items.length}',
+    );
+    print('DEBUG: _initializeSession - widget.items = ${widget.items}');
+
     if (currentUser != null) {
       if (widget.forceNewSession) {
         // Force start a new session
@@ -60,6 +67,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           checklistId: widget.checklistId,
           userId: currentUser.uid,
           items: widget.items,
+        );
+        print(
+          'DEBUG: _initializeSession - After startSession, session state: ${ref.read(sessionNotifierProvider)}',
         );
         logger.i(
           '🚀 Force started new session for checklist: ${widget.checklistId}',
@@ -89,6 +99,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
             userId: currentUser.uid,
             items: widget.items,
           );
+          print(
+            'DEBUG: _initializeSession - After startSession (new session), session state: ${ref.read(sessionNotifierProvider)}',
+          );
           logger.i(
             '🚀 Started new session for checklist: ${widget.checklistId}',
           );
@@ -104,6 +117,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   @override
   Widget build(BuildContext context) {
     final session = ref.watch(currentSessionProvider);
+    print('DEBUG: SessionScreen build - session state: $session');
     final sessionNotifier = ref.read(sessionNotifierProvider.notifier);
     final currentUser = ref.watch(currentUserProvider);
 
@@ -126,7 +140,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       builder: (context, ref, child) {
         return Scaffold(
           appBar: AppBar(
-            title: Text(widget.checklistTitle ?? tr('session')),
+            title: Text(widget.checklistTitle ?? tr(ref, 'session')),
             leading: IconButton(
               onPressed: () => Navigator.of(context).pop(),
               icon: const Icon(Icons.arrow_back),
@@ -143,13 +157,13 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
             child: Column(
               children: [
                 // Progress indicator
-                _buildProgressIndicator(session),
+                _buildProgressIndicator(session, ref),
 
                 // Current item display
                 Expanded(child: _buildCurrentItem(session)),
 
                 // Navigation controls
-                _buildNavigationControls(session, sessionNotifier),
+                _buildNavigationControls(session, sessionNotifier, ref),
               ],
             ),
           ),
@@ -158,7 +172,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     );
   }
 
-  Widget _buildProgressIndicator(SessionState session) {
+  Widget _buildProgressIndicator(SessionState session, WidgetRef ref) {
     return Container(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -170,13 +184,10 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            tr(
-              'progress',
-              namedArgs: {
-                'current': session.completedItems.toString(),
-                'total': session.totalItems.toString(),
-              },
-            ),
+            tr(ref, 'progress', [
+              session.completedItems.toString(),
+              session.totalItems.toString(),
+            ]),
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 8),
@@ -185,10 +196,18 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
             runSpacing: 8,
             alignment: WrapAlignment.spaceEvenly,
             children: [
-              _buildStatChip('Completed', session.completedItems, Colors.green),
-              _buildStatChip('Skipped', session.skippedItems, Colors.orange),
               _buildStatChip(
-                'Remaining',
+                tr(ref, 'completed'),
+                session.completedItems,
+                Colors.green,
+              ),
+              _buildStatChip(
+                tr(ref, 'skipped'),
+                session.skippedItems,
+                Colors.orange,
+              ),
+              _buildStatChip(
+                tr(ref, 'remaining'),
                 session.totalItems -
                     session.completedItems -
                     session.skippedItems,
@@ -205,9 +224,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
+        border: Border.all(color: color.withOpacity(0.3)),
       ),
       child: Column(
         children: [
@@ -221,7 +240,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           ),
           Text(
             label,
-            style: TextStyle(fontSize: 12, color: color.withValues(alpha: 0.8)),
+            style: TextStyle(fontSize: 12, color: color.withOpacity(0.8)),
           ),
         ],
       ),
@@ -284,13 +303,13 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           const SizedBox(height: 24),
 
           // Swipe instructions
-          _buildSwipeInstructions(),
+          _buildSwipeInstructions(ref),
         ],
       ),
     );
   }
 
-  Widget _buildSwipeInstructions() {
+  Widget _buildSwipeInstructions(WidgetRef ref) {
     return Container(
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
@@ -301,7 +320,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       child: Column(
         children: [
           Text(
-            tr('swipe_instructions'),
+            tr(ref, 'swipe_instructions'),
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w500,
@@ -315,10 +334,10 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
             runSpacing: 8,
             alignment: WrapAlignment.spaceEvenly,
             children: [
-              _buildSwipeInstruction('←', tr('complete'), Colors.green),
-              _buildSwipeInstruction('→', tr('review'), Colors.blue),
-              _buildSwipeInstruction('↑', tr('skip'), Colors.orange),
-              _buildSwipeInstruction('↓', tr('pause'), Colors.red),
+              _buildSwipeInstruction('←', tr(ref, 'complete'), Colors.green),
+              _buildSwipeInstruction('→', tr(ref, 'review'), Colors.blue),
+              _buildSwipeInstruction('↑', tr(ref, 'skip'), Colors.orange),
+              _buildSwipeInstruction('↓', tr(ref, 'pause'), Colors.red),
             ],
           ),
         ],
@@ -357,6 +376,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   Widget _buildNavigationControls(
     SessionState session,
     SessionNotifier sessionNotifier,
+    WidgetRef ref,
   ) {
     final isLastItem = session.currentItemIndex == session.totalItems - 1;
     return Container(
@@ -373,7 +393,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                     ? () => sessionNotifier.handleSwipeRight()
                     : null,
                 icon: const Icon(Icons.arrow_back),
-                label: Text(tr('previous')),
+                label: Text(tr(ref, 'previous')),
               ),
             ),
           ),
@@ -391,7 +411,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                   }
                 },
                 icon: Icon(session.isPaused ? Icons.play_arrow : Icons.pause),
-                label: Text(session.isPaused ? tr('resume') : tr('pause')),
+                label: Text(
+                  session.isPaused ? tr(ref, 'resume') : tr(ref, 'pause'),
+                ),
               ),
             ),
           ),
@@ -407,7 +429,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                 icon: isLastItem
                     ? const Icon(Icons.check)
                     : const Icon(Icons.arrow_forward),
-                label: Text(isLastItem ? tr('finish') : tr('next')),
+                label: Text(isLastItem ? tr(ref, 'finish') : tr(ref, 'next')),
               ),
             ),
           ),
@@ -507,7 +529,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           children: [
             ListTile(
               leading: const Icon(Icons.refresh),
-              title: Text(tr('restart_session')),
+              title: Text(tr(ref, 'restart_session')),
               onTap: () {
                 Navigator.pop(context);
                 _restartSession(sessionNotifier);
@@ -515,7 +537,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.stop),
-              title: Text(tr('abandon_session')),
+              title: Text(tr(ref, 'abandon_session')),
               onTap: () {
                 Navigator.pop(context);
                 sessionNotifier.abandonSession();
@@ -524,7 +546,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.close),
-              title: Text(tr('close')),
+              title: Text(tr(ref, 'close')),
               onTap: () => Navigator.pop(context),
             ),
           ],
@@ -536,9 +558,17 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   Widget _buildCompletionScreen(SessionState session, BuildContext context) {
     return Consumer(
       builder: (context, ref, child) {
+        final durationStr = _formatDuration(session.totalDuration);
+        print(
+          'DEBUG: CompletionScreen - totalDuration = ${session.totalDuration}, formatted = $durationStr',
+        );
+        final totalDurationText = tr(ref, 'total_duration', [durationStr]);
+        print(
+          'DEBUG: CompletionScreen - tr(ref, total_duration, [durationStr]) = $totalDurationText',
+        );
         return Scaffold(
           appBar: AppBar(
-            title: Text(widget.checklistTitle ?? tr('session')),
+            title: Text(widget.checklistTitle ?? tr(ref, 'session')),
             leading: IconButton(
               onPressed: () => Navigator.of(context).pop(),
               icon: const Icon(Icons.arrow_back),
@@ -568,7 +598,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
                 // Completion message
                 Text(
-                  'Session Completed!',
+                  tr(ref, 'session_completed'),
                   style: const TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -579,7 +609,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                 const SizedBox(height: 16),
 
                 Text(
-                  'Great job! You\'ve completed all checklist items.',
+                  tr(ref, 'session_completed_message'),
                   style: const TextStyle(fontSize: 16, color: Colors.grey),
                   textAlign: TextAlign.center,
                 ),
@@ -592,7 +622,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                     child: Column(
                       children: [
                         Text(
-                          'Session Summary',
+                          tr(ref, 'session_summary'),
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -603,12 +633,12 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
                             _buildStatChip(
-                              'Completed',
+                              tr(ref, 'completed'),
                               session.completedItems,
                               Colors.green,
                             ),
                             _buildStatChip(
-                              'Skipped',
+                              tr(ref, 'skipped'),
                               session.skippedItems,
                               Colors.orange,
                             ),
@@ -616,7 +646,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          'Total Duration: ${_formatDuration(session.totalDuration)}',
+                          totalDurationText,
                           style: const TextStyle(
                             fontSize: 14,
                             color: Colors.grey,
@@ -641,7 +671,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                           _restartSession(sessionNotifier);
                         },
                         icon: const Icon(Icons.refresh),
-                        label: Text(tr('restart_session')),
+                        label: Text(tr(ref, 'restart_session')),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blue,
                           foregroundColor: Colors.white,
@@ -660,7 +690,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                           Navigator.of(context).pop();
                         },
                         icon: const Icon(Icons.home),
-                        label: const Text('Back to Home'),
+                        label: Text(tr(ref, 'back_to_home')),
                       ),
                     ),
                   ],

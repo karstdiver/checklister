@@ -18,6 +18,7 @@ import 'package:firebase_analytics/firebase_analytics.dart';
 //import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart';
 import 'core/services/analytics_service.dart';
+import 'core/services/translation_service.dart';
 
 final Logger logger = Logger();
 
@@ -47,6 +48,19 @@ class UnderscoreAssetLoader extends AssetLoader {
       logger.i(
         '🔍 DEBUG: Custom asset loader - sample keys: ${decoded.keys.take(3).toList()}',
       );
+
+      // Log some specific translations to verify content
+      if (decoded.containsKey('language')) {
+        logger.i(
+          '🔍 DEBUG: Custom asset loader - "language" translation: ${decoded['language']}',
+        );
+      }
+      if (decoded.containsKey('home')) {
+        logger.i(
+          '🔍 DEBUG: Custom asset loader - "home" translation: ${decoded['home']}',
+        );
+      }
+
       return decoded;
     } catch (e) {
       logger.e('🔍 DEBUG: Custom asset loader - failed to load $fullPath: $e');
@@ -203,6 +217,12 @@ void main() async {
     }
     // Continue without Firebase for now
   }
+
+  // Load initial translations
+  await TranslationService.loadTranslations(
+    savedLocale ?? const Locale('en', 'US'),
+  );
+  logger.i('🔍 DEBUG: Main - initial translations loaded');
 
   // Run the app in the same zone as ensureInitialized
   logger.i(

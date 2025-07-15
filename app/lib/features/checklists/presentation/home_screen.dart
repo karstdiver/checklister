@@ -5,6 +5,7 @@ import '../../../core/providers/providers.dart';
 import '../../../core/providers/settings_provider.dart';
 import '../../../shared/widgets/logout_dialog.dart';
 import '../../../core/services/analytics_service.dart';
+import '../../../core/services/translation_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../sessions/domain/session_state.dart' as sessions;
@@ -38,9 +39,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Widget _buildWelcomeText(User? currentUser) {
     if (currentUser == null) {
-      print('No currentUser, using anonymous');
       return Text(
-        tr('welcome_user', args: [tr('anonymous')]),
+        TranslationService.translate('welcome_user', [
+          TranslationService.translate('anonymous'),
+        ]),
         style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
       );
     }
@@ -50,34 +52,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           .doc(currentUser.uid)
           .get(),
       builder: (context, snapshot) {
-        String displayName = currentUser.email ?? tr('anonymous');
+        String displayName =
+            currentUser.email ?? TranslationService.translate('anonymous');
         if (snapshot.hasData && snapshot.data!.exists) {
           final data = snapshot.data!.data() as Map<String, dynamic>;
-          print('Firestore user doc: ${data.toString()}');
           if (data['displayName'] != null &&
               data['displayName'].toString().isNotEmpty) {
-            print('Using Firestore displayName: ${data['displayName']}');
             displayName = data['displayName'];
           } else if (currentUser.displayName != null &&
               currentUser.displayName!.isNotEmpty) {
-            print('Using Auth displayName: ${currentUser.displayName}');
             displayName = currentUser.displayName!;
-          } else {
-            print('Using email: ${currentUser.email}');
           }
         } else if (currentUser.displayName != null &&
             currentUser.displayName!.isNotEmpty) {
-          print(
-            'No Firestore doc or displayName, using Auth displayName: ${currentUser.displayName}',
-          );
           displayName = currentUser.displayName!;
-        } else {
-          print(
-            'No Firestore or Auth displayName, using email: ${currentUser.email}',
-          );
         }
         return Text(
-          tr('welcome_user', args: [displayName]),
+          TranslationService.translate('welcome_user', [displayName]),
           style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         );
       },
@@ -88,33 +79,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     return Consumer(
       builder: (context, ref, child) {
-        // Watch the current locale to trigger rebuilds when language changes
-        final currentLocale = context.locale;
-
-        // Also watch the settings provider to ensure rebuilds when language changes
-        final settings = ref.watch(settingsProvider);
-
-        // Force rebuild by accessing the locale
-        context.locale;
-
-        print(
-          '🔍 DEBUG: HomeScreen - context.locale: ${currentLocale.languageCode}_${currentLocale.countryCode}',
-        );
-        print(
-          '🔍 DEBUG: HomeScreen - settings.language: ${settings.language?.languageCode}_${settings.language?.countryCode}',
-        );
-        // Force rebuild when locale changes by accessing context.locale
-        final currentLocaleForRebuild = context.locale;
-        print('🔍 DEBUG: HomeScreen - "home" translation: ${tr('home')}');
-        print(
-          '🔍 DEBUG: HomeScreen - "my_checklists" translation: ${tr('my_checklists')}',
-        );
-        print(
-          '🔍 DEBUG: HomeScreen - EasyLocalization supported locales: ${context.supportedLocales}',
-        );
-        print(
-          '🔍 DEBUG: HomeScreen - EasyLocalization fallback locale: ${context.fallbackLocale}',
-        );
+        // Watch the translation provider to trigger rebuilds when language changes
+        ref.watch(translationProvider);
 
         final analytics = AnalyticsService();
         final currentUser = ref.watch(currentUserProvider);
@@ -124,7 +90,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
         return Scaffold(
           appBar: AppBar(
-            title: Text(tr('home')),
+            title: Text(TranslationService.translate('home')),
             actions: [
               // User menu
               PopupMenuButton<String>(
@@ -148,7 +114,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       children: [
                         const Icon(Icons.person),
                         const SizedBox(width: 8),
-                        Text(tr('profile')),
+                        Text(TranslationService.translate('profile')),
                       ],
                     ),
                   ),
@@ -158,7 +124,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       children: [
                         const Icon(Icons.settings),
                         const SizedBox(width: 8),
-                        Text(tr('settings')),
+                        Text(TranslationService.translate('settings')),
                       ],
                     ),
                   ),
@@ -169,7 +135,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       children: [
                         const Icon(Icons.logout),
                         const SizedBox(width: 8),
-                        Text(tr('logout')),
+                        Text(TranslationService.translate('logout')),
                       ],
                     ),
                   ),
@@ -179,7 +145,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   child: CircleAvatar(
                     backgroundColor: Colors.blue,
                     child: Text(
-                      //currentUser?.email?.substring(0, 1).toUpperCase() ?? 'U',
                       currentUser?.email?.isNotEmpty == true
                           ? currentUser!.email!.substring(0, 1).toUpperCase()
                           : 'U',
@@ -194,398 +159,436 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             padding: const EdgeInsets.all(16.0),
             child: ListView(
               children: [
-                // Debug info
-                Text(
-                  'Auth Status: ${authState.status}',
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
-                ),
-                if (currentUser != null)
-                  Text(
-                    'User: ${currentUser.uid}',
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
-                  ),
-                const SizedBox(height: 16),
-
-                // Welcome message
+                // Welcome section
                 _buildWelcomeText(currentUser),
                 const SizedBox(height: 24),
 
-                // Checklists section
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                // My Checklists section
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          tr('my_checklists'),
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        TextButton.icon(
-                          onPressed: () async {
-                            await analytics.logCustomEvent(
-                              name: 'create_checklist_clicked',
-                              parameters: {'source': 'header_button'},
-                            );
-                            _navigateToCreateChecklist(context);
-                          },
-                          icon: const Icon(Icons.add),
-                          label: Text(tr('create_new')),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    checklistsAsync.when(
-                      data: (checklists) {
-                        if (checklists.isEmpty) {
-                          return Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(
-                                  Icons.checklist_outlined,
-                                  size: 64,
-                                  color: Colors.grey,
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  tr('no_checklists_yet'),
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  tr('create_first_checklist'),
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                                const SizedBox(height: 24),
-                                ElevatedButton.icon(
-                                  onPressed: () =>
-                                      _navigateToCreateChecklist(context),
-                                  icon: const Icon(Icons.add),
-                                  label: Text(tr('create_checklist')),
-                                ),
-                              ],
-                            ),
-                          );
-                        }
-
-                        return ListView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: checklists.length,
-                          itemBuilder: (context, index) {
-                            final checklist = checklists[index];
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: ChecklistCard(
-                                checklist: checklist,
-                                onTap: () =>
-                                    _navigateToChecklist(context, checklist),
-                                onEdit: () => _navigateToEditChecklist(
-                                  context,
-                                  checklist,
-                                ),
-                                onDelete: () =>
-                                    _deleteChecklist(context, checklist),
-                                onDuplicate: () =>
-                                    _duplicateChecklist(context, checklist),
-                                onShare: () =>
-                                    _shareChecklist(context, checklist),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                      loading: () =>
-                          const Center(child: CircularProgressIndicator()),
-                      error: (error, stack) => Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              Icons.error_outline,
-                              size: 64,
-                              color: Colors.red,
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              tr('error_loading_checklists'),
-                              style: const TextStyle(
-                                fontSize: 16,
-                                color: Colors.red,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            ElevatedButton(
-                              onPressed: () {
-                                if (currentUser != null) {
-                                  ref
-                                      .read(checklistNotifierProvider.notifier)
-                                      .loadUserChecklists(currentUser.uid);
-                                }
-                              },
-                              child: Text(tr('retry')),
-                            ),
-                          ],
-                        ),
+                    Text(
+                      TranslationService.translate('my_checklists'),
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
+                    FloatingActionButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ChecklistEditorScreen(),
+                          ),
+                        );
+                      },
+                      child: const Icon(Icons.add),
+                    ),
                   ],
+                ),
+                const SizedBox(height: 16),
+
+                // Create new checklist card
+                Card(
+                  child: ListTile(
+                    leading: const Icon(Icons.add_circle_outline, size: 32),
+                    title: Text(
+                      TranslationService.translate('create_new'),
+                      style: const TextStyle(fontWeight: FontWeight.w500),
+                    ),
+                    subtitle: Text(
+                      TranslationService.translate('create_checklist'),
+                    ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ChecklistEditorScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Checklists list
+                checklistsAsync.when(
+                  data: (checklists) {
+                    if (checklists.isEmpty) {
+                      return Column(
+                        children: [
+                          const Icon(
+                            Icons.checklist_outlined,
+                            size: 64,
+                            color: Colors.grey,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            TranslationService.translate('no_checklists_yet'),
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            TranslationService.translate(
+                              'create_first_checklist',
+                            ),
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(color: Colors.grey),
+                          ),
+                          const SizedBox(height: 24),
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const ChecklistEditorScreen(),
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.add),
+                            label: Text(
+                              TranslationService.translate('create_checklist'),
+                            ),
+                          ),
+                        ],
+                      );
+                    }
+
+                    return Column(
+                      children: checklists.map((checklist) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 8.0),
+                          child: ChecklistCard(
+                            checklist: checklist,
+                            onTap: () {
+                              // Check if there's an active session
+                              final activeSession = ref.read(
+                                sessionNotifierProvider,
+                              );
+                              if (activeSession != null &&
+                                  activeSession.checklistId == checklist.id) {
+                                // Show dialog to resume or start new session
+                                showDialog(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    title: Text(
+                                      TranslationService.translate(
+                                        'session_in_progress',
+                                      ),
+                                    ),
+                                    content: Text(
+                                      TranslationService.translate(
+                                        'session_already_in_progress',
+                                        [checklist.title],
+                                      ),
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () {
+                                          ref
+                                              .read(
+                                                sessionNotifierProvider
+                                                    .notifier,
+                                              )
+                                              .clearSession();
+                                          Navigator.pop(context);
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => SessionScreen(
+                                                checklistId: checklist.id!,
+                                                checklistTitle: checklist.title,
+                                                items: checklist.items
+                                                    .map(
+                                                      (item) =>
+                                                          sessions.ChecklistItem(
+                                                            id: item.id,
+                                                            text: item.text,
+                                                            imageUrl:
+                                                                item.imageUrl,
+                                                            status: sessions
+                                                                .ItemStatus
+                                                                .pending,
+                                                            completedAt: null,
+                                                            skippedAt: null,
+                                                            notes: item.notes,
+                                                          ),
+                                                    )
+                                                    .toList(),
+                                                totalChecklistItems:
+                                                    checklist.items.length,
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                        child: Text(
+                                          TranslationService.translate(
+                                            'resume_session',
+                                          ),
+                                        ),
+                                      ),
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.pop(context);
+                                          ref
+                                              .read(
+                                                sessionNotifierProvider
+                                                    .notifier,
+                                              )
+                                              .clearSession();
+                                          print(
+                                            'DEBUG: checklist.items.length = ${checklist.items.length}',
+                                          );
+                                          print(
+                                            'DEBUG: checklist.items = ${checklist.items}',
+                                          );
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => SessionScreen(
+                                                checklistId: checklist.id!,
+                                                checklistTitle: checklist.title,
+                                                items: checklist.items
+                                                    .map(
+                                                      (item) =>
+                                                          sessions.ChecklistItem(
+                                                            id: item.id,
+                                                            text: item.text,
+                                                            imageUrl:
+                                                                item.imageUrl,
+                                                            status: sessions
+                                                                .ItemStatus
+                                                                .pending,
+                                                            completedAt: null,
+                                                            skippedAt: null,
+                                                            notes: item.notes,
+                                                          ),
+                                                    )
+                                                    .toList(),
+                                                totalChecklistItems:
+                                                    checklist.items.length,
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                        child: Text(
+                                          TranslationService.translate(
+                                            'start_new_session',
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              } else {
+                                // Start new session
+                                ref
+                                    .read(sessionNotifierProvider.notifier)
+                                    .clearSession();
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => SessionScreen(
+                                      checklistId: checklist.id!,
+                                      checklistTitle: checklist.title,
+                                      // Debug print for checklist items
+                                      // ignore: avoid_print
+                                      items: (() {
+                                        print(
+                                          'DEBUG: checklist.items.length = ${checklist.items.length}',
+                                        );
+                                        print(
+                                          'DEBUG: checklist.items = ${checklist.items}',
+                                        );
+                                        return checklist.items
+                                            .map(
+                                              (item) => sessions.ChecklistItem(
+                                                id: item.id,
+                                                text: item.text,
+                                                imageUrl: item.imageUrl,
+                                                status:
+                                                    sessions.ItemStatus.pending,
+                                                completedAt: null,
+                                                skippedAt: null,
+                                                notes: item.notes,
+                                              ),
+                                            )
+                                            .toList();
+                                      })(),
+                                      totalChecklistItems:
+                                          checklist.items.length,
+                                    ),
+                                  ),
+                                );
+                              }
+                            },
+                            onEdit: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ChecklistEditorScreen(
+                                    checklist: checklist,
+                                  ),
+                                ),
+                              );
+                            },
+                            onDuplicate: () async {
+                              try {
+                                if (currentUser != null) {
+                                  await ref
+                                      .read(checklistNotifierProvider.notifier)
+                                      .duplicateChecklist(
+                                        checklist.id!,
+                                        currentUser.uid,
+                                      );
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          TranslationService.translate(
+                                            'checklist_duplicated',
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                }
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        TranslationService.translate(
+                                          'error_duplicating_checklist',
+                                        ),
+                                      ),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              }
+                            },
+                            onDelete: () async {
+                              final confirmed = await showDialog<bool>(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: Text(
+                                    TranslationService.translate(
+                                      'delete_checklist',
+                                    ),
+                                  ),
+                                  content: Text(
+                                    TranslationService.translate(
+                                      'delete_checklist_confirmation',
+                                      [checklist.title],
+                                    ),
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(context, false),
+                                      child: Text(
+                                        TranslationService.translate('cancel'),
+                                      ),
+                                    ),
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(context, true),
+                                      child: Text(
+                                        TranslationService.translate('delete'),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+
+                              if (confirmed == true) {
+                                try {
+                                  await ref
+                                      .read(checklistNotifierProvider.notifier)
+                                      .deleteChecklist(checklist.id!);
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          TranslationService.translate(
+                                            'checklist_deleted',
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                } catch (e) {
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          TranslationService.translate(
+                                            'error_deleting_checklist',
+                                          ),
+                                        ),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
+                                }
+                              }
+                            },
+                            onShare: () {
+                              // Share functionality
+                            },
+                          ),
+                        );
+                      }).toList(),
+                    );
+                  },
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (error, stack) {
+                    return Column(
+                      children: [
+                        const Icon(
+                          Icons.error_outline,
+                          size: 64,
+                          color: Colors.red,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          TranslationService.translate(
+                            'error_loading_checklists',
+                          ),
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () {
+                            final currentUser =
+                                FirebaseAuth.instance.currentUser;
+                            if (currentUser != null) {
+                              ref
+                                  .read(checklistNotifierProvider.notifier)
+                                  .loadUserChecklists(currentUser.uid);
+                            }
+                          },
+                          child: Text(TranslationService.translate('retry')),
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ],
             ),
           ),
-          floatingActionButton: FloatingActionButton(
-            onPressed: () => _navigateToCreateChecklist(context),
-            child: const Icon(Icons.add),
-          ),
         );
       },
-    );
-  }
-
-  // Checklist CRUD methods
-  void _navigateToCreateChecklist(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const ChecklistEditorScreen()),
-    );
-  }
-
-  void _navigateToChecklist(BuildContext context, Checklist checklist) async {
-    final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(tr('error_user_not_authenticated')),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    // Check if there's an active session for this checklist
-    final sessionNotifier = ProviderScope.containerOf(
-      context,
-    ).read(sessionNotifierProvider.notifier);
-    final activeSession = await sessionNotifier.getActiveSession(
-      currentUser.uid,
-      checklist.id,
-    );
-
-    print('🔍 Checking for active session for checklist: ${checklist.id}');
-    print('🔍 Active session found: ${activeSession != null}');
-    if (activeSession != null) {
-      print('🔍 Session status: ${activeSession.status}');
-      print('🔍 Session ID: ${activeSession.sessionId}');
-      print(
-        '🔍 Completed items: ${activeSession.completedItems}/${activeSession.totalItems}',
-      );
-      print(
-        '🔍 Will show dialog: ${activeSession.status == sessions.SessionStatus.inProgress || activeSession.status == sessions.SessionStatus.paused}',
-      );
-    }
-
-    if (activeSession != null &&
-        (activeSession.status == sessions.SessionStatus.inProgress ||
-            activeSession.status == sessions.SessionStatus.paused)) {
-      // Show dialog to choose between resume or new session
-      final choice = await showDialog<String>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text(tr('session_in_progress')),
-          content: Text(
-            tr(
-              'session_in_progress_message',
-              args: [
-                checklist.title,
-                activeSession.completedItems.toString(),
-                activeSession.totalItems.toString(),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop('resume'),
-              child: Text(tr('resume_session')),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.of(context).pop('new'),
-              child: Text(tr('start_new_session')),
-            ),
-          ],
-        ),
-      );
-
-      if (choice == 'resume') {
-        // Resume existing session
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => SessionScreen(
-              checklistId: checklist.id,
-              checklistTitle: checklist.title,
-              items: activeSession.items,
-              forceNewSession: false,
-            ),
-          ),
-        );
-      } else if (choice == 'new') {
-        // Start new session
-        _startNewChecklistSession(context, checklist, startNewIfActive: true);
-      }
-    } else {
-      // No active session, start new one directly
-      _startNewChecklistSession(context, checklist);
-    }
-  }
-
-  void _startNewChecklistSession(
-    BuildContext context,
-    Checklist checklist, {
-    bool startNewIfActive = false,
-  }) {
-    // Convert checklist items to sessions domain ChecklistItem
-    final sessionItems = checklist.items
-        .map(
-          (item) => sessions.ChecklistItem(
-            id: item.id,
-            text: item.text,
-            imageUrl: item.imageUrl,
-            status: sessions.ItemStatus.pending,
-            completedAt: null,
-            skippedAt: null,
-            notes: item.notes,
-          ),
-        )
-        .toList();
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => SessionScreen(
-          checklistId: checklist.id,
-          checklistTitle: checklist.title,
-          items: sessionItems,
-          forceNewSession: false, // Let the SessionScreen handle session logic
-          startNewIfActive: startNewIfActive,
-        ),
-      ),
-    );
-  }
-
-  void _navigateToEditChecklist(BuildContext context, Checklist checklist) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ChecklistEditorScreen(checklist: checklist),
-      ),
-    );
-  }
-
-  Future<void> _deleteChecklist(
-    BuildContext context,
-    Checklist checklist,
-  ) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(tr('delete_checklist')),
-        content: Text(
-          tr('delete_checklist_confirmation', args: [checklist.title]),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(tr('cancel')),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: Text(tr('delete')),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true) {
-      final notifier = ProviderScope.containerOf(
-        context,
-      ).read(checklistNotifierProvider.notifier);
-      final success = await notifier.deleteChecklist(checklist.id);
-
-      if (success && context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(tr('checklist_deleted')),
-            backgroundColor: Colors.green,
-          ),
-        );
-      } else if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(tr('error_deleting_checklist')),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
-
-  Future<void> _duplicateChecklist(
-    BuildContext context,
-    Checklist checklist,
-  ) async {
-    final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(tr('error_user_not_authenticated')),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    final notifier = ProviderScope.containerOf(
-      context,
-    ).read(checklistNotifierProvider.notifier);
-    final duplicatedChecklist = await notifier.duplicateChecklist(
-      checklist.id,
-      currentUser.uid,
-    );
-
-    if (duplicatedChecklist != null && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(tr('checklist_duplicated')),
-          backgroundColor: Colors.green,
-        ),
-      );
-    } else if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(tr('error_duplicating_checklist')),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
-
-  void _shareChecklist(BuildContext context, Checklist checklist) {
-    // TODO: Implement sharing functionality
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Sharing checklist: ${checklist.title}')),
     );
   }
 }

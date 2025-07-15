@@ -7,6 +7,7 @@ import '../../../core/providers/settings_provider.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../features/settings/presentation/language_screen.dart';
 import '../../../features/auth/presentation/widgets/profile_image_picker.dart';
+import '../../../core/services/translation_service.dart';
 
 class ProfileEditScreen extends ConsumerStatefulWidget {
   const ProfileEditScreen({super.key});
@@ -123,7 +124,9 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(tr('profile_updated_successfully')),
+            content: Text(
+              TranslationService.translate('profile_updated_successfully'),
+            ),
             backgroundColor: Colors.green,
           ),
         );
@@ -141,18 +144,14 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
 
   @override
   Widget build(BuildContext context) {
-    print(
-      '🔍 DEBUG: ProfileEditScreen - context.locale: ${context.locale.languageCode}_${context.locale.countryCode}',
-    );
-    print(
-      '🔍 DEBUG: ProfileEditScreen - "edit_profile" translation: ${tr('edit_profile')}',
-    );
+    // Watch the translation provider to trigger rebuilds when language changes
+    ref.watch(translationProvider);
 
     return Consumer(
       builder: (context, ref, child) {
         return Scaffold(
           appBar: AppBar(
-            title: Text(tr('edit_profile')),
+            title: Text(TranslationService.translate('edit_profile')),
             leading: IconButton(
               onPressed: () => Navigator.of(context).pop(),
               icon: const Icon(Icons.arrow_back),
@@ -167,7 +166,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                           height: 16,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : Text(tr('save')),
+                      : Text(TranslationService.translate('save')),
                 ),
             ],
           ),
@@ -194,7 +193,10 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
-          ElevatedButton(onPressed: _loadUserData, child: Text(tr('retry'))),
+          ElevatedButton(
+            onPressed: _loadUserData,
+            child: Text(TranslationService.translate('retry')),
+          ),
         ],
       ),
     );
@@ -239,7 +241,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         child: Column(
           children: [
             Text(
-              tr('profile_picture'),
+              TranslationService.translate('profile_picture'),
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -258,7 +260,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              tr('change_photo'),
+              TranslationService.translate('change_photo'),
               style: TextStyle(
                 fontSize: 14,
                 color: Theme.of(context).colorScheme.primary,
@@ -280,7 +282,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              tr('basic_information'),
+              TranslationService.translate('basic_information'),
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -293,19 +295,19 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
               controller: _displayNameController,
               style: TextStyle(color: textColor),
               decoration: InputDecoration(
-                labelText: tr('display_name'),
+                labelText: TranslationService.translate('display_name'),
                 labelStyle: TextStyle(color: textColor.withOpacity(0.8)),
-                hintText: tr('enter_display_name'),
+                hintText: TranslationService.translate('enter_display_name'),
                 hintStyle: TextStyle(color: hintColor),
                 border: const OutlineInputBorder(),
                 prefixIcon: Icon(Icons.person, color: textColor),
               ),
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
-                  return tr('display_name_required');
+                  return TranslationService.translate('display_name_required');
                 }
                 if (value.trim().length < 2) {
-                  return tr('display_name_too_short');
+                  return TranslationService.translate('display_name_too_short');
                 }
                 return null;
               },
@@ -316,9 +318,9 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
               controller: _emailController,
               style: TextStyle(color: textColor),
               decoration: InputDecoration(
-                labelText: tr('email'),
+                labelText: TranslationService.translate('email'),
                 labelStyle: TextStyle(color: textColor.withOpacity(0.8)),
-                hintText: tr('enter_email'),
+                hintText: TranslationService.translate('enter_email'),
                 hintStyle: TextStyle(color: hintColor),
                 border: const OutlineInputBorder(),
                 prefixIcon: Icon(Icons.email, color: textColor),
@@ -326,12 +328,12 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
               keyboardType: TextInputType.emailAddress,
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
-                  return tr('email_required');
+                  return TranslationService.translate('email_required');
                 }
                 if (!RegExp(
                   r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
                 ).hasMatch(value.trim())) {
-                  return tr('email_invalid');
+                  return TranslationService.translate('email_invalid');
                 }
                 return null;
               },
@@ -351,7 +353,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              tr('preferences'),
+              TranslationService.translate('preferences'),
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -364,11 +366,11 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
               dense: true,
               leading: Icon(Icons.language, size: 20, color: textColor),
               title: Text(
-                tr('language'),
+                TranslationService.translate('language'),
                 style: TextStyle(fontSize: 14, color: textColor),
               ),
               subtitle: Text(
-                tr('english'),
+                TranslationService.translate('english'),
                 style: TextStyle(
                   fontSize: 12,
                   color: textColor.withOpacity(0.7),
@@ -398,7 +400,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      tr('theme'),
+                      TranslationService.translate('theme'),
                       style: TextStyle(fontSize: 14, color: textColor),
                     ),
                   ),
@@ -410,21 +412,21 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                       DropdownMenuItem(
                         value: ThemeMode.system,
                         child: Text(
-                          tr('system_default'),
+                          TranslationService.translate('system_default'),
                           style: TextStyle(color: textColor),
                         ),
                       ),
                       DropdownMenuItem(
                         value: ThemeMode.light,
                         child: Text(
-                          tr('light'),
+                          TranslationService.translate('light'),
                           style: TextStyle(color: textColor),
                         ),
                       ),
                       DropdownMenuItem(
                         value: ThemeMode.dark,
                         child: Text(
-                          tr('dark'),
+                          TranslationService.translate('dark'),
                           style: TextStyle(color: textColor),
                         ),
                       ),
@@ -444,11 +446,11 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
               dense: true,
               leading: Icon(Icons.notifications, size: 20, color: textColor),
               title: Text(
-                tr('notifications'),
+                TranslationService.translate('notifications'),
                 style: TextStyle(fontSize: 14, color: textColor),
               ),
               subtitle: Text(
-                tr('enabled'),
+                TranslationService.translate('enabled'),
                 style: TextStyle(
                   fontSize: 12,
                   color: textColor.withOpacity(0.7),
@@ -485,7 +487,10 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                   height: 20,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : Text(tr('save_changes'), style: const TextStyle(fontSize: 16)),
+              : Text(
+                  TranslationService.translate('save_changes'),
+                  style: const TextStyle(fontSize: 16),
+                ),
         ),
       ),
     );

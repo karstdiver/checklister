@@ -160,8 +160,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
                 'Network error. Please check your internet connection and try again.';
             break;
           default:
-            userFriendlyMessage =
-                'Sign in failed. Please check your credentials and try again.';
+            userFriendlyMessage = 'sign_in_failed';
         }
       } else {
         userFriendlyMessage = 'An unexpected error occurred. Please try again.';

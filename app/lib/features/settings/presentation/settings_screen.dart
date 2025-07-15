@@ -6,6 +6,7 @@ import '../../../shared/widgets/logout_dialog.dart';
 import '../../../core/providers/settings_provider.dart';
 import 'dart:io' show Platform;
 import 'package:flutter/cupertino.dart';
+import '../../../core/services/translation_service.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -31,9 +32,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         );
         final authNotifier = ref.read(authNotifierProvider.notifier);
 
+        // Watch the translation provider to trigger rebuilds when language changes
+        ref.watch(translationProvider);
+
         return Scaffold(
           appBar: AppBar(
-            title: Text(tr('settings')),
+            title: Text(TranslationService.translate('settings')),
             leading: IconButton(
               onPressed: () => Navigator.of(context).pop(),
               icon: const Icon(Icons.arrow_back),
@@ -41,28 +45,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           body: ListView(
             children: [
-              // Debug info
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Auth Status: ${authState.status}',
-                      style: const TextStyle(fontSize: 12, color: Colors.grey),
-                    ),
-                    if (currentUser != null)
-                      Text(
-                        'User: ${currentUser.uid}',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-
               // User Info Section
               Card(
                 margin: const EdgeInsets.all(16),
@@ -72,7 +54,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        tr('account'),
+                        TranslationService.translate('account'),
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -98,7 +80,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  currentUser?.email ?? tr('anonymous'),
+                                  currentUser?.email ??
+                                      TranslationService.translate('anonymous'),
                                   style: const TextStyle(
                                     fontWeight: FontWeight.w500,
                                   ),
@@ -127,7 +110,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   children: [
                     ListTile(
                       leading: const Icon(Icons.person),
-                      title: Text(tr('profile')),
+                      title: Text(TranslationService.translate('profile')),
                       trailing: const Icon(Icons.arrow_forward_ios),
                       onTap: () {
                         Navigator.pushNamed(context, '/profile');
@@ -136,7 +119,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     const Divider(height: 1),
                     ListTile(
                       leading: const Icon(Icons.notifications),
-                      title: Text(tr('notifications')),
+                      title: Text(
+                        TranslationService.translate('notifications'),
+                      ),
                       trailing: const Icon(Icons.arrow_forward_ios),
                       onTap: () {
                         // TODO: Navigate to notifications settings
@@ -145,7 +130,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     const Divider(height: 1),
                     ListTile(
                       leading: const Icon(Icons.language),
-                      title: Text(tr('language')),
+                      title: Text(TranslationService.translate('language')),
                       trailing: const Icon(Icons.arrow_forward_ios),
                       onTap: () {
                         Navigator.pushNamed(context, '/language');
@@ -213,14 +198,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   children: [
                     ListTile(
                       leading: const Icon(Icons.help, color: Colors.blue),
-                      title: Text(tr('help')),
+                      title: Text(TranslationService.translate('help')),
                       trailing: const Icon(Icons.arrow_forward_ios),
                       onTap: () => navigationNotifier.navigateToHelp(),
                     ),
                     const Divider(height: 1),
                     ListTile(
                       leading: const Icon(Icons.info, color: Colors.blue),
-                      title: Text(tr('about')),
+                      title: Text(TranslationService.translate('about')),
                       trailing: const Icon(Icons.arrow_forward_ios),
                       onTap: () => navigationNotifier.navigateToAbout(),
                     ),
@@ -236,7 +221,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 child: ListTile(
                   leading: const Icon(Icons.logout, color: Colors.red),
                   title: Text(
-                    tr('logout'),
+                    TranslationService.translate('logout'),
                     style: const TextStyle(color: Colors.red),
                   ),
                   onTap: () async {
