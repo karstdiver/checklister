@@ -141,6 +141,13 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
 
   @override
   Widget build(BuildContext context) {
+    print(
+      '🔍 DEBUG: ProfileEditScreen - context.locale: ${context.locale.languageCode}_${context.locale.countryCode}',
+    );
+    print(
+      '🔍 DEBUG: ProfileEditScreen - "edit_profile" translation: ${tr('edit_profile')}',
+    );
+
     return Consumer(
       builder: (context, ref, child) {
         return Scaffold(

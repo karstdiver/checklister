@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/providers/settings_provider.dart';
 
 class LanguageScreen extends ConsumerWidget {
   const LanguageScreen({super.key});
@@ -22,8 +23,19 @@ class LanguageScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Consumer(
       builder: (context, ref, child) {
-        // Watch the current locale to trigger rebuilds when language changes
-        final currentLocale = context.locale;
+        // Watch the settings to get the current language preference
+        final settings = ref.watch(settingsProvider);
+        final currentLocale = settings.language ?? context.locale;
+
+        print(
+          '🔍 DEBUG: LanguageScreen - settings.language: ${settings.language?.languageCode}_${settings.language?.countryCode}',
+        );
+        print(
+          '🔍 DEBUG: LanguageScreen - context.locale: ${context.locale.languageCode}_${context.locale.countryCode}',
+        );
+        print(
+          '🔍 DEBUG: LanguageScreen - currentLocale: ${currentLocale.languageCode}_${currentLocale.countryCode}',
+        );
 
         return Scaffold(
           appBar: AppBar(
@@ -39,7 +51,14 @@ class LanguageScreen extends ConsumerWidget {
             separatorBuilder: (context, index) => const Divider(height: 1),
             itemBuilder: (context, index) {
               final lang = _languages[index];
-              final isSelected = lang.locale == currentLocale;
+              final isSelected =
+                  lang.locale.languageCode == currentLocale.languageCode &&
+                  lang.locale.countryCode == currentLocale.countryCode;
+
+              print(
+                '🔍 DEBUG: Language option ${lang.name}: ${lang.locale.languageCode}_${lang.locale.countryCode} vs current: ${currentLocale.languageCode}_${currentLocale.countryCode} -> isSelected: $isSelected',
+              );
+
               return ListTile(
                 leading: Text(lang.flag, style: const TextStyle(fontSize: 28)),
                 title: Text(
@@ -63,10 +82,56 @@ class LanguageScreen extends ConsumerWidget {
                         color: Colors.grey,
                       ),
                 onTap: () async {
+                  print(
+                    '🔍 DEBUG: Tapped on ${lang.name} (isSelected: $isSelected)',
+                  );
                   if (!isSelected) {
-                    await context.setLocale(lang.locale);
+                    try {
+                      print(
+                        '🔍 DEBUG: Changing language from ${currentLocale.languageCode}_${currentLocale.countryCode} to ${lang.locale.languageCode}_${lang.locale.countryCode}',
+                      );
+
+                      // Save language preference to settings first
+                      await ref
+                          .read(settingsProvider.notifier)
+                          .setLanguage(lang.locale);
+
+                      print('🔍 DEBUG: Language saved to settings');
+
+                      // Then update EasyLocalization context
+                      await context.setLocale(lang.locale);
+
+                      // Force EasyLocalization to reload translations
+                      await EasyLocalization.of(
+                        context,
+                      )?.delegate.load(lang.locale);
+
+                      print(
+                        '🔍 DEBUG: EasyLocalization context updated and translations reloaded',
+                      );
+
+                      // Navigate back after successful language change
+                      if (context.mounted) {
+                        Navigator.of(context).pop();
+                      }
+                    } catch (e) {
+                      print('🔍 DEBUG: Error changing language: $e');
+                      // Handle any errors during language change
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Error changing language: $e'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    }
+                  } else {
+                    print(
+                      '🔍 DEBUG: Language already selected, just navigating back',
+                    );
+                    Navigator.of(context).pop();
                   }
-                  Navigator.of(context).pop();
                 },
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),

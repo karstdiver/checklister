@@ -4,7 +4,10 @@ import 'package:flutter/material.dart';
 //import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/services.dart';
+import 'dart:convert';
 import 'package:logger/logger.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 //import 'package:checklister/checklister.dart'; // be sure to add new code to the lib/checklister.dart exports
 import 'checklister_app.dart';
@@ -17,6 +20,40 @@ import 'firebase_options.dart';
 import 'core/services/analytics_service.dart';
 
 final Logger logger = Logger();
+
+// Keys for SharedPreferences
+const String kLanguageKey = 'language';
+
+// Custom asset loader for underscore-named translation files
+class UnderscoreAssetLoader extends AssetLoader {
+  @override
+  Future<Map<String, dynamic>> load(String path, Locale locale) async {
+    // Convert locale to underscore format for filename
+    final fileName = '${locale.languageCode}_${locale.countryCode}.json';
+    final fullPath = '$path/$fileName';
+
+    logger.i('🔍 DEBUG: Custom asset loader - loading: $fullPath');
+    logger.i(
+      '🔍 DEBUG: Custom asset loader - locale: ${locale.languageCode}_${locale.countryCode}',
+    );
+
+    try {
+      final data = await rootBundle.loadString(fullPath);
+      logger.i('🔍 DEBUG: Custom asset loader - successfully loaded $fullPath');
+      final decoded = json.decode(data) as Map<String, dynamic>;
+      logger.i(
+        '🔍 DEBUG: Custom asset loader - decoded ${decoded.length} keys',
+      );
+      logger.i(
+        '🔍 DEBUG: Custom asset loader - sample keys: ${decoded.keys.take(3).toList()}',
+      );
+      return decoded;
+    } catch (e) {
+      logger.e('🔍 DEBUG: Custom asset loader - failed to load $fullPath: $e');
+      rethrow;
+    }
+  }
+}
 
 /*vvvvvv--------------------------------------------*/
 /* M A I N   R O U T I N E                          */
@@ -84,6 +121,30 @@ void main() async {
     );
   };
 
+  // Load saved language preference before initializing EasyLocalization
+  Locale? savedLocale;
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    final languageCode = prefs.getString(kLanguageKey);
+    logger.i(
+      '🔍 DEBUG: Main - loaded language code from SharedPreferences: $languageCode',
+    );
+    if (languageCode != null) {
+      // Handle both old hyphenated format and new underscore format
+      final parts = languageCode.contains('-')
+          ? languageCode.split('-')
+          : languageCode.split('_');
+      if (parts.length == 2) {
+        savedLocale = Locale(parts[0], parts[1]);
+        logger.i(
+          '🔍 DEBUG: Main - parsed saved locale: ${savedLocale.languageCode}_${savedLocale.countryCode}',
+        );
+      }
+    }
+  } catch (e) {
+    logger.w('Failed to load saved language preference: $e');
+  }
+
   // Initialize EasyLocalization
   await EasyLocalization.ensureInitialized();
 
@@ -144,11 +205,17 @@ void main() async {
   }
 
   // Run the app in the same zone as ensureInitialized
+  logger.i(
+    '🔍 DEBUG: Main - setting up EasyLocalization with custom asset loader',
+  );
   runApp(
     EasyLocalization(
       supportedLocales: const [Locale('en', 'US'), Locale('es', 'ES')],
       path: 'assets/translations',
       fallbackLocale: const Locale('en', 'US'),
+      startLocale: savedLocale ?? const Locale('en', 'US'),
+      assetLoader: UnderscoreAssetLoader(),
+      useOnlyLangCode: false,
       child: const ProviderScope(child: ChecklisterApp()),
     ),
   );
