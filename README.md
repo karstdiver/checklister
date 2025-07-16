@@ -21,6 +21,24 @@
 
 ---
 
+## 💎 Paid Tier (Planned)
+
+The paid-for tier of Checklister will unlock advanced features for professional and compliance-driven users:
+
+- 🗂️ **Session Persistence & Audit Trail:**
+  - Retain completed sessions for history, analytics, and regulatory compliance (e.g., FAA audit).
+  - Export and review past session data.
+- 📊 **Advanced Analytics:**
+  - Access detailed usage statistics and performance reports.
+- 🛡️ **Priority Support & SLA:**
+  - Get faster support and guaranteed uptime for mission-critical use.
+- 🏷️ **More to come:**
+  - Suggest features you need for your workflow!
+
+*Note: The free tier deletes finished sessions to save storage and improve performance. Paid users will have the option to retain session data as needed.*
+
+---
+
 ## 📦 Tech Stack
 
 - **Flutter** with Level 3/4 Clean Architecture
