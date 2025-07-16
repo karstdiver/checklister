@@ -82,8 +82,30 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       _resetEmailController.text.trim(),
     );
 
-    // Don't close the dialog immediately - let user read the message
-    // Dialog will be closed when user clicks Cancel or after a delay
+    // Check if the operation was successful (no error message means success)
+    final authState = ref.read(authStateProvider);
+    if (!authState.hasError && mounted) {
+      // Success - close dialog and show snackbar
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'If an account exists with this email, a password reset link has been sent.',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+          ),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 4),
+          action: SnackBarAction(
+            label: 'OK',
+            textColor: Colors.white,
+            onPressed: () {
+              ScaffoldMessenger.of(context).hideCurrentSnackBar();
+            },
+          ),
+        ),
+      );
+    }
+    // If there's an error, dialog stays open to show the error message
   }
 
   void _closeResetDialog() {
@@ -323,7 +345,7 @@ class _PasswordResetDialog extends ConsumerWidget {
                   height: 16,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : Text(TranslationService.translate('retry')),
+              : Text(TranslationService.translate('send')),
         ),
       ],
     );

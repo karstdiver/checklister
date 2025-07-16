@@ -345,12 +345,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
       await _auth.sendPasswordResetEmail(email: email);
 
-      // Always show success message for security (prevents email enumeration)
+      // Success - clear any previous errors and set to unauthenticated
       print('🔍 DEBUG: Password reset email sent successfully');
       state = state.copyWith(
         status: AuthStatus.unauthenticated,
-        errorMessage:
-            'If an account exists with this email, a password reset link has been sent.',
+        errorMessage: null,
       );
     } catch (e) {
       print('🔍 DEBUG: Password reset email failed: $e');
