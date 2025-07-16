@@ -18,16 +18,32 @@ class ChecklisterApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Watch settings to get the saved language preference
+    final settings = ref.watch(settingsProvider);
+
+    // Use the saved language from settings, fallback to context.locale
+    final currentLocale = settings.language ?? context.locale;
+
+    print(
+      '🔍 DEBUG: ChecklisterApp - settings.language: ${settings.language?.languageCode}_${settings.language?.countryCode}',
+    );
+    print(
+      '🔍 DEBUG: ChecklisterApp - context.locale: ${context.locale.languageCode}_${context.locale.countryCode}',
+    );
+    print(
+      '🔍 DEBUG: ChecklisterApp - currentLocale: ${currentLocale.languageCode}_${currentLocale.countryCode}',
+    );
+
     return MaterialApp(
       title: 'Checklister',
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ref.watch(settingsProvider).themeMode,
+      themeMode: settings.themeMode,
       home: const SplashScreen(),
       debugShowCheckedModeBanner: false,
       localizationsDelegates: context.localizationDelegates,
       supportedLocales: context.supportedLocales,
-      locale: context.locale,
+      locale: currentLocale,
       routes: {
         '/splash': (context) => const SplashScreen(),
         '/login': (context) => const LoginScreen(),

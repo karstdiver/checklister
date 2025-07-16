@@ -181,6 +181,15 @@ ${APPNAME}/app/.idea/
 \*.iml
 ./${APPNAME}/app/.vscode/\*
 \*/node_modules/\*
+\*/ios/Pods\*
+\*/ios/Pods/\*
+\*Pods\*
+\*ios/.symlinks\*
+\*ios/.symlinks/\*
+\*ios/Flutter/ephemeral\*
+\*ios/Flutter/ephemeral/\*
+\*ios/Runner.xcworkspace\*
+\*ios/Runner.xcworkspace/\*
 EOF
 
 # Add sensitive files to exclude list if user chose not to include them

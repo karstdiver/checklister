@@ -88,6 +88,11 @@ class ChecklistItem {
       notes: map['notes'],
     );
   }
+
+  @override
+  String toString() {
+    return 'ChecklistItem(id: $id, text: $text, status: $status)';
+  }
 }
 
 class SessionState {
@@ -222,5 +227,10 @@ class SessionState {
       activeDuration: Duration(milliseconds: map['activeDuration']),
       metadata: Map<String, dynamic>.from(map['metadata']),
     );
+  }
+
+  @override
+  String toString() {
+    return 'SessionState(sessionId: $sessionId, checklistId: $checklistId, userId: $userId, status: $status, totalItems: ${items.length}, items: $items, currentItemIndex: $currentItemIndex, startedAt: $startedAt, completedAt: $completedAt)';
   }
 }

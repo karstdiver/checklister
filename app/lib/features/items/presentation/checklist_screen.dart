@@ -3,12 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../../../core/providers/providers.dart';
 import '../../../core/services/analytics_service.dart';
+import '../../../core/services/translation_service.dart';
 
 class ChecklistScreen extends ConsumerWidget {
   const ChecklistScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Watch the translation provider to trigger rebuilds when language changes
+    ref.watch(translationProvider);
     final analytics = AnalyticsService();
     final navigationState = ref.watch(navigationStateProvider);
     final navigationNotifier = ref.read(navigationNotifierProvider.notifier);
@@ -19,7 +22,7 @@ class ChecklistScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(tr('checklist')),
+        title: Text(TranslationService.translate('checklist')),
         leading: IconButton(
           onPressed: () => navigationNotifier.goBack(),
           icon: const Icon(Icons.arrow_back),
@@ -47,7 +50,10 @@ class ChecklistScreen extends ConsumerWidget {
 
             // Progress text
             Text(
-              tr('progress', args: ['3', '10']), // TODO: Use actual values
+              TranslationService.translate('progress', [
+                '3',
+                '10',
+              ]), // TODO: Use actual values
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
             ),
             const SizedBox(height: 32),
@@ -76,7 +82,7 @@ class ChecklistScreen extends ConsumerWidget {
 
                     // Item title
                     Text(
-                      tr('sample_item_title'),
+                      TranslationService.translate('sample_item_title'),
                       style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -87,7 +93,7 @@ class ChecklistScreen extends ConsumerWidget {
 
                     // Item description
                     Text(
-                      tr('sample_item_description'),
+                      TranslationService.translate('sample_item_description'),
                       style: const TextStyle(fontSize: 16, color: Colors.grey),
                       textAlign: TextAlign.center,
                     ),
@@ -110,7 +116,7 @@ class ChecklistScreen extends ConsumerWidget {
                             );
                           },
                           icon: const Icon(Icons.skip_next),
-                          label: Text(tr('skip')),
+                          label: Text(TranslationService.translate('skip')),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.orange,
                             foregroundColor: Colors.white,
@@ -130,7 +136,7 @@ class ChecklistScreen extends ConsumerWidget {
                             );
                           },
                           icon: const Icon(Icons.check),
-                          label: Text(tr('complete')),
+                          label: Text(TranslationService.translate('complete')),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.green,
                             foregroundColor: Colors.white,
@@ -153,7 +159,7 @@ class ChecklistScreen extends ConsumerWidget {
                     // TODO: Go to previous item
                   },
                   icon: const Icon(Icons.arrow_back),
-                  label: Text(tr('previous')),
+                  label: Text(TranslationService.translate('previous')),
                 ),
 
                 // Next button
@@ -162,7 +168,7 @@ class ChecklistScreen extends ConsumerWidget {
                     // TODO: Go to next item
                   },
                   icon: const Icon(Icons.arrow_forward),
-                  label: Text(tr('next')),
+                  label: Text(TranslationService.translate('next')),
                 ),
               ],
             ),

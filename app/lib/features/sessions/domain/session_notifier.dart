@@ -41,6 +41,7 @@ class SessionNotifier extends StateNotifier<SessionState?> {
     );
 
     state = session;
+    print('DEBUG: startSession - session state set to: $state');
 
     // Save session to database
     try {
@@ -432,4 +433,39 @@ class SessionNotifier extends StateNotifier<SessionState?> {
       logger.e('Error cleaning up old sessions: $e');
     }
   }
+
+  // TODO: Tech Debt - Implement automatic session cleanup and analytics
+  //
+  // Current Issue: Sessions accumulate indefinitely in Firestore without cleanup,
+  // leading to storage costs and performance degradation. Current cleanup only
+  // marks sessions as abandoned but doesn't delete them.
+  //
+  // Tech Debt Impact:
+  // - Firestore storage costs increase over time
+  // - Query performance degrades with large session collections
+  // - No session analytics or insights available
+  // - Manual cleanup required to manage database size
+  //
+  // Implementation Plan:
+  // 1. Create SessionAnalyticsService to extract insights before deletion:
+  //    - Session completion rates by checklist
+  //    - Average session duration
+  //    - Most/least completed items
+  //    - User engagement patterns
+  // 2. Implement automatic cleanup with configurable retention policy:
+  //    - Delete completed sessions older than 30 days
+  //    - Delete abandoned sessions older than 7 days
+  //    - Archive important analytics data before deletion
+  // 3. Add scheduled cleanup triggers:
+  //    - Daily cleanup job for old sessions
+  //    - Weekly analytics generation
+  //    - Monthly retention policy review
+  // 4. Create admin dashboard for session management:
+  //    - View session statistics
+  //    - Manual cleanup controls
+  //    - Retention policy configuration
+  //
+  // Priority: High - affects storage costs and app performance
+  // Estimated effort: 2-3 days for basic implementation
+  // Dependencies: Analytics service, admin dashboard, scheduled jobs
 }

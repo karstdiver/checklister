@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:easy_localization/easy_localization.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../domain/checklist.dart';
 import '../domain/checklist_providers.dart';
 
 import '../../../core/services/analytics_service.dart';
+import '../../../core/services/translation_service.dart';
 import '../../../shared/widgets/app_card.dart';
 
 class ChecklistEditorScreen extends ConsumerStatefulWidget {
@@ -61,7 +61,9 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEditing ? tr('edit_checklist') : tr('create_checklist')),
+        title: Text(
+          isEditing ? tr(ref, 'edit_checklist') : tr(ref, 'create_checklist'),
+        ),
         leading: IconButton(
           onPressed: () => Navigator.of(context).pop(),
           icon: const Icon(Icons.arrow_back),
@@ -77,7 +79,7 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
               ),
             )
           else
-            TextButton(onPressed: _saveChecklist, child: Text(tr('save'))),
+            TextButton(onPressed: _saveChecklist, child: Text(tr(ref, 'save'))),
         ],
       ),
       body: Form(
@@ -91,7 +93,7 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    tr('basic_information'),
+                    tr(ref, 'basic_information'),
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -102,13 +104,13 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
                   TextFormField(
                     controller: _titleController,
                     decoration: InputDecoration(
-                      labelText: tr('title'),
-                      hintText: tr('enter_checklist_title'),
+                      labelText: tr(ref, 'title'),
+                      hintText: tr(ref, 'enter_checklist_title'),
                       border: const OutlineInputBorder(),
                     ),
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
-                        return tr('title_required');
+                        return tr(ref, 'title_required');
                       }
                       return null;
                     },
@@ -119,8 +121,8 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
                   TextFormField(
                     controller: _descriptionController,
                     decoration: InputDecoration(
-                      labelText: tr('description'),
-                      hintText: tr('enter_checklist_description'),
+                      labelText: tr(ref, 'description'),
+                      hintText: tr(ref, 'enter_checklist_description'),
                       border: const OutlineInputBorder(),
                     ),
                     maxLines: 3,
@@ -129,8 +131,8 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
 
                   // Public toggle
                   SwitchListTile(
-                    title: Text(tr('make_public')),
-                    subtitle: Text(tr('public_checklist_description')),
+                    title: Text(tr(ref, 'make_public')),
+                    subtitle: Text(tr(ref, 'public_checklist_description')),
                     value: _isPublic,
                     onChanged: (value) {
                       setState(() {
@@ -150,7 +152,7 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    tr('tags'),
+                    tr(ref, 'tags'),
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -164,8 +166,8 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
                         child: TextFormField(
                           controller: _tagController,
                           decoration: InputDecoration(
-                            labelText: tr('add_tag'),
-                            hintText: tr('enter_tag'),
+                            labelText: tr(ref, 'add_tag'),
+                            hintText: tr(ref, 'enter_tag'),
                             border: const OutlineInputBorder(),
                           ),
                         ),
@@ -173,7 +175,7 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
                       const SizedBox(width: 8),
                       ElevatedButton(
                         onPressed: _addTag,
-                        child: Text(tr('add')),
+                        child: Text(tr(ref, 'add')),
                       ),
                     ],
                   ),
@@ -209,7 +211,7 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        tr('items'),
+                        tr(ref, 'items'),
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -217,7 +219,7 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
                       ElevatedButton.icon(
                         onPressed: _addItem,
                         icon: const Icon(Icons.add),
-                        label: Text(tr('add_item')),
+                        label: Text(tr(ref, 'add_item')),
                       ),
                     ],
                   ),
@@ -234,7 +236,7 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            tr('no_items_yet'),
+                            tr(ref, 'no_items_yet'),
                             style: theme.textTheme.bodyLarge?.copyWith(
                               color: theme.colorScheme.onSurface.withOpacity(
                                 0.6,
@@ -243,7 +245,7 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            tr('add_items_description'),
+                            tr(ref, 'add_items_description'),
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: theme.colorScheme.onSurface.withOpacity(
                                 0.5,
@@ -350,14 +352,14 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(item != null ? tr('edit_item') : tr('add_item')),
+        title: Text(item != null ? tr(ref, 'edit_item') : tr(ref, 'add_item')),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: textController,
               decoration: InputDecoration(
-                labelText: tr('item_text'),
+                labelText: tr(ref, 'item_text'),
                 border: const OutlineInputBorder(),
               ),
             ),
@@ -365,7 +367,7 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
             TextField(
               controller: notesController,
               decoration: InputDecoration(
-                labelText: tr('notes'),
+                labelText: tr(ref, 'notes'),
                 border: const OutlineInputBorder(),
               ),
               maxLines: 3,
@@ -375,7 +377,7 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: Text(tr('cancel')),
+            child: Text(tr(ref, 'cancel')),
           ),
           ElevatedButton(
             onPressed: () {
@@ -406,7 +408,7 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
               }
               Navigator.of(context).pop();
             },
-            child: Text(tr('save')),
+            child: Text(tr(ref, 'save')),
           ),
         ],
       ),
@@ -475,7 +477,7 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(tr('error_saving_checklist')),
+            content: Text(tr(ref, 'error_saving_checklist')),
             backgroundColor: Colors.red,
           ),
         );

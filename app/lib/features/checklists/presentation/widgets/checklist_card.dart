@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:easy_localization/easy_localization.dart';
+import '../../../../core/services/translation_service.dart';
 import '../../domain/checklist.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../sessions/domain/session_providers.dart';
@@ -99,7 +99,7 @@ class ChecklistCard extends ConsumerWidget {
                               children: [
                                 const Icon(Icons.edit, size: 20),
                                 const SizedBox(width: 8),
-                                Text(tr('edit')),
+                                Text(tr(ref, 'edit')),
                               ],
                             ),
                           ),
@@ -110,7 +110,7 @@ class ChecklistCard extends ConsumerWidget {
                               children: [
                                 const Icon(Icons.copy, size: 20),
                                 const SizedBox(width: 8),
-                                Text(tr('duplicate')),
+                                Text(tr(ref, 'duplicate')),
                               ],
                             ),
                           ),
@@ -121,7 +121,7 @@ class ChecklistCard extends ConsumerWidget {
                               children: [
                                 const Icon(Icons.share, size: 20),
                                 const SizedBox(width: 8),
-                                Text(tr('share')),
+                                Text(tr(ref, 'share')),
                               ],
                             ),
                           ),
@@ -138,7 +138,7 @@ class ChecklistCard extends ConsumerWidget {
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
-                                  tr('delete'),
+                                  tr(ref, 'delete'),
                                   style: const TextStyle(color: Colors.red),
                                 ),
                               ],
@@ -228,7 +228,7 @@ class ChecklistCard extends ConsumerWidget {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    '${checklist.totalItems} ${tr('items')}',
+                    '${checklist.totalItems} ${tr(ref, 'items')}',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: colorScheme.onSurface.withOpacity(0.6),
                     ),
@@ -274,7 +274,7 @@ class ChecklistCard extends ConsumerWidget {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      '${tr('last_used')}: ${_formatDate(checklist.lastUsedAt!)}',
+                      '${tr(ref, 'last_used')}: ${_formatDate(ref, checklist.lastUsedAt!)}',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: colorScheme.onSurface.withOpacity(0.5),
                       ),
@@ -301,7 +301,7 @@ class ChecklistCard extends ConsumerWidget {
                       const Icon(Icons.public, size: 12, color: Colors.blue),
                       const SizedBox(width: 4),
                       Text(
-                        tr('public'),
+                        tr(ref, 'public'),
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: Colors.blue,
                           fontWeight: FontWeight.w500,
@@ -318,19 +318,19 @@ class ChecklistCard extends ConsumerWidget {
     );
   }
 
-  String _formatDate(DateTime date) {
+  String _formatDate(WidgetRef ref, DateTime date) {
     final now = DateTime.now();
     final difference = now.difference(date);
 
     if (difference.inDays == 0) {
-      return tr('today');
+      return tr(ref, 'today');
     } else if (difference.inDays == 1) {
-      return tr('yesterday');
+      return tr(ref, 'yesterday');
     } else if (difference.inDays < 7) {
-      return '${difference.inDays} ${tr('days_ago')}';
+      return '${difference.inDays} ${tr(ref, 'days_ago')}';
     } else if (difference.inDays < 30) {
       final weeks = (difference.inDays / 7).floor();
-      return '$weeks ${tr('weeks_ago')}';
+      return '$weeks ${tr(ref, 'weeks_ago')}';
     } else {
       return '${date.day}/${date.month}/${date.year}';
     }

@@ -21,7 +21,7 @@ class UserRepository {
         'isActive': true,
         'preferences': {
           'themeMode': 'system',
-          'language': 'en-US',
+          'language': 'en_US',
           'notifications': {'email': true, 'push': true},
         },
         'stats': {
@@ -51,6 +51,26 @@ class UserRepository {
     } catch (e) {
       print('🔍 DEBUG: Error in createUserDocumentIfNotExists: $e');
       throw Exception('Failed to create user document: $e');
+    }
+  }
+
+  Future<void> updateUserPreferences(
+    String userId,
+    Map<String, dynamic> preferences,
+  ) async {
+    try {
+      print('🔍 DEBUG: Updating user preferences for UID: $userId');
+      print('🔍 DEBUG: Preferences to update: $preferences');
+
+      await _firestore.collection('users').doc(userId).update({
+        'preferences': preferences,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      print('🔍 DEBUG: User preferences updated successfully');
+    } catch (e) {
+      print('🔍 DEBUG: Error updating user preferences: $e');
+      throw Exception('Failed to update user preferences: $e');
     }
   }
 }

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:easy_localization/easy_localization.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../core/providers/providers.dart';
 import '../../../core/navigation/navigation_notifier.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../features/auth/presentation/widgets/profile_image_picker.dart';
+import '../../../core/services/translation_service.dart';
 
 class ProfileOverviewScreen extends ConsumerStatefulWidget {
   const ProfileOverviewScreen({super.key});
@@ -68,6 +68,9 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Watch the translation provider to trigger rebuilds when language changes
+    ref.watch(translationProvider);
+
     return Consumer(
       builder: (context, ref, child) {
         final currentUser = ref.watch(currentUserProvider);
@@ -77,7 +80,7 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
 
         return Scaffold(
           appBar: AppBar(
-            title: Text(tr('profile')),
+            title: Text(TranslationService.translate('profile')),
             leading: IconButton(
               onPressed: () => Navigator.of(context).pop(),
               icon: const Icon(Icons.arrow_back),
@@ -114,7 +117,10 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
-          ElevatedButton(onPressed: _loadUserData, child: Text(tr('retry'))),
+          ElevatedButton(
+            onPressed: _loadUserData,
+            child: Text(TranslationService.translate('retry')),
+          ),
         ],
       ),
     );
@@ -177,7 +183,9 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
 
             // User Name
             Text(
-              currentUser?.displayName ?? currentUser?.email ?? tr('anonymous'),
+              currentUser?.displayName ??
+                  currentUser?.email ??
+                  TranslationService.translate('anonymous'),
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -196,7 +204,7 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
                 border: Border.all(color: Colors.green),
               ),
               child: Text(
-                tr('active'),
+                TranslationService.translate('active'),
                 style: const TextStyle(
                   color: Colors.green,
                   fontWeight: FontWeight.w500,
@@ -219,7 +227,7 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              tr('statistics'),
+              TranslationService.translate('statistics'),
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -232,7 +240,7 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
                 Expanded(
                   child: _buildStatItem(
                     icon: Icons.checklist,
-                    label: tr('total_checklists'),
+                    label: TranslationService.translate('total_checklists'),
                     value: '${stats['totalChecklists'] ?? 0}',
                     textColor: textColor,
                   ),
@@ -240,7 +248,7 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
                 Expanded(
                   child: _buildStatItem(
                     icon: Icons.check_circle,
-                    label: tr('completed_checklists'),
+                    label: TranslationService.translate('completed_checklists'),
                     value: '${stats['completedChecklists'] ?? 0}',
                     textColor: textColor,
                   ),
@@ -253,7 +261,7 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
                 Expanded(
                   child: _buildStatItem(
                     icon: Icons.list,
-                    label: tr('total_items'),
+                    label: TranslationService.translate('total_items'),
                     value: '${stats['totalItems'] ?? 0}',
                     textColor: textColor,
                   ),
@@ -261,7 +269,7 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
                 Expanded(
                   child: _buildStatItem(
                     icon: Icons.done_all,
-                    label: tr('completed_items'),
+                    label: TranslationService.translate('completed_items'),
                     value: '${stats['completedItems'] ?? 0}',
                     textColor: textColor,
                   ),
@@ -311,7 +319,7 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
             dense: true,
             leading: const Icon(Icons.edit, color: Colors.blue, size: 20),
             title: Text(
-              tr('edit_profile'),
+              TranslationService.translate('edit_profile'),
               style: TextStyle(fontSize: 14, color: textColor),
             ),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
@@ -324,7 +332,7 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
             dense: true,
             leading: const Icon(Icons.analytics, color: Colors.green, size: 20),
             title: Text(
-              tr('detailed_statistics'),
+              TranslationService.translate('detailed_statistics'),
               style: TextStyle(fontSize: 14, color: textColor),
             ),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
@@ -341,7 +349,7 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
               size: 20,
             ),
             title: Text(
-              tr('achievements'),
+              TranslationService.translate('achievements'),
               style: TextStyle(fontSize: 14, color: textColor),
             ),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
@@ -366,7 +374,7 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              tr('account_information'),
+              TranslationService.translate('account_information'),
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -375,27 +383,30 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
             ),
             const SizedBox(height: 12),
             _buildInfoRow(
-              tr('email'),
-              currentUser?.email ?? tr('not_available'),
+              TranslationService.translate('email'),
+              currentUser?.email ??
+                  TranslationService.translate('not_available'),
               textColor,
             ),
             _buildInfoRow(
-              tr('user_id'),
-              currentUser?.uid ?? tr('not_available'),
+              TranslationService.translate('user_id'),
+              currentUser?.uid ?? TranslationService.translate('not_available'),
               textColor,
             ),
             _buildInfoRow(
-              tr('email_verified'),
-              currentUser?.emailVerified == true ? tr('yes') : tr('no'),
+              TranslationService.translate('email_verified'),
+              currentUser?.emailVerified == true
+                  ? TranslationService.translate('yes')
+                  : TranslationService.translate('no'),
               textColor,
             ),
             _buildInfoRow(
-              tr('account_created'),
+              TranslationService.translate('account_created'),
               _formatTimestamp(_userData?['createdAt']),
               textColor,
             ),
             _buildInfoRow(
-              tr('last_updated'),
+              TranslationService.translate('last_updated'),
               _formatTimestamp(_userData?['updatedAt']),
               textColor,
             ),
@@ -446,7 +457,7 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
             dense: true,
             leading: const Icon(Icons.settings, color: Colors.grey, size: 20),
             title: Text(
-              tr('account_settings'),
+              TranslationService.translate('account_settings'),
               style: TextStyle(fontSize: 14, color: textColor),
             ),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
@@ -459,7 +470,7 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
             dense: true,
             leading: const Icon(Icons.security, color: Colors.grey, size: 20),
             title: Text(
-              tr('privacy_security'),
+              TranslationService.translate('privacy_security'),
               style: TextStyle(fontSize: 14, color: textColor),
             ),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
@@ -472,7 +483,7 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
             dense: true,
             leading: const Icon(Icons.help, color: Colors.grey, size: 20),
             title: Text(
-              tr('help_support'),
+              TranslationService.translate('help_support'),
               style: TextStyle(fontSize: 14, color: textColor),
             ),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
@@ -484,16 +495,16 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
   }
 
   String _formatTimestamp(dynamic timestamp) {
-    if (timestamp == null) return tr('not_available');
+    if (timestamp == null) return TranslationService.translate('not_available');
 
     try {
       if (timestamp is Timestamp) {
         final date = timestamp.toDate();
         return '${date.day}/${date.month}/${date.year}';
       }
-      return tr('not_available');
+      return TranslationService.translate('not_available');
     } catch (e) {
-      return tr('not_available');
+      return TranslationService.translate('not_available');
     }
   }
 }
