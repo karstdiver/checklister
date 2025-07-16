@@ -205,6 +205,13 @@ class SessionNotifier extends StateNotifier<SessionState?> {
     await _repository.saveSession(newState);
     logger.i('🎯 Completed session saved successfully');
 
+    // TODO: For paid tier, retain finished sessions for audit/history purposes instead of deleting.
+    // For free tier, delete finished sessions to save storage and improve performance.
+    logger.d(
+      '🗑️ Deleting finished session from Firestore: ${state!.sessionId}',
+    );
+    await _repository.deleteSession(state!.sessionId);
+
     // Clean up any other active sessions for the same checklist
     await _cleanupOtherActiveSessions(state!.checklistId, state!.sessionId);
   }

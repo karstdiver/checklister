@@ -136,6 +136,43 @@ async function displayUserInfo(userRecord) {
   console.log(`🚫 Disabled: ${userRecord.disabled}`);
 }
 
+// Add the names of top-level collections that reference userId
+const userLinkedCollections = ['sessions', 'checklists']; // Add more as needed
+
+async function deleteUserTopLevelDocs(userId) {
+  const db = admin.firestore();
+  let totalDeleted = 0;
+  for (const collectionName of userLinkedCollections) {
+    console.log(`🔍 Checking collection '${collectionName}' for documents belonging to user ${userId}...`);
+    const snapshot = await db.collection(collectionName).where('userId', '==', userId).get();
+    if (snapshot.empty) {
+      console.log(`ℹ️  No documents found in '${collectionName}' for user ${userId}`);
+      continue;
+    }
+    for (const doc of snapshot.docs) {
+      await doc.ref.delete();
+      totalDeleted++;
+      console.log(`✅ Deleted document ${doc.id} from '${collectionName}' for user ${userId}`);
+    }
+    console.log(`🗑️  Deleted ${snapshot.size} documents from '${collectionName}' for user ${userId}`);
+  }
+  return totalDeleted;
+}
+
+async function deleteUserDocument(userId) {
+  const db = admin.firestore();
+  const userDocRef = db.collection('users').doc(userId);
+  const userDoc = await userDocRef.get();
+  if (userDoc.exists) {
+    await userDocRef.delete();
+    console.log(`✅ Deleted user document for user: ${userId}`);
+    return true;
+  } else {
+    console.log(`ℹ️  No user document found for user: ${userId}`);
+    return false;
+  }
+}
+
 async function processUser(userRecord) {
   // Display user information
   await displayUserInfo(userRecord);
@@ -144,32 +181,36 @@ async function processUser(userRecord) {
   const collections = await getUserCollections(userRecord.uid);
   
   if (collections.length > 0) {
-    console.log(`📋 Collections: ${collections.join(', ')}`);
+    console.log(`📋 Subcollections: ${collections.join(', ')}`);
   } else {
-    console.log(`📋 Collections: None found`);
+    console.log(`📋 Subcollections: None found`);
   }
-  
+
+  // Info: Top-level collections to be checked
+  console.log(`📋 Top-level collections to be checked for userId: ${userLinkedCollections.join(', ')}`);
+
   // Ask if user wants to delete this user
   const shouldDeleteUser = await promptUser(`🗑️  Delete user ${userRecord.uid}? (y/N): `);
   
   if (shouldDeleteUser) {
     try {
-      // If user has collections, ask about deleting them
+      // If user has subcollections, ask about deleting them
       if (collections.length > 0) {
-        const shouldDeleteCollections = await promptUser(`🗂️  Delete all collections for user ${userRecord.uid}? (y/N): `);
-        
+        const shouldDeleteCollections = await promptUser(`🗂️  Delete all subcollections for user ${userRecord.uid}? (y/N): `);
         if (shouldDeleteCollections) {
           await deleteUserCollections(userRecord.uid, collections);
         } else {
-          console.log(`⚠️  User will be deleted but collections will remain (orphaned data)`);
+          console.log(`⚠️  User will be deleted but subcollections will remain (orphaned data)`);
         }
       }
-      
+      // Delete user document in 'users' collection
+      await deleteUserDocument(userRecord.uid);
+      // Delete all top-level docs in user-linked collections
+      await deleteUserTopLevelDocs(userRecord.uid);
       // Delete the user from Firebase Auth
       await admin.auth().deleteUser(userRecord.uid);
       console.log(`✅ Deleted user: ${userRecord.uid}`);
       return { deleted: true, collectionsDeleted: collections.length > 0 };
-      
     } catch (error) {
       console.error(`❌ Error deleting user ${userRecord.uid}:`, error.message);
       return { deleted: false, error: error.message };
