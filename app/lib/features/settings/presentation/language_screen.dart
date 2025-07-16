@@ -115,7 +115,7 @@ class LanguageScreen extends ConsumerWidget {
                       tileColor: isSelected
                           ? Theme.of(
                               context,
-                            ).colorScheme.primary.withOpacity(0.08)
+                            ).colorScheme.primary.withValues(alpha: 0.08)
                           : null,
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16,

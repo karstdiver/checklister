@@ -24,16 +24,6 @@ class ChecklisterApp extends ConsumerWidget {
     // Use the saved language from settings, fallback to context.locale
     final currentLocale = settings.language ?? context.locale;
 
-    print(
-      '🔍 DEBUG: ChecklisterApp - settings.language: ${settings.language?.languageCode}_${settings.language?.countryCode}',
-    );
-    print(
-      '🔍 DEBUG: ChecklisterApp - context.locale: ${context.locale.languageCode}_${context.locale.countryCode}',
-    );
-    print(
-      '🔍 DEBUG: ChecklisterApp - currentLocale: ${currentLocale.languageCode}_${currentLocale.countryCode}',
-    );
-
     return MaterialApp(
       title: 'Checklister',
       theme: AppTheme.lightTheme,

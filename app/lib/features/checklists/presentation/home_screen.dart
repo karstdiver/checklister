@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:easy_localization/easy_localization.dart';
 import '../../../core/providers/providers.dart';
-import '../../../core/providers/settings_provider.dart';
 import '../../../shared/widgets/logout_dialog.dart';
-import '../../../core/services/analytics_service.dart';
 import '../../../core/services/translation_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -12,7 +9,6 @@ import '../../sessions/domain/session_state.dart' as sessions;
 import '../../sessions/domain/session_providers.dart';
 import '../../sessions/presentation/session_screen.dart';
 import '../domain/checklist_providers.dart';
-import '../domain/checklist.dart';
 import 'widgets/checklist_card.dart';
 import 'checklist_editor_screen.dart';
 
@@ -82,9 +78,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         // Watch the translation provider to trigger rebuilds when language changes
         ref.watch(translationProvider);
 
-        final analytics = AnalyticsService();
         final currentUser = ref.watch(currentUserProvider);
-        final authState = ref.watch(authStateProvider);
         final authNotifier = ref.read(authNotifierProvider.notifier);
         final checklistsAsync = ref.watch(checklistNotifierProvider);
 
@@ -301,7 +295,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                             context,
                                             MaterialPageRoute(
                                               builder: (context) => SessionScreen(
-                                                checklistId: checklist.id!,
+                                                checklistId: checklist.id,
                                                 checklistTitle: checklist.title,
                                                 items: checklist.items
                                                     .map(
@@ -341,17 +335,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                                     .notifier,
                                               )
                                               .clearSession();
-                                          print(
-                                            'DEBUG: checklist.items.length = ${checklist.items.length}',
-                                          );
-                                          print(
-                                            'DEBUG: checklist.items = ${checklist.items}',
-                                          );
                                           Navigator.push(
                                             context,
                                             MaterialPageRoute(
                                               builder: (context) => SessionScreen(
-                                                checklistId: checklist.id!,
+                                                checklistId: checklist.id,
                                                 checklistTitle: checklist.title,
                                                 items: checklist.items
                                                     .map(
@@ -394,17 +382,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => SessionScreen(
-                                      checklistId: checklist.id!,
+                                      checklistId: checklist.id,
                                       checklistTitle: checklist.title,
                                       // Debug print for checklist items
                                       // ignore: avoid_print
                                       items: (() {
-                                        print(
-                                          'DEBUG: checklist.items.length = ${checklist.items.length}',
-                                        );
-                                        print(
-                                          'DEBUG: checklist.items = ${checklist.items}',
-                                        );
                                         return checklist.items
                                             .map(
                                               (item) => sessions.ChecklistItem(
@@ -443,7 +425,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   await ref
                                       .read(checklistNotifierProvider.notifier)
                                       .duplicateChecklist(
-                                        checklist.id!,
+                                        checklist.id,
                                         currentUser.uid,
                                       );
                                   if (context.mounted) {
@@ -511,7 +493,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 try {
                                   await ref
                                       .read(checklistNotifierProvider.notifier)
-                                      .deleteChecklist(checklist.id!);
+                                      .deleteChecklist(checklist.id);
                                   if (context.mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(

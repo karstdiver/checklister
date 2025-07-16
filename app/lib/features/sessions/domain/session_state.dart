@@ -62,10 +62,8 @@ class ChecklistItem {
       'text': text,
       'imageUrl': imageUrl,
       'status': status.name,
-      'completedAt': completedAt != null
-          ? completedAt!.toIso8601String()
-          : null,
-      'skippedAt': skippedAt != null ? skippedAt!.toIso8601String() : null,
+      'completedAt': completedAt?.toIso8601String(),
+      'skippedAt': skippedAt?.toIso8601String(),
       'notes': notes,
     };
   }

@@ -7,31 +7,6 @@ final logger = Logger();
 class SessionRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Helper function to parse Firestore Timestamp or ISO8601 string
-  // This can be used in SessionState.fromMap if needed
-  DateTime _parseTimestamp(dynamic timestamp) {
-    if (timestamp == null) {
-      throw Exception('Timestamp is null');
-    }
-
-    if (timestamp is Timestamp) {
-      return timestamp.toDate();
-    } else if (timestamp is String) {
-      try {
-        return DateTime.parse(timestamp);
-      } catch (e) {
-        logger.e('Failed to parse timestamp string: $timestamp', error: e);
-        throw Exception('Failed to parse timestamp string: $timestamp');
-      }
-    } else {
-      logger.e(
-        'Unexpected timestamp type: ${timestamp.runtimeType}',
-        error: timestamp,
-      );
-      throw Exception('Unexpected timestamp type: ${timestamp.runtimeType}');
-    }
-  }
-
   Future<void> saveSession(SessionState session) async {
     try {
       await _firestore

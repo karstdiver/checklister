@@ -303,7 +303,10 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
         const SizedBox(height: 3),
         Text(
           label,
-          style: TextStyle(fontSize: 11, color: textColor.withOpacity(0.7)),
+          style: TextStyle(
+            fontSize: 11,
+            color: textColor.withValues(alpha: 0.7),
+          ),
           textAlign: TextAlign.center,
         ),
       ],
@@ -428,7 +431,7 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
               label,
               style: TextStyle(
                 fontWeight: FontWeight.w500,
-                color: textColor.withOpacity(0.7),
+                color: textColor.withValues(alpha: 0.7),
                 fontSize: 13,
               ),
             ),

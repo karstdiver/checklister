@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:easy_localization/easy_localization.dart';
 import '../../../core/providers/providers.dart';
 import '../../../shared/widgets/logout_dialog.dart';
 import '../../../core/providers/settings_provider.dart';
@@ -26,7 +25,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     return Consumer(
       builder: (context, ref, child) {
         final currentUser = ref.watch(currentUserProvider);
-        final authState = ref.watch(authStateProvider);
         final navigationNotifier = ref.read(
           navigationNotifierProvider.notifier,
         );

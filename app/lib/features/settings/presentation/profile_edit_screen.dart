@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:easy_localization/easy_localization.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/providers/providers.dart';
 import '../../../core/providers/settings_provider.dart';
@@ -296,7 +295,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
               style: TextStyle(color: textColor),
               decoration: InputDecoration(
                 labelText: TranslationService.translate('display_name'),
-                labelStyle: TextStyle(color: textColor.withOpacity(0.8)),
+                labelStyle: TextStyle(color: textColor.withValues(alpha: 0.8)),
                 hintText: TranslationService.translate('enter_display_name'),
                 hintStyle: TextStyle(color: hintColor),
                 border: const OutlineInputBorder(),
@@ -319,7 +318,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
               style: TextStyle(color: textColor),
               decoration: InputDecoration(
                 labelText: TranslationService.translate('email'),
-                labelStyle: TextStyle(color: textColor.withOpacity(0.8)),
+                labelStyle: TextStyle(color: textColor.withValues(alpha: 0.8)),
                 hintText: TranslationService.translate('enter_email'),
                 hintStyle: TextStyle(color: hintColor),
                 border: const OutlineInputBorder(),
@@ -373,7 +372,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                 TranslationService.translate('english'),
                 style: TextStyle(
                   fontSize: 12,
-                  color: textColor.withOpacity(0.7),
+                  color: textColor.withValues(alpha: 0.7),
                 ),
               ),
               trailing: Icon(
@@ -453,7 +452,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                 TranslationService.translate('enabled'),
                 style: TextStyle(
                   fontSize: 12,
-                  color: textColor.withOpacity(0.7),
+                  color: textColor.withValues(alpha: 0.7),
                 ),
               ),
               trailing: Icon(

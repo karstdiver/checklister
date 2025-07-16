@@ -57,7 +57,9 @@ class ChecklistCard extends ConsumerWidget {
                           Text(
                             checklist.description!,
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: colorScheme.onSurface.withOpacity(0.7),
+                              color: colorScheme.onSurface.withValues(
+                                alpha: 0.7,
+                              ),
                             ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
@@ -73,7 +75,7 @@ class ChecklistCard extends ConsumerWidget {
                     PopupMenuButton<String>(
                       icon: Icon(
                         Icons.more_vert,
-                        color: colorScheme.onSurface.withOpacity(0.7),
+                        color: colorScheme.onSurface.withValues(alpha: 0.7),
                       ),
                       onSelected: (value) {
                         switch (value) {
@@ -175,10 +177,12 @@ class ChecklistCard extends ConsumerWidget {
                           child: Container(
                             height: 8,
                             decoration: BoxDecoration(
-                              color: colorScheme.surfaceVariant,
+                              color: colorScheme.surfaceContainerHighest,
                               borderRadius: BorderRadius.circular(4),
                               border: Border.all(
-                                color: colorScheme.outline.withOpacity(0.3),
+                                color: colorScheme.outline.withValues(
+                                  alpha: 0.3,
+                                ),
                                 width: 1,
                               ),
                             ),
@@ -204,7 +208,7 @@ class ChecklistCard extends ConsumerWidget {
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: hasActiveSession
                                 ? Colors.blue
-                                : colorScheme.onSurface.withOpacity(0.7),
+                                : colorScheme.onSurface.withValues(alpha: 0.7),
                             fontWeight: hasActiveSession
                                 ? FontWeight.bold
                                 : FontWeight.normal,
@@ -224,13 +228,13 @@ class ChecklistCard extends ConsumerWidget {
                   Icon(
                     Icons.checklist,
                     size: 16,
-                    color: colorScheme.onSurface.withOpacity(0.6),
+                    color: colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
                   const SizedBox(width: 4),
                   Text(
                     '${checklist.totalItems} ${tr(ref, 'items')}',
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurface.withOpacity(0.6),
+                      color: colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -240,13 +244,13 @@ class ChecklistCard extends ConsumerWidget {
                     Icon(
                       Icons.label,
                       size: 16,
-                      color: colorScheme.onSurface.withOpacity(0.6),
+                      color: colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
                     const SizedBox(width: 4),
                     Text(
                       checklist.tags.take(2).join(', '),
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurface.withOpacity(0.6),
+                        color: colorScheme.onSurface.withValues(alpha: 0.6),
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -255,7 +259,7 @@ class ChecklistCard extends ConsumerWidget {
                       Text(
                         ' +${checklist.tags.length - 2}',
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurface.withOpacity(0.6),
+                          color: colorScheme.onSurface.withValues(alpha: 0.6),
                         ),
                       ),
                   ],
@@ -270,13 +274,13 @@ class ChecklistCard extends ConsumerWidget {
                     Icon(
                       Icons.access_time,
                       size: 14,
-                      color: colorScheme.onSurface.withOpacity(0.5),
+                      color: colorScheme.onSurface.withValues(alpha: 0.5),
                     ),
                     const SizedBox(width: 4),
                     Text(
                       '${tr(ref, 'last_used')}: ${_formatDate(ref, checklist.lastUsedAt!)}',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurface.withOpacity(0.5),
+                        color: colorScheme.onSurface.withValues(alpha: 0.5),
                       ),
                     ),
                   ],
@@ -292,7 +296,7 @@ class ChecklistCard extends ConsumerWidget {
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.1),
+                    color: Colors.blue.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(

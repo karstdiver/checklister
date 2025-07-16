@@ -41,7 +41,6 @@ class SessionNotifier extends StateNotifier<SessionState?> {
     );
 
     state = session;
-    print('DEBUG: startSession - session state set to: $state');
 
     // Save session to database
     try {
@@ -247,22 +246,13 @@ class SessionNotifier extends StateNotifier<SessionState?> {
     if (state == null) return;
 
     logger.i('👈 Swipe LEFT - Completing current item');
-    print(
-      'DEBUG: handleSwipeLeft - before completeCurrentItem, currentItemIndex=${state!.currentItemIndex}, completedItems=${state!.completedItems}, skippedItems=${state!.skippedItems}',
-    );
     await completeCurrentItem();
-    print(
-      'DEBUG: handleSwipeLeft - after completeCurrentItem, currentItemIndex=${state?.currentItemIndex}, completedItems=${state?.completedItems}, skippedItems=${state?.skippedItems}',
-    );
 
     // Move to next item if available
     if (state != null && state!.canGoNext) {
       nextItem();
       logger.d(
         '➡️ Moved to next item: ${state!.currentItemIndex + 1}/${state!.totalItems}',
-      );
-      print(
-        'DEBUG: handleSwipeLeft - after nextItem, currentItemIndex=${state!.currentItemIndex}, completedItems=${state!.completedItems}, skippedItems=${state!.skippedItems}',
       );
     }
   }
@@ -319,10 +309,6 @@ class SessionNotifier extends StateNotifier<SessionState?> {
           '🔄 Completed items: ${session.completedItems}/${session.totalItems}',
         );
         logger.i('🔄 Current item index: ${session.currentItemIndex}');
-
-        print(
-          'DEBUG: loadSession - loaded session: sessionId=${session.sessionId}, currentItemIndex=${session.currentItemIndex}, completedItems=${session.completedItems}, skippedItems=${session.skippedItems}',
-        );
 
         // Find the first incomplete item
         int firstIncomplete = session.items.indexWhere(

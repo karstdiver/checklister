@@ -61,9 +61,9 @@ class UserUidDisplay extends ConsumerWidget {
           onPressed: () {
             final currentUid = getCurrentUserUid();
             if (currentUid != null) {
-              print('Current UID: $currentUid');
+              // print('Current UID: $currentUid');
             } else {
-              print('No user logged in');
+              // print('No user logged in');
             }
           },
           child: const Text('Print Current UID'),
@@ -76,7 +76,7 @@ class UserUidDisplay extends ConsumerWidget {
 // Example 6: Function that uses UID for Firestore operations
 Future<void> createUserDocument(String uid) async {
   // This is what you'd implement in the TODO sections
-  print('Creating user document for UID: $uid');
+  // print('Creating user document for UID: $uid');
 
   // Example Firestore operation:
   // await FirebaseFirestore.instance
@@ -124,7 +124,7 @@ class ExampleAuthNotifier extends StateNotifier<AuthState> {
 
       if (userCredential.user != null) {
         final uid = userCredential.user!.uid;
-        print('User signed in with UID: $uid');
+        // print('User signed in with UID: $uid');
 
         // Create user document in Firestore
         await createUserDocument(uid);

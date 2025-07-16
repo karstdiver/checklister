@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:easy_localization/easy_localization.dart';
 import '../../../core/providers/providers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:async';
@@ -74,7 +73,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                 child: Container(
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white.withOpacity(0.15),
+                    color: Colors.white.withValues(alpha: 0.15),
                   ),
                   padding: const EdgeInsets.all(32),
                   child: Image.asset(

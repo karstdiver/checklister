@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class TranslationService {
   static final Logger _logger = Logger();
-  static Map<String, Map<String, dynamic>> _translations = {};
+  static final Map<String, Map<String, dynamic>> _translations = {};
   static Locale? _currentLocale;
 
   static Future<void> loadTranslations(Locale locale) async {
@@ -58,19 +58,15 @@ class TranslationService {
     final translations = _translations[localeKey];
 
     if (translations == null) {
-      print(
-        'WARNING: translate() - No translations loaded for localeKey: $localeKey',
+      _logger.w(
+        'translate() - No translations loaded for localeKey: $localeKey',
       );
       return key;
     }
     if (!translations.containsKey(key)) {
-      print(
-        'WARNING: translate() - Missing translation key "$key" for localeKey: $localeKey',
+      _logger.w(
+        'translate() - Missing translation key "$key" for localeKey: $localeKey',
       );
-    }
-
-    if (translations == null) {
-      return key;
     }
 
     final translation = translations[key];

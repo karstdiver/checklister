@@ -2,11 +2,13 @@ import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:logger/logger.dart';
 
 class ProfileImageService {
   final FirebaseStorage _storage = FirebaseStorage.instance;
   final ImagePicker _picker = ImagePicker();
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final Logger _logger = Logger();
 
   /// Pick an image from gallery
   Future<File?> pickImageFromGallery() async {
@@ -80,7 +82,7 @@ class ProfileImageService {
       }
     } catch (e) {
       // Don't throw error for deletion, just log it
-      print('Failed to delete old profile image: $e');
+      _logger.w('Failed to delete old profile image: $e');
     }
   }
 }
