@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/providers/providers.dart';
+import '../../../core/domain/user_tier.dart';
+import '../../../core/providers/privilege_provider.dart';
 import '../../../shared/widgets/logout_dialog.dart';
 import '../../../core/services/translation_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -69,6 +71,73 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         );
       },
     );
+  }
+
+  Widget _buildTierIndicator(WidgetRef ref) {
+    final privileges = ref.watch(privilegeProvider);
+    final currentTier = privileges?.tier ?? UserTier.anonymous;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: _getTierColor(currentTier),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(_getTierIcon(currentTier), color: Colors.white, size: 16),
+          const SizedBox(width: 6),
+          Text(
+            _getTierDisplayName(currentTier),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _getTierColor(UserTier tier) {
+    switch (tier) {
+      case UserTier.anonymous:
+        return Colors.grey;
+      case UserTier.free:
+        return Colors.blue;
+      case UserTier.premium:
+        return Colors.purple;
+      case UserTier.pro:
+        return Colors.orange;
+    }
+  }
+
+  IconData _getTierIcon(UserTier tier) {
+    switch (tier) {
+      case UserTier.anonymous:
+        return Icons.person_outline;
+      case UserTier.free:
+        return Icons.star_outline;
+      case UserTier.premium:
+        return Icons.star;
+      case UserTier.pro:
+        return Icons.star_rounded;
+    }
+  }
+
+  String _getTierDisplayName(UserTier tier) {
+    switch (tier) {
+      case UserTier.anonymous:
+        return 'Anonymous';
+      case UserTier.free:
+        return 'Free';
+      case UserTier.premium:
+        return 'Premium';
+      case UserTier.pro:
+        return 'Pro';
+    }
   }
 
   @override
@@ -155,6 +224,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               children: [
                 // Welcome section
                 _buildWelcomeText(currentUser),
+                const SizedBox(height: 8),
+                _buildTierIndicator(ref),
                 const SizedBox(height: 24),
 
                 // My Checklists section

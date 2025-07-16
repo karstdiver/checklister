@@ -2,8 +2,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../features/auth/domain/auth_notifier.dart';
 import '../../features/auth/domain/auth_state.dart';
+import '../../features/auth/data/user_repository.dart';
 import '../navigation/navigation_notifier.dart';
 import '../navigation/navigation_state.dart';
+import 'privilege_provider.dart';
 
 // Firebase Auth provider with fallback
 final firebaseAuthProvider = Provider<FirebaseAuth?>((ref) {
@@ -13,6 +15,11 @@ final firebaseAuthProvider = Provider<FirebaseAuth?>((ref) {
     // Return null if Firebase is not available
     return null;
   }
+});
+
+// User repository provider
+final userRepositoryProvider = Provider<UserRepository>((ref) {
+  return UserRepository();
 });
 
 // Authentication providers
