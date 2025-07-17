@@ -201,5 +201,14 @@
   "create_free_account": "Create Your Free Account",
   "signup_unlock_list": "Sign up to unlock:\n• Save and edit your checklists\n• Session history and progress tracking\n• Checklist templates\n• Data backup and sync\n• Create up to 5 checklists with 15 items each",
   "signup_flow_coming_soon": "Signup flow coming soon!",
-  "upgrade_flow_coming_soon": "Upgrade flow coming soon!"
+  "upgrade_flow_coming_soon": "Upgrade flow coming soon!",
+  "anonymous_profile_encouragement_title": "Create Your Profile",
+  "anonymous_profile_encouragement_subtitle": "Sign up to unlock your personal profile and track your progress",
+  "anonymous_profile_encouragement_description": "Get access to personalized features, progress tracking, and data backup when you create your free account.",
+  "anonymous_profile_benefits": "Profile Benefits:",
+  "anonymous_profile_benefit_1": "• Save and edit your checklists",
+  "anonymous_profile_benefit_2": "• Track your progress over time",
+  "anonymous_profile_benefit_3": "• Access your data across devices",
+  "anonymous_profile_benefit_4": "• Personalized experience",
+  "anonymous_profile_benefit_5": "• Data backup and sync"
 }

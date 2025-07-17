@@ -201,5 +201,14 @@
   "create_free_account": "Crear tu Cuenta Gratuita",
   "signup_unlock_list": "Regístrate para desbloquear:\n• Guardar y editar tus listas\n• Historial de sesiones y seguimiento de progreso\n• Plantillas de listas\n• Respaldo y sincronización de datos\n• Crear hasta 5 listas con 15 elementos cada una",
   "signup_flow_coming_soon": "¡Flujo de registro próximamente!",
-  "upgrade_flow_coming_soon": "¡Flujo de actualización próximamente!"
+  "upgrade_flow_coming_soon": "¡Flujo de actualización próximamente!",
+  "anonymous_profile_encouragement_title": "Crea tu Perfil",
+  "anonymous_profile_encouragement_subtitle": "Regístrate para desbloquear tu perfil personal y rastrear tu progreso",
+  "anonymous_profile_encouragement_description": "Obtén acceso a funciones personalizadas, seguimiento de progreso y respaldo de datos cuando crees tu cuenta gratuita.",
+  "anonymous_profile_benefits": "Beneficios del Perfil:",
+  "anonymous_profile_benefit_1": "• Guardar y editar tus listas",
+  "anonymous_profile_benefit_2": "• Rastrear tu progreso en el tiempo",
+  "anonymous_profile_benefit_3": "• Acceder a tus datos en todos los dispositivos",
+  "anonymous_profile_benefit_4": "• Experiencia personalizada",
+  "anonymous_profile_benefit_5": "• Respaldo y sincronización de datos"
 }

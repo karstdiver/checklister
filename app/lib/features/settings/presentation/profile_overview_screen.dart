@@ -9,6 +9,7 @@ import '../../../features/auth/presentation/widgets/profile_image_picker.dart';
 import '../../../core/services/translation_service.dart';
 import '../../../core/widgets/feature_guard.dart';
 import '../../../core/widgets/signup_encouragement.dart';
+import '../../../core/widgets/anonymous_profile_encouragement.dart';
 import '../../../core/domain/user_tier.dart';
 import '../../../core/providers/privilege_provider.dart';
 
@@ -81,6 +82,11 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
         final navigationNotifier = ref.read(
           navigationNotifierProvider.notifier,
         );
+
+        // Show encouragement screen for anonymous users
+        if (currentUser == null || currentUser.isAnonymous) {
+          return AnonymousProfileEncouragement();
+        }
 
         return Scaffold(
           appBar: AppBar(
