@@ -9,6 +9,9 @@ class PrivilegeTestPanel extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Watch the translation provider to trigger rebuilds when language changes
+    ref.watch(translationProvider);
+
     final privileges = ref.watch(privilegeProvider);
     final currentTier = privileges?.tier ?? UserTier.anonymous;
 
@@ -17,7 +20,7 @@ class PrivilegeTestPanel extends ConsumerWidget {
         children: [
           Icon(Icons.science, color: Colors.orange),
           const SizedBox(width: 8),
-          Text('🧪 Test Privileges (DEV ONLY)'),
+          Text(TranslationService.translate('test_privileges')),
         ],
       ),
       children: [
@@ -27,12 +30,14 @@ class PrivilegeTestPanel extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Current Tier: ${_getTierName(currentTier)}',
+                TranslationService.translate('current_tier', [
+                  _getTierName(currentTier),
+                ]),
                 style: Theme.of(context).textTheme.titleSmall,
               ),
               const SizedBox(height: 16),
               Text(
-                'Switch to test different privilege levels:',
+                TranslationService.translate('switch_privilege_levels'),
                 style: Theme.of(context).textTheme.bodySmall,
               ),
               const SizedBox(height: 8),
@@ -56,7 +61,7 @@ class PrivilegeTestPanel extends ConsumerWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                'Current Privileges:',
+                TranslationService.translate('current_privileges'),
                 style: Theme.of(context).textTheme.titleSmall,
               ),
               const SizedBox(height: 8),
@@ -71,18 +76,20 @@ class PrivilegeTestPanel extends ConsumerWidget {
   String _getTierName(UserTier tier) {
     switch (tier) {
       case UserTier.anonymous:
-        return 'Anonymous';
+        return TranslationService.translate('anonymous');
       case UserTier.free:
-        return 'Free';
+        return TranslationService.translate('free');
       case UserTier.premium:
-        return 'Premium';
+        return TranslationService.translate('premium');
       case UserTier.pro:
-        return 'Pro';
+        return TranslationService.translate('pro');
     }
   }
 
   Widget _buildPrivilegeList(UserPrivileges? privileges) {
-    if (privileges == null) return const Text('No privileges loaded');
+    if (privileges == null) {
+      return Text(TranslationService.translate('no_privileges_loaded'));
+    }
 
     final features = privileges.features;
     final enabledFeatures = features.entries
@@ -107,7 +114,7 @@ class PrivilegeTestPanel extends ConsumerWidget {
         ),
         if (enabledFeatures.isEmpty)
           Text(
-            'No features enabled',
+            TranslationService.translate('no_features_enabled'),
             style: TextStyle(
               color: Colors.grey[600],
               fontStyle: FontStyle.italic,
@@ -126,7 +133,11 @@ class PrivilegeTestPanel extends ConsumerWidget {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Switched to ${_getTierName(tier)} tier'),
+        content: Text(
+          TranslationService.translate('switched_to_tier', [
+            _getTierName(tier),
+          ]),
+        ),
         duration: const Duration(seconds: 2),
       ),
     );

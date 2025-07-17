@@ -99,7 +99,7 @@ class SignupEncouragement extends ConsumerWidget {
                   onPressed:
                       onSignupPressed ?? () => _showSignupDialog(context),
                   icon: const Icon(Icons.person_add, size: 18),
-                  label: const Text('Sign Up Free'),
+                  label: Text(TranslationService.translate('sign_up_free')),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue[600],
                     foregroundColor: Colors.white,
@@ -111,7 +111,7 @@ class SignupEncouragement extends ConsumerWidget {
               TextButton(
                 onPressed: onDismiss,
                 child: Text(
-                  'Maybe Later',
+                  TranslationService.translate('maybe_later'),
                   style: TextStyle(color: Colors.grey[600]),
                 ),
               ),
@@ -126,26 +126,19 @@ class SignupEncouragement extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Create Your Free Account'),
-        content: const Text(
-          'Sign up to unlock:\n'
-          '• Save and edit your checklists\n'
-          '• Session history and progress tracking\n'
-          '• Checklist templates\n'
-          '• Data backup and sync\n'
-          '• Create up to 5 checklists with 15 items each',
-        ),
+        title: Text(TranslationService.translate('create_free_account')),
+        content: Text(TranslationService.translate('signup_unlock_list')),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+            child: Text(TranslationService.translate('cancel')),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.of(context).pop();
               Navigator.pushReplacementNamed(context, '/login');
             },
-            child: const Text('Sign Up'),
+            child: Text(TranslationService.translate('signup')),
           ),
         ],
       ),
@@ -257,24 +250,24 @@ class ProfilePictureEncouragement extends ConsumerWidget {
   String _getTitle(UserTier tier) {
     switch (tier) {
       case UserTier.anonymous:
-        return 'Personalize Your Profile';
+        return TranslationService.translate('personalize_your_profile');
       case UserTier.free:
-        return 'Unlock Profile Pictures';
+        return TranslationService.translate('unlock_profile_pictures');
       case UserTier.premium:
       case UserTier.pro:
-        return 'Profile Pictures Available';
+        return TranslationService.translate('profile_pictures_available');
     }
   }
 
   String _getDescription(UserTier tier) {
     switch (tier) {
       case UserTier.anonymous:
-        return 'Sign up to add a profile picture and personalize your experience.';
+        return TranslationService.translate('signup_profile_description');
       case UserTier.free:
-        return 'Upgrade to Premium to add profile pictures and unlock more personalization features.';
+        return TranslationService.translate('upgrade_profile_description');
       case UserTier.premium:
       case UserTier.pro:
-        return 'You have access to profile pictures and all personalization features.';
+        return TranslationService.translate('premium_profile_description');
     }
   }
 }
@@ -321,24 +314,24 @@ class ProfilePictureDetailsDialog extends ConsumerWidget {
   String _getDialogTitle() {
     switch (userTier) {
       case UserTier.anonymous:
-        return 'Why Sign Up?';
+        return TranslationService.translate('why_sign_up');
       case UserTier.free:
-        return 'Premium Features';
+        return TranslationService.translate('premium_features');
       case UserTier.premium:
       case UserTier.pro:
-        return 'Your Premium Benefits';
+        return TranslationService.translate('your_premium_benefits');
     }
   }
 
   String _getDialogContent() {
     switch (userTier) {
       case UserTier.anonymous:
-        return 'Sign up to unlock these amazing features:';
+        return TranslationService.translate('signup_unlock_features');
       case UserTier.free:
-        return 'Upgrade to Premium to get access to:';
+        return TranslationService.translate('upgrade_access_features');
       case UserTier.premium:
       case UserTier.pro:
-        return 'You currently have access to:';
+        return TranslationService.translate('currently_have_access');
     }
   }
 
@@ -371,28 +364,28 @@ class ProfilePictureDetailsDialog extends ConsumerWidget {
     switch (userTier) {
       case UserTier.anonymous:
         return [
-          'Profile pictures and customization',
-          'Unlimited checklists',
-          'Session persistence',
-          'Advanced features',
-          'Data backup and sync',
+          TranslationService.translate('profile_pictures_customization'),
+          TranslationService.translate('unlimited_checklists'),
+          TranslationService.translate('session_persistence'),
+          TranslationService.translate('advanced_features'),
+          TranslationService.translate('data_backup_sync'),
         ];
       case UserTier.free:
         return [
-          'Profile pictures',
-          'Advanced personalization',
-          'Priority support',
-          'Custom themes',
-          'Export capabilities',
+          TranslationService.translate('profile_pictures_customization'),
+          TranslationService.translate('advanced_personalization'),
+          TranslationService.translate('priority_support'),
+          TranslationService.translate('custom_themes'),
+          TranslationService.translate('export_capabilities'),
         ];
       case UserTier.premium:
       case UserTier.pro:
         return [
-          'Profile pictures ✓',
-          'Advanced personalization ✓',
-          'Priority support ✓',
-          'Custom themes ✓',
-          'Export capabilities ✓',
+          TranslationService.translate('profile_pictures_check'),
+          TranslationService.translate('advanced_personalization_check'),
+          TranslationService.translate('priority_support_check'),
+          TranslationService.translate('custom_themes_check'),
+          TranslationService.translate('export_capabilities_check'),
         ];
     }
   }
