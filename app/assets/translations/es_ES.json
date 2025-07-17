@@ -200,5 +200,6 @@
   "maybe_later": "Quizás Después",
   "create_free_account": "Crear tu Cuenta Gratuita",
   "signup_unlock_list": "Regístrate para desbloquear:\n• Guardar y editar tus listas\n• Historial de sesiones y seguimiento de progreso\n• Plantillas de listas\n• Respaldo y sincronización de datos\n• Crear hasta 5 listas con 15 elementos cada una",
-  "cancel": "Cancelar"
+  "signup_flow_coming_soon": "¡Flujo de registro próximamente!",
+  "upgrade_flow_coming_soon": "¡Flujo de actualización próximamente!"
 }

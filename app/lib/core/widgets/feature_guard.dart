@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/privilege_provider.dart';
 import '../domain/user_tier.dart';
+import '../services/translation_service.dart';
 
 class FeatureGuard extends ConsumerWidget {
   final Widget child;
@@ -95,7 +96,11 @@ class FeatureGuard extends ConsumerWidget {
               Navigator.of(context).pop();
               // TODO: Implement upgrade flow
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Upgrade flow coming soon!')),
+                SnackBar(
+                  content: Text(
+                    TranslationService.translate('upgrade_flow_coming_soon'),
+                  ),
+                ),
               );
             },
             child: const Text('Upgrade'),

@@ -200,5 +200,6 @@
   "maybe_later": "Maybe Later",
   "create_free_account": "Create Your Free Account",
   "signup_unlock_list": "Sign up to unlock:\n• Save and edit your checklists\n• Session history and progress tracking\n• Checklist templates\n• Data backup and sync\n• Create up to 5 checklists with 15 items each",
-  "cancel": "Cancel"
+  "signup_flow_coming_soon": "Signup flow coming soon!",
+  "upgrade_flow_coming_soon": "Upgrade flow coming soon!"
 }

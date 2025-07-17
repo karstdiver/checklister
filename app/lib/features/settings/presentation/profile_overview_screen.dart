@@ -188,13 +188,23 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
                 onSignUp: () {
                   // TODO: Navigate to signup screen
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Signup flow coming soon!')),
+                    SnackBar(
+                      content: Text(
+                        TranslationService.translate('signup_flow_coming_soon'),
+                      ),
+                    ),
                   );
                 },
                 onUpgrade: () {
                   // TODO: Navigate to upgrade screen
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Upgrade flow coming soon!')),
+                    SnackBar(
+                      content: Text(
+                        TranslationService.translate(
+                          'upgrade_flow_coming_soon',
+                        ),
+                      ),
+                    ),
                   );
                 },
                 onDetails: () {
