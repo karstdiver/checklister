@@ -7,6 +7,11 @@ import '../../../shared/widgets/app_card.dart';
 import '../../../features/settings/presentation/language_screen.dart';
 import '../../../features/auth/presentation/widgets/profile_image_picker.dart';
 import '../../../core/services/translation_service.dart';
+import '../../../core/widgets/feature_guard.dart';
+import '../../../core/widgets/signup_encouragement.dart';
+import '../../../core/domain/user_tier.dart';
+import '../../../core/providers/privilege_provider.dart';
+import '../../../core/widgets/privilege_test_panel.dart';
 
 class ProfileEditScreen extends ConsumerStatefulWidget {
   const ProfileEditScreen({super.key});
@@ -219,6 +224,10 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
           _buildPreferencesSection(),
           const SizedBox(height: 16),
 
+          // TESTING: Privilege Test Panel (DEV ONLY)
+          const PrivilegeTestPanel(),
+          const SizedBox(height: 16),
+
           // Save Button
           _buildSaveButton(),
           const SizedBox(height: 16),
@@ -234,39 +243,64 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     final currentUser = ref.watch(currentUserProvider);
     final userData = _userData;
 
-    return AppCard(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Text(
-              TranslationService.translate('profile_picture'),
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.onSurface,
+    return ProfilePicturesGuard(
+      child: AppCard(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              Text(
+                TranslationService.translate('profile_picture'),
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            ProfileImagePicker(
-              currentImageUrl:
-                  userData?['profileImageUrl'] ?? currentUser?.photoURL,
-              size: 100,
-              onImageChanged: () {
-                // Reload user data to get the updated profile image
-                _loadUserData();
-              },
-            ),
-            const SizedBox(height: 12),
-            Text(
-              TranslationService.translate('change_photo'),
-              style: TextStyle(
-                fontSize: 14,
-                color: Theme.of(context).colorScheme.primary,
+              const SizedBox(height: 16),
+              ProfileImagePicker(
+                currentImageUrl:
+                    userData?['profileImageUrl'] ?? currentUser?.photoURL,
+                size: 100,
+                onImageChanged: () {
+                  // Reload user data to get the updated profile image
+                  _loadUserData();
+                },
               ),
-            ),
-          ],
+              const SizedBox(height: 12),
+              Text(
+                TranslationService.translate('change_photo'),
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+            ],
+          ),
         ),
+      ),
+      fallback: ProfilePictureEncouragement(
+        onSignUp: () {
+          // TODO: Navigate to signup screen
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Signup flow coming soon!')),
+          );
+        },
+        onUpgrade: () {
+          // TODO: Navigate to upgrade screen
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Upgrade flow coming soon!')),
+          );
+        },
+        onDetails: () {
+          final privileges = ref.read(privilegeProvider);
+          final currentTier = privileges?.tier ?? UserTier.anonymous;
+          showDialog(
+            context: context,
+            builder: (context) =>
+                ProfilePictureDetailsDialog(userTier: currentTier),
+          );
+        },
       ),
     );
   }

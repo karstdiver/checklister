@@ -7,6 +7,10 @@ import '../../../core/navigation/navigation_notifier.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../features/auth/presentation/widgets/profile_image_picker.dart';
 import '../../../core/services/translation_service.dart';
+import '../../../core/widgets/feature_guard.dart';
+import '../../../core/widgets/signup_encouragement.dart';
+import '../../../core/domain/user_tier.dart';
+import '../../../core/providers/privilege_provider.dart';
 
 class ProfileOverviewScreen extends ConsumerStatefulWidget {
   const ProfileOverviewScreen({super.key});
@@ -170,14 +174,39 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
         child: Column(
           children: [
             // Profile Picture
-            ProfileImagePicker(
-              currentImageUrl:
-                  _userData?['profileImageUrl'] ?? currentUser?.photoURL,
-              size: 80,
-              onImageChanged: () {
-                // Reload user data to get the updated profile image
-                _loadUserData();
-              },
+            ProfilePicturesGuard(
+              child: ProfileImagePicker(
+                currentImageUrl:
+                    _userData?['profileImageUrl'] ?? currentUser?.photoURL,
+                size: 80,
+                onImageChanged: () {
+                  // Reload user data to get the updated profile image
+                  _loadUserData();
+                },
+              ),
+              fallback: ProfilePictureEncouragement(
+                onSignUp: () {
+                  // TODO: Navigate to signup screen
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Signup flow coming soon!')),
+                  );
+                },
+                onUpgrade: () {
+                  // TODO: Navigate to upgrade screen
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Upgrade flow coming soon!')),
+                  );
+                },
+                onDetails: () {
+                  final privileges = ref.read(privilegeProvider);
+                  final currentTier = privileges?.tier ?? UserTier.anonymous;
+                  showDialog(
+                    context: context,
+                    builder: (context) =>
+                        ProfilePictureDetailsDialog(userTier: currentTier),
+                  );
+                },
+              ),
             ),
             const SizedBox(height: 12),
 

@@ -81,24 +81,42 @@ class PrivilegeNotifier extends StateNotifier<UserPrivileges?> {
       case UserTier.anonymous:
         return {
           'maxChecklists': 1,
-          'maxItemsPerChecklist': 5,
+          'maxItemsPerChecklist': 3,
           'sessionPersistence': false,
           'analytics': false,
           'export': false,
           'sharing': false,
           'customThemes': false,
           'prioritySupport': false,
+          'canEditChecklists': false,
+          'canDeleteChecklists': false,
+          'canDuplicateChecklists': false,
+          'sessionHistory': false,
+          'checklistTemplates': false,
+          'dataBackup': false,
+          'canUseAdvancedFeatures': false,
+          'profileCustomization': false,
+          'profilePictures': false,
         };
       case UserTier.free:
         return {
-          'maxChecklists': 3,
-          'maxItemsPerChecklist': 10,
-          'sessionPersistence': false,
+          'maxChecklists': 5,
+          'maxItemsPerChecklist': 15,
+          'sessionPersistence': true,
           'analytics': false,
           'export': false,
           'sharing': false,
           'customThemes': false,
           'prioritySupport': false,
+          'canEditChecklists': true,
+          'canDeleteChecklists': true,
+          'canDuplicateChecklists': true,
+          'sessionHistory': true,
+          'checklistTemplates': true,
+          'dataBackup': true,
+          'canUseAdvancedFeatures': true,
+          'profileCustomization': true,
+          'profilePictures': false,
         };
       case UserTier.premium:
         return {
@@ -110,6 +128,15 @@ class PrivilegeNotifier extends StateNotifier<UserPrivileges?> {
           'sharing': true,
           'customThemes': false,
           'prioritySupport': false,
+          'canEditChecklists': true,
+          'canDeleteChecklists': true,
+          'canDuplicateChecklists': true,
+          'sessionHistory': true,
+          'checklistTemplates': true,
+          'dataBackup': true,
+          'canUseAdvancedFeatures': true,
+          'profileCustomization': true,
+          'profilePictures': true,
         };
       case UserTier.pro:
         return {
@@ -121,6 +148,15 @@ class PrivilegeNotifier extends StateNotifier<UserPrivileges?> {
           'sharing': true,
           'customThemes': true,
           'prioritySupport': true,
+          'canEditChecklists': true,
+          'canDeleteChecklists': true,
+          'canDuplicateChecklists': true,
+          'sessionHistory': true,
+          'checklistTemplates': true,
+          'dataBackup': true,
+          'canUseAdvancedFeatures': true,
+          'profileCustomization': true,
+          'profilePictures': true,
         };
     }
   }
@@ -171,6 +207,17 @@ class PrivilegeNotifier extends StateNotifier<UserPrivileges?> {
     }
   }
 
+  // TESTING ONLY - Switch tier without database update
+  void testSwitchTier(UserTier newTier) {
+    final features = _getFeaturesForTier(newTier);
+    state = UserPrivileges(
+      tier: newTier,
+      isActive: true,
+      features: features,
+      usage: state?.usage ?? {'checklistsCreated': 0, 'sessionsCompleted': 0},
+    );
+  }
+
   // Convenience getters
   bool get canCreateChecklists => state?.canCreateChecklists ?? false;
   bool get canPersistSessions => state?.canPersistSessions ?? false;
@@ -179,6 +226,15 @@ class PrivilegeNotifier extends StateNotifier<UserPrivileges?> {
   bool get canShare => state?.canShare ?? false;
   bool get hasCustomThemes => state?.hasCustomThemes ?? false;
   bool get hasPrioritySupport => state?.hasPrioritySupport ?? false;
+
+  // Enhanced feature getters
+  bool get canEditChecklists => state?.canEditChecklists ?? false;
+  bool get canDeleteChecklists => state?.canDeleteChecklists ?? false;
+  bool get canDuplicateChecklists => state?.canDuplicateChecklists ?? false;
+  bool get hasSessionHistory => state?.hasSessionHistory ?? false;
+  bool get hasChecklistTemplates => state?.hasChecklistTemplates ?? false;
+  bool get hasDataBackup => state?.hasDataBackup ?? false;
+  bool get canUseAdvancedFeatures => state?.canUseAdvancedFeatures ?? false;
 
   UserTier get currentTier => state?.tier ?? UserTier.anonymous;
   bool get isAnonymous => currentTier == UserTier.anonymous;

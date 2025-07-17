@@ -160,5 +160,7 @@
   "welcome_user": "Bienvenido, {}",
   "xwelcome_subtitle": "Tu aplicación de gestión de tareas basada en listas",
   "yes": "Sí",
-  "yesterday": "Ayer"
+  "yesterday": "Ayer",
+  "upgrade": "Actualizar",
+  "details": "Detalles"
 }

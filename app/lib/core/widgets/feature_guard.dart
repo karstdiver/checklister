@@ -177,3 +177,144 @@ class ExportGuard extends ConsumerWidget {
     return FeatureGuard(feature: 'export', child: child, fallback: fallback);
   }
 }
+
+// Enhanced feature guards
+class EditChecklistGuard extends ConsumerWidget {
+  final Widget child;
+  final Widget? fallback;
+
+  const EditChecklistGuard({super.key, required this.child, this.fallback});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return FeatureGuard(
+      feature: 'canEditChecklists',
+      child: child,
+      fallback: fallback,
+    );
+  }
+}
+
+class DeleteChecklistGuard extends ConsumerWidget {
+  final Widget child;
+  final Widget? fallback;
+
+  const DeleteChecklistGuard({super.key, required this.child, this.fallback});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return FeatureGuard(
+      feature: 'canDeleteChecklists',
+      child: child,
+      fallback: fallback,
+    );
+  }
+}
+
+class DuplicateChecklistGuard extends ConsumerWidget {
+  final Widget child;
+  final Widget? fallback;
+
+  const DuplicateChecklistGuard({
+    super.key,
+    required this.child,
+    this.fallback,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return FeatureGuard(
+      feature: 'canDuplicateChecklists',
+      child: child,
+      fallback: fallback,
+    );
+  }
+}
+
+class SessionHistoryGuard extends ConsumerWidget {
+  final Widget child;
+  final Widget? fallback;
+
+  const SessionHistoryGuard({super.key, required this.child, this.fallback});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return FeatureGuard(
+      feature: 'sessionHistory',
+      child: child,
+      fallback: fallback,
+    );
+  }
+}
+
+class ChecklistTemplatesGuard extends ConsumerWidget {
+  final Widget child;
+  final Widget? fallback;
+
+  const ChecklistTemplatesGuard({
+    super.key,
+    required this.child,
+    this.fallback,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return FeatureGuard(
+      feature: 'checklistTemplates',
+      child: child,
+      fallback: fallback,
+    );
+  }
+}
+
+class ProfileCustomizationGuard extends ConsumerWidget {
+  final Widget child;
+  final Widget? fallback;
+
+  const ProfileCustomizationGuard({
+    super.key,
+    required this.child,
+    this.fallback,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return FeatureGuard(
+      feature: 'profileCustomization',
+      child: child,
+      fallback: fallback,
+    );
+  }
+}
+
+class ProfilePicturesGuard extends ConsumerWidget {
+  final Widget child;
+  final Widget? fallback;
+
+  const ProfilePicturesGuard({super.key, required this.child, this.fallback});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return FeatureGuard(
+      feature: 'profilePictures',
+      child: child,
+      fallback: fallback,
+    );
+  }
+}
+
+class DataBackupGuard extends ConsumerWidget {
+  final Widget child;
+  final Widget? fallback;
+
+  const DataBackupGuard({super.key, required this.child, this.fallback});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return FeatureGuard(
+      feature: 'dataBackup',
+      child: child,
+      fallback: fallback,
+    );
+  }
+}

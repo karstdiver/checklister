@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/providers/providers.dart';
 import '../../../core/domain/user_tier.dart';
 import '../../../core/providers/privilege_provider.dart';
+import '../../../core/widgets/signup_encouragement.dart';
 import '../../../shared/widgets/logout_dialog.dart';
 import '../../../core/services/translation_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -130,13 +131,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   String _getTierDisplayName(UserTier tier) {
     switch (tier) {
       case UserTier.anonymous:
-        return 'Anonymous';
+        //return 'Anonymous';
+        return (TranslationService.translate('anonymous'));
       case UserTier.free:
-        return 'Free';
+        //return 'Free';
+        return (TranslationService.translate('free'));
       case UserTier.premium:
-        return 'Premium';
+        //return 'Premium';
+        return (TranslationService.translate('premium'));
       case UserTier.pro:
-        return 'Pro';
+        //return 'Pro';
+        return (TranslationService.translate('pro'));
     }
   }
 
@@ -226,6 +231,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 _buildWelcomeText(currentUser),
                 const SizedBox(height: 8),
                 _buildTierIndicator(ref),
+                const SizedBox(height: 16),
+
+                // Sign-up encouragement for anonymous users
+                const SignupEncouragement(
+                  title: 'Unlock More Features',
+                  message:
+                      'Create a free account to save your checklists, edit them later, and track your progress!',
+                  featureName: 'Save • Edit • Track Progress',
+                ),
                 const SizedBox(height: 24),
 
                 // My Checklists section

@@ -34,6 +34,31 @@ class UserPrivileges {
 
   bool get hasPrioritySupport => features['prioritySupport'] == true;
 
+  // Enhanced feature checks for anonymous vs authenticated
+  bool get canEditChecklists => features['canEditChecklists'] == true;
+
+  bool get canDeleteChecklists => features['canDeleteChecklists'] == true;
+
+  bool get canDuplicateChecklists => features['canDuplicateChecklists'] == true;
+
+  bool get hasSessionHistory => features['sessionHistory'] == true;
+
+  bool get hasChecklistTemplates => features['checklistTemplates'] == true;
+
+  bool get hasDataBackup => features['dataBackup'] == true;
+
+  bool get canUseAdvancedFeatures => features['canUseAdvancedFeatures'] == true;
+
+  // Profile customization features
+  bool get canCustomizeProfile => features['profileCustomization'] == true;
+  bool get canUseProfilePictures => features['profilePictures'] == true;
+
+  // Tier status getters
+  bool get isAnonymous => tier == UserTier.anonymous;
+  bool get isFree => tier == UserTier.free;
+  bool get isPremium => tier == UserTier.premium;
+  bool get isPro => tier == UserTier.pro;
+
   // Generic feature check
   bool hasFeature(String feature) {
     return features[feature] == true;
@@ -63,13 +88,22 @@ class UserPrivileges {
       isActive: true,
       features: {
         'maxChecklists': 1,
-        'maxItemsPerChecklist': 5,
+        'maxItemsPerChecklist': 3,
         'sessionPersistence': false,
         'analytics': false,
         'export': false,
         'sharing': false,
         'customThemes': false,
         'prioritySupport': false,
+        'canEditChecklists': false,
+        'canDeleteChecklists': false,
+        'canDuplicateChecklists': false,
+        'sessionHistory': false,
+        'checklistTemplates': false,
+        'dataBackup': false,
+        'canUseAdvancedFeatures': false,
+        'profileCustomization': false,
+        'profilePictures': false,
       },
       usage: {'checklistsCreated': 0, 'sessionsCompleted': 0},
     );
@@ -80,14 +114,23 @@ class UserPrivileges {
       tier: UserTier.free,
       isActive: true,
       features: {
-        'maxChecklists': 3,
-        'maxItemsPerChecklist': 10,
-        'sessionPersistence': false,
+        'maxChecklists': 5,
+        'maxItemsPerChecklist': 15,
+        'sessionPersistence': true,
         'analytics': false,
         'export': false,
         'sharing': false,
         'customThemes': false,
         'prioritySupport': false,
+        'canEditChecklists': true,
+        'canDeleteChecklists': true,
+        'canDuplicateChecklists': true,
+        'sessionHistory': true,
+        'checklistTemplates': true,
+        'dataBackup': true,
+        'canUseAdvancedFeatures': true,
+        'profileCustomization': true,
+        'profilePictures': false,
       },
       usage: {'checklistsCreated': 0, 'sessionsCompleted': 0},
     );
@@ -106,6 +149,15 @@ class UserPrivileges {
         'sharing': true,
         'customThemes': false,
         'prioritySupport': false,
+        'canEditChecklists': true,
+        'canDeleteChecklists': true,
+        'canDuplicateChecklists': true,
+        'sessionHistory': true,
+        'checklistTemplates': true,
+        'dataBackup': true,
+        'canUseAdvancedFeatures': true,
+        'profileCustomization': true,
+        'profilePictures': true,
       },
       usage: {'checklistsCreated': 0, 'sessionsCompleted': 0},
     );
@@ -124,6 +176,15 @@ class UserPrivileges {
         'sharing': true,
         'customThemes': true,
         'prioritySupport': true,
+        'canEditChecklists': true,
+        'canDeleteChecklists': true,
+        'canDuplicateChecklists': true,
+        'sessionHistory': true,
+        'checklistTemplates': true,
+        'dataBackup': true,
+        'canUseAdvancedFeatures': true,
+        'profileCustomization': true,
+        'profilePictures': true,
       },
       usage: {'checklistsCreated': 0, 'sessionsCompleted': 0},
     );

@@ -160,5 +160,7 @@
   "welcome_user": "Welcome, {}",
   "xwelcome_subtitle": "Your checklist-driven task management app",
   "yes": "Yes",
-  "yesterday": "Yesterday"
+  "yesterday": "Yesterday",
+  "upgrade": "Upgrade",
+  "details": "Details"
 }
