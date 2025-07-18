@@ -145,7 +145,7 @@ class ProfileImagePicker extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'profile.select_image_source'.tr(),
+              'select_image_source'.tr(),
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 20),
@@ -155,7 +155,7 @@ class ProfileImagePicker extends ConsumerWidget {
                   child: _buildImageSourceOption(
                     context,
                     icon: Icons.photo_library,
-                    title: 'profile.gallery'.tr(),
+                    title: 'gallery'.tr(),
                     onTap: () {
                       Navigator.pop(context);
                       notifier.pickAndUploadFromGallery().then((_) {
@@ -169,7 +169,7 @@ class ProfileImagePicker extends ConsumerWidget {
                   child: _buildImageSourceOption(
                     context,
                     icon: Icons.camera_alt,
-                    title: 'profile.camera'.tr(),
+                    title: 'camera'.tr(),
                     onTap: () {
                       Navigator.pop(context);
                       notifier.takePhotoAndUpload().then((_) {

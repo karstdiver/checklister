@@ -97,6 +97,8 @@ class PrivilegeNotifier extends StateNotifier<UserPrivileges?> {
           'canUseAdvancedFeatures': false,
           'profileCustomization': false,
           'profilePictures': false,
+          'itemPhotos': false,
+          'publicChecklists': false,
         };
       case UserTier.free:
         return {
@@ -117,6 +119,8 @@ class PrivilegeNotifier extends StateNotifier<UserPrivileges?> {
           'canUseAdvancedFeatures': true,
           'profileCustomization': true,
           'profilePictures': false,
+          'itemPhotos': false,
+          'publicChecklists': false,
         };
       case UserTier.premium:
         return {
@@ -137,6 +141,8 @@ class PrivilegeNotifier extends StateNotifier<UserPrivileges?> {
           'canUseAdvancedFeatures': true,
           'profileCustomization': true,
           'profilePictures': true,
+          'itemPhotos': true,
+          'publicChecklists': true,
         };
       case UserTier.pro:
         return {
@@ -157,6 +163,8 @@ class PrivilegeNotifier extends StateNotifier<UserPrivileges?> {
           'canUseAdvancedFeatures': true,
           'profileCustomization': true,
           'profilePictures': true,
+          'itemPhotos': true,
+          'publicChecklists': true,
         };
     }
   }

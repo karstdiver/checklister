@@ -3,6 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../domain/checklist.dart';
 import '../domain/checklist_providers.dart';
+import '../../items/data/item_photo_service.dart';
+import '../../items/presentation/item_edit_screen.dart';
+import '../../../core/providers/privilege_provider.dart';
+import '../../../core/widgets/feature_guard.dart';
+import '../../../core/widgets/signup_encouragement.dart';
 
 import '../../../core/services/analytics_service.dart';
 import '../../../core/services/translation_service.dart';
@@ -62,7 +67,9 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          isEditing ? tr(ref, 'edit_checklist') : tr(ref, 'create_checklist'),
+          isEditing
+              ? TranslationService.translate('edit_checklist')
+              : TranslationService.translate('create_checklist'),
         ),
         leading: IconButton(
           onPressed: () => Navigator.of(context).pop(),
@@ -79,7 +86,10 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
               ),
             )
           else
-            TextButton(onPressed: _saveChecklist, child: Text(tr(ref, 'save'))),
+            TextButton(
+              onPressed: _saveChecklist,
+              child: Text(TranslationService.translate('save')),
+            ),
         ],
       ),
       body: Form(
@@ -93,7 +103,7 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    tr(ref, 'basic_information'),
+                    TranslationService.translate('basic_information'),
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -104,13 +114,15 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
                   TextFormField(
                     controller: _titleController,
                     decoration: InputDecoration(
-                      labelText: tr(ref, 'title'),
-                      hintText: tr(ref, 'enter_checklist_title'),
+                      labelText: TranslationService.translate('title'),
+                      hintText: TranslationService.translate(
+                        'enter_checklist_title',
+                      ),
                       border: const OutlineInputBorder(),
                     ),
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
-                        return tr(ref, 'title_required');
+                        return TranslationService.translate('title_required');
                       }
                       return null;
                     },
@@ -121,23 +133,39 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
                   TextFormField(
                     controller: _descriptionController,
                     decoration: InputDecoration(
-                      labelText: tr(ref, 'description'),
-                      hintText: tr(ref, 'enter_checklist_description'),
+                      labelText: TranslationService.translate('description'),
+                      hintText: TranslationService.translate(
+                        'enter_checklist_description',
+                      ),
                       border: const OutlineInputBorder(),
                     ),
                     maxLines: 3,
                   ),
                   const SizedBox(height: 16),
 
-                  // Public toggle
+                  // Public toggle with privilege guard (curious user method)
                   SwitchListTile(
-                    title: Text(tr(ref, 'make_public')),
-                    subtitle: Text(tr(ref, 'public_checklist_description')),
+                    title: Text(TranslationService.translate('make_public')),
+                    subtitle: Text(
+                      TranslationService.translate(
+                        'public_checklist_description',
+                      ),
+                    ),
                     value: _isPublic,
                     onChanged: (value) {
-                      setState(() {
-                        _isPublic = value;
-                      });
+                      // Check privilege before allowing public toggle
+                      final privileges = ref.read(privilegeProvider);
+                      final hasPublicChecklists =
+                          privileges?.features['publicChecklists'] == true;
+
+                      if (hasPublicChecklists) {
+                        setState(() {
+                          _isPublic = value;
+                        });
+                      } else {
+                        // Show encouragement dialog for curious users
+                        _showPublicChecklistsEncouragement();
+                      }
                     },
                   ),
                 ],
@@ -152,7 +180,7 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    tr(ref, 'tags'),
+                    TranslationService.translate('tags'),
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -166,8 +194,8 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
                         child: TextFormField(
                           controller: _tagController,
                           decoration: InputDecoration(
-                            labelText: tr(ref, 'add_tag'),
-                            hintText: tr(ref, 'enter_tag'),
+                            labelText: TranslationService.translate('add_tag'),
+                            hintText: TranslationService.translate('enter_tag'),
                             border: const OutlineInputBorder(),
                           ),
                         ),
@@ -175,7 +203,7 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
                       const SizedBox(width: 8),
                       ElevatedButton(
                         onPressed: _addTag,
-                        child: Text(tr(ref, 'add')),
+                        child: Text(TranslationService.translate('add')),
                       ),
                     ],
                   ),
@@ -211,7 +239,7 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        tr(ref, 'items'),
+                        TranslationService.translate('items'),
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -219,7 +247,7 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
                       ElevatedButton.icon(
                         onPressed: _addItem,
                         icon: const Icon(Icons.add),
-                        label: Text(tr(ref, 'add_item')),
+                        label: Text(TranslationService.translate('add_item')),
                       ),
                     ],
                   ),
@@ -238,7 +266,7 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            tr(ref, 'no_items_yet'),
+                            TranslationService.translate('no_items_yet'),
                             style: theme.textTheme.bodyLarge?.copyWith(
                               color: theme.colorScheme.onSurface.withValues(
                                 alpha: 0.6,
@@ -247,7 +275,9 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            tr(ref, 'add_items_description'),
+                            TranslationService.translate(
+                              'add_items_description',
+                            ),
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: theme.colorScheme.onSurface.withValues(
                                 alpha: 0.5,
@@ -270,7 +300,22 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
                           key: ValueKey(item.id),
                           margin: const EdgeInsets.only(bottom: 8),
                           child: ListTile(
-                            leading: const Icon(Icons.drag_handle),
+                            leading:
+                                item.imageUrl != null &&
+                                    item.imageUrl!.isNotEmpty
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(4),
+                                    child: Image.network(
+                                      item.imageUrl!,
+                                      width: 48,
+                                      height: 48,
+                                      fit: BoxFit.cover,
+                                      errorBuilder:
+                                          (context, error, stackTrace) =>
+                                              const Icon(Icons.broken_image),
+                                    ),
+                                  )
+                                : const Icon(Icons.drag_handle),
                             title: Text(item.text),
                             subtitle: item.notes != null
                                 ? Text(item.notes!)
@@ -319,11 +364,32 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
   }
 
   void _addItem() {
-    _showItemDialog();
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => ItemEditScreen(
+          onSave: (item) {
+            setState(() {
+              _items.add(item.copyWith(order: _items.length));
+            });
+          },
+        ),
+      ),
+    );
   }
 
   void _editItem(int index) {
-    _showItemDialog(item: _items[index], index: index);
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => ItemEditScreen(
+          item: _items[index],
+          onSave: (item) {
+            setState(() {
+              _items[index] = item.copyWith(order: _items[index].order);
+            });
+          },
+        ),
+      ),
+    );
   }
 
   void _removeItem(int index) {
@@ -347,70 +413,25 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
     });
   }
 
-  void _showItemDialog({ChecklistItem? item, int? index}) {
-    final textController = TextEditingController(text: item?.text ?? '');
-    final notesController = TextEditingController(text: item?.notes ?? '');
-
+  void _showPublicChecklistsEncouragement() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(item != null ? tr(ref, 'edit_item') : tr(ref, 'add_item')),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: textController,
-              decoration: InputDecoration(
-                labelText: tr(ref, 'item_text'),
-                border: const OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: notesController,
-              decoration: InputDecoration(
-                labelText: tr(ref, 'notes'),
-                border: const OutlineInputBorder(),
-              ),
-              maxLines: 3,
-            ),
-          ],
+        title: Text(TranslationService.translate('public_checklists_title')),
+        content: Text(
+          TranslationService.translate('public_checklists_description'),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: Text(tr(ref, 'cancel')),
+            child: Text(TranslationService.translate('maybe_later')),
           ),
           ElevatedButton(
             onPressed: () {
-              final text = textController.text.trim();
-              if (text.isNotEmpty) {
-                final newItem = ChecklistItem.create(
-                  text: text,
-                  notes: notesController.text.trim().isEmpty
-                      ? null
-                      : notesController.text.trim(),
-                );
-
-                setState(() {
-                  if (index != null) {
-                    _items[index] = newItem.copyWith(
-                      id: item!.id,
-                      order: item.order,
-                    );
-                  } else {
-                    _items.add(
-                      newItem.copyWith(
-                        id: 'item_${DateTime.now().millisecondsSinceEpoch}',
-                        order: _items.length,
-                      ),
-                    );
-                  }
-                });
-              }
               Navigator.of(context).pop();
+              // TODO: Navigate to upgrade/signup flow
             },
-            child: Text(tr(ref, 'save')),
+            child: Text(TranslationService.translate('upgrade')),
           ),
         ],
       ),
@@ -479,7 +500,9 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(tr(ref, 'error_saving_checklist')),
+            content: Text(
+              TranslationService.translate('error_saving_checklist'),
+            ),
             backgroundColor: Colors.red,
           ),
         );

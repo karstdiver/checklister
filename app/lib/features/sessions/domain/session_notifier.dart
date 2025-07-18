@@ -26,6 +26,8 @@ class SessionNotifier extends StateNotifier<SessionState?> {
         'session_${now.millisecondsSinceEpoch}_${now.microsecond}';
 
     logger.i('Starting new session: $sessionId at $now');
+    logger.i('Items count: ${items.length}');
+    logger.i('Items statuses: ${items.map((item) => item.status).toList()}');
 
     final session = SessionState(
       sessionId: sessionId,
@@ -41,6 +43,26 @@ class SessionNotifier extends StateNotifier<SessionState?> {
     );
 
     state = session;
+
+    logger.i('Session state set:');
+    logger.i('  - Session ID: ${session.sessionId}');
+    logger.i('  - Current item index: ${session.currentItemIndex}');
+    logger.i(
+      '  - Completed items: ${session.completedItems}/${session.totalItems}',
+    );
+    logger.i('  - Progress percentage: ${session.progressPercentage}');
+    logger.i(
+      '  - Item statuses: ${session.items.map((item) => item.status).toList()}',
+    );
+    logger.i(
+      '  - Completed items count: ${session.items.where((item) => item.status == ItemStatus.completed).length}',
+    );
+    logger.i(
+      '  - Skipped items count: ${session.items.where((item) => item.status == ItemStatus.skipped).length}',
+    );
+    logger.i(
+      '  - Pending items count: ${session.items.where((item) => item.status == ItemStatus.pending).length}',
+    );
 
     // Save session to database
     try {
@@ -453,6 +475,58 @@ class SessionNotifier extends StateNotifier<SessionState?> {
       }
     } catch (e) {
       logger.e('Error cleaning up old sessions: $e');
+    }
+  }
+
+  /// Update session with latest checklist items (e.g., new photos)
+  Future<void> updateSessionWithLatestItems(
+    List<ChecklistItem> latestItems,
+  ) async {
+    if (state == null) return;
+
+    logger.i('🔄 Updating session with latest items');
+    logger.i('🔄 Current items count: ${state!.items.length}');
+    logger.i('🔄 Latest items count: ${latestItems.length}');
+
+    // Create a map of current items by ID to preserve their status
+    final currentItemsMap = <String, ChecklistItem>{};
+    for (final item in state!.items) {
+      currentItemsMap[item.id] = item;
+    }
+
+    // Update items with latest data while preserving status
+    final updatedItems = <ChecklistItem>[];
+    for (int i = 0; i < latestItems.length; i++) {
+      final latestItem = latestItems[i];
+      final currentItem = currentItemsMap[latestItem.id];
+
+      if (currentItem != null) {
+        // Preserve the current status and timestamps, but update other fields
+        updatedItems.add(
+          latestItem.copyWith(
+            status: currentItem.status,
+            completedAt: currentItem.completedAt,
+            skippedAt: currentItem.skippedAt,
+          ),
+        );
+      } else {
+        // New item, add with pending status
+        updatedItems.add(latestItem.copyWith(status: ItemStatus.pending));
+      }
+    }
+
+    // Update the session state
+    final updatedSession = state!.copyWith(items: updatedItems);
+
+    state = updatedSession;
+    logger.i('🔄 Session updated with latest items');
+
+    // Save to database
+    try {
+      await _repository.saveSession(updatedSession);
+      logger.i('🔄 Updated session saved to database');
+    } catch (e) {
+      logger.e('🔄 Failed to save updated session: $e');
     }
   }
 

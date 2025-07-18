@@ -82,14 +82,20 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         );
 
         if (activeSession != null && !widget.startNewIfActive) {
-          // Load the existing session
+          // Load the existing session but update with latest checklist data
           logger.i(
             '🔄 About to load existing session: ${activeSession.sessionId}',
           );
           logger.i(
             '🔄 Active session completed items: ${activeSession.completedItems}/${activeSession.totalItems}',
           );
+
+          // Load the session first
           await sessionNotifier.loadSession(activeSession.sessionId);
+
+          // Update the session with latest checklist items (to get any new photos)
+          await sessionNotifier.updateSessionWithLatestItems(widget.items);
+
           logger.i('🔄 Resumed existing session: ${activeSession.sessionId}');
         } else {
           // Start a new session (either no active session or startNewIfActive is true)
@@ -256,55 +262,55 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
     return Padding(
       padding: const EdgeInsets.all(16.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // Item image
-          if (currentItem.imageUrl != null)
-            Container(
-              width: double.infinity,
-              height: 300,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                image: DecorationImage(
-                  image: NetworkImage(currentItem.imageUrl!),
-                  fit: BoxFit.cover,
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Item image
+            if (currentItem.imageUrl != null)
+              Container(
+                width: double.infinity,
+                height: 250, // Reduced from 300
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  image: DecorationImage(
+                    image: NetworkImage(currentItem.imageUrl!),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              )
+            else
+              Container(
+                width: double.infinity,
+                height: 150, // Reduced from 200
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.image, size: 64, color: Colors.grey),
+              ),
+
+            const SizedBox(height: 16), // Reduced from 24
+            // Item text
+            AppCard(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                  currentItem.text,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
               ),
-            )
-          else
-            Container(
-              width: double.infinity,
-              height: 200,
-              decoration: BoxDecoration(
-                color: Colors.grey[200],
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(Icons.image, size: 64, color: Colors.grey),
             ),
 
-          const SizedBox(height: 24),
-
-          // Item text
-          AppCard(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Text(
-                currentItem.text,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w500,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 24),
-
-          // Swipe instructions
-          _buildSwipeInstructions(ref),
-        ],
+            const SizedBox(height: 16), // Reduced from 24
+            // Swipe instructions
+            _buildSwipeInstructions(ref),
+          ],
+        ),
       ),
     );
   }
@@ -483,25 +489,36 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   void _restartSession(SessionNotifier sessionNotifier) async {
     logger.i('🔄 Restarting session...');
 
-    // First, abandon the current session if it exists
-    await sessionNotifier.abandonSession();
-    logger.d('✅ Old session abandoned');
-
-    // Clear the current session
+    // Clear the current session state completely
     sessionNotifier.clearSession();
     logger.d('✅ Session cleared');
 
     // Create fresh items with pending status
+    // Reset existing items to pending status
     final freshItems = widget.items
         .map(
-          (item) => ChecklistItem(
-            id: item.id,
-            text: item.text,
-            imageUrl: item.imageUrl,
+          (item) => item.copyWith(
             status: ItemStatus.pending,
+            completedAt: null,
+            skippedAt: null,
           ),
         )
         .toList();
+
+    logger.i('🔄 Created ${freshItems.length} fresh items with pending status');
+    logger.i('🔄 First item status: ${freshItems.first.status}');
+    logger.i(
+      '🔄 All item statuses: ${freshItems.map((item) => item.status).toList()}',
+    );
+    logger.i(
+      '🔄 Pending items count: ${freshItems.where((item) => item.status == ItemStatus.pending).length}',
+    );
+    logger.i(
+      '🔄 Completed items count: ${freshItems.where((item) => item.status == ItemStatus.completed).length}',
+    );
+    logger.i(
+      '🔄 Skipped items count: ${freshItems.where((item) => item.status == ItemStatus.skipped).length}',
+    );
 
     // Start a new session with fresh checklist items
     final currentUser = ref.read(currentUserProvider);
@@ -511,7 +528,16 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         userId: currentUser.uid,
         items: freshItems,
       );
+
+      // Get the session state after starting
+      final sessionState = ref.read(sessionNotifierProvider);
       logger.i('✅ New session started with fresh items');
+      logger.i('✅ Session state after start: ${sessionState?.sessionId}');
+      logger.i('✅ Current item index: ${sessionState?.currentItemIndex}');
+      logger.i(
+        '✅ Completed items: ${sessionState?.completedItems}/${sessionState?.totalItems}',
+      );
+      logger.i('✅ Progress percentage: ${sessionState?.progressPercentage}');
 
       // Force a rebuild by calling setState
       setState(() {});

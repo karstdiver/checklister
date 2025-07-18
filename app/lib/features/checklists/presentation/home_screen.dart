@@ -426,6 +426,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                               builder: (context) => SessionScreen(
                                                 checklistId: checklist.id,
                                                 checklistTitle: checklist.title,
+                                                startNewIfActive:
+                                                    true, // Force start new session
                                                 items: checklist.items
                                                     .map(
                                                       (item) =>
