@@ -91,6 +91,124 @@ async function confirmCollectionDeletion(userId, collectionName) {
   });
 }
 
+async function deleteUserProfileImages(userId) {
+  try {
+    const bucket = admin.storage().bucket();
+    const [files] = await bucket.getFiles({
+      prefix: `profile_images/profile_${userId}_`
+    });
+
+    if (files.length === 0) {
+      console.log(`ℹ️  No profile images found for user: ${userId}`);
+      return 0;
+    }
+
+    console.log(`📸 Found ${files.length} profile image(s) for user: ${userId}`);
+    
+    const shouldDelete = await confirmStorageDeletion(userId, 'profile images', files.length);
+    if (!shouldDelete) {
+      console.log(`⏭️  Skipped profile image deletion for user: ${userId}`);
+      return 0;
+    }
+
+    const deletePromises = files.map(file => file.delete());
+    await Promise.all(deletePromises);
+    
+    console.log(`✅ Deleted ${files.length} profile image(s) for user: ${userId}`);
+    return files.length;
+  } catch (error) {
+    console.log(`⚠️  Error deleting profile images for user ${userId}: ${error.message}`);
+    return 0;
+  }
+}
+
+async function deleteUserItemPhotos(userId) {
+  try {
+    const db = admin.firestore();
+    const bucket = admin.storage().bucket();
+    
+    // First, get all checklist items belonging to this user
+    const checklistsSnapshot = await db.collection('checklists')
+      .where('userId', '==', userId)
+      .get();
+    
+    if (checklistsSnapshot.empty) {
+      console.log(`ℹ️  No checklists found for user: ${userId}`);
+      return 0;
+    }
+
+    const itemIds = [];
+    for (const checklistDoc of checklistsSnapshot.docs) {
+      const checklistData = checklistDoc.data();
+      if (checklistData.items && Array.isArray(checklistData.items)) {
+        checklistData.items.forEach(item => {
+          if (item.id) {
+            itemIds.push(item.id);
+          }
+        });
+      }
+    }
+
+    if (itemIds.length === 0) {
+      console.log(`ℹ️  No checklist items found for user: ${userId}`);
+      return 0;
+    }
+
+    console.log(`📋 Found ${itemIds.length} checklist item(s) for user: ${userId}`);
+    
+    // Find all item photos for these items
+    const allPhotos = [];
+    for (const itemId of itemIds) {
+      const [files] = await bucket.getFiles({
+        prefix: `item_photos/item_${itemId}_`
+      });
+      allPhotos.push(...files);
+    }
+
+    if (allPhotos.length === 0) {
+      console.log(`ℹ️  No item photos found for user: ${userId}`);
+      return 0;
+    }
+
+    console.log(`📸 Found ${allPhotos.length} item photo(s) for user: ${userId}`);
+    
+    const shouldDelete = await confirmStorageDeletion(userId, 'item photos', allPhotos.length);
+    if (!shouldDelete) {
+      console.log(`⏭️  Skipped item photo deletion for user: ${userId}`);
+      return 0;
+    }
+
+    const deletePromises = allPhotos.map(file => file.delete());
+    await Promise.all(deletePromises);
+    
+    console.log(`✅ Deleted ${allPhotos.length} item photo(s) for user: ${userId}`);
+    return allPhotos.length;
+  } catch (error) {
+    console.log(`⚠️  Error deleting item photos for user ${userId}: ${error.message}`);
+    return 0;
+  }
+}
+
+async function deleteUserStorage(userId) {
+  console.log(`🗂️  Checking Firebase Storage for user: ${userId}`);
+  
+  const profileImagesDeleted = await deleteUserProfileImages(userId);
+  const itemPhotosDeleted = await deleteUserItemPhotos(userId);
+  
+  const totalDeleted = profileImagesDeleted + itemPhotosDeleted;
+  
+  if (totalDeleted > 0) {
+    console.log(`📊 Storage cleanup summary for user ${userId}:`);
+    console.log(`   - Profile images: ${profileImagesDeleted}`);
+    console.log(`   - Item photos: ${itemPhotosDeleted}`);
+    console.log(`   - Total files deleted: ${totalDeleted}`);
+  } else {
+    console.log(`ℹ️  No storage files found for user: ${userId}`);
+  }
+  
+  return totalDeleted;
+}
+
 async function deleteUserData(userId) {
   try {
     const db = admin.firestore();
@@ -147,6 +265,9 @@ async function deleteAnonymousUsers() {
             console.log(`✅ Deleted anonymous user: ${userRecord.uid}`);
             deletedCount++;
             
+            // Delete storage files first
+            await deleteUserStorage(userRecord.uid);
+            
             // Ask if user wants to delete associated data
             const shouldDeleteData = await confirmDataDeletion(userRecord.uid);
             if (shouldDeleteData) {
@@ -200,6 +321,21 @@ async function confirmDataDeletion(userId) {
     });
 
     rl.question(`🗂️  Delete associated data for user ${userId}? (Y/n): `, (answer) => {
+      rl.close();
+      // Default to 'yes' if user just presses Enter
+      resolve(answer.toLowerCase() !== 'n' && answer.toLowerCase() !== 'no');
+    });
+  });
+}
+
+async function confirmStorageDeletion(userId, fileType, count) {
+  return new Promise((resolve) => {
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout
+    });
+
+    rl.question(`🗑️  Delete ${count} ${fileType} for user ${userId}? (Y/n): `, (answer) => {
       rl.close();
       // Default to 'yes' if user just presses Enter
       resolve(answer.toLowerCase() !== 'n' && answer.toLowerCase() !== 'no');

@@ -22,6 +22,73 @@ This directory contains Firebase Admin SDK scripts for managing the Checklister 
 
 ## Scripts
 
+### User CRUD Script
+
+Manages Firebase users with comprehensive cleanup including Firestore documents and Firebase Storage files.
+
+#### Usage
+
+```bash
+# Run the user management script
+node firebaseUserCRUD.js
+```
+
+#### What it deletes
+
+When deleting a user, the script removes:
+
+1. **Firebase Auth user account**
+2. **User document** from `users` collection
+3. **User subcollections** (if confirmed)
+4. **Top-level documents** in `sessions` and `checklists` collections
+5. **Profile images** from Firebase Storage (`profile_images/` folder)
+6. **Item photos** from Firebase Storage (`item_photos/` folder)
+
+#### Safety features
+
+- **Interactive confirmation**: Asks for confirmation before each deletion step
+- **Granular control**: Separate confirmations for collections, profile images, and item photos
+- **Comprehensive cleanup**: Ensures no orphaned files remain in storage
+- **Error handling**: Graceful error handling and reporting
+- **Detailed logging**: Shows exactly what's being deleted
+
+#### Storage cleanup process
+
+1. **Profile images**: Finds all files matching `profile_images/profile_{userId}_*`
+2. **Item photos**: 
+   - Finds all checklists belonging to the user
+   - Extracts all item IDs from those checklists
+   - Finds all files matching `item_photos/item_{itemId}_*`
+3. **Confirmation**: Asks user to confirm deletion of each type
+4. **Bulk deletion**: Deletes all files in parallel for efficiency
+
+#### Example output
+
+```
+👤 User ID: abc123
+📧 Email: user@example.com
+📋 Subcollections: None found
+📋 Top-level collections to be checked for userId: sessions, checklists
+🗑️  Delete user abc123? (y/N): y
+
+🗂️  Checking Firebase Storage for user: abc123
+📸 Found 2 profile image(s) for user: abc123
+🗑️  Delete 2 profile image(s) for user abc123? (y/N): y
+✅ Deleted 2 profile image(s) for user: abc123
+
+📋 Found 5 checklist item(s) for user: abc123
+📸 Found 3 item photo(s) for user: abc123
+🗑️  Delete 3 item photo(s) for user abc123? (y/N): y
+✅ Deleted 3 item photo(s) for user: abc123
+
+📊 Storage cleanup summary for user abc123:
+   - Profile images: 2
+   - Item photos: 3
+   - Total files deleted: 5
+
+✅ Deleted user: abc123
+```
+
 ### Session Cleanup Script
 
 Deletes unused sessions from the Firebase database to reduce storage costs and improve performance.
