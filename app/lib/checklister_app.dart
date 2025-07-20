@@ -13,6 +13,8 @@ import 'features/settings/presentation/profile_edit_screen.dart';
 import 'features/settings/presentation/language_screen.dart';
 import 'features/settings/presentation/notification_screen.dart';
 import 'features/achievements/presentation/achievement_screen.dart';
+import 'features/settings/presentation/about_screen.dart';
+import 'features/settings/presentation/help_screen.dart';
 import 'shared/themes/app_theme.dart';
 
 class ChecklisterApp extends ConsumerWidget {
@@ -46,90 +48,9 @@ class ChecklisterApp extends ConsumerWidget {
         '/language': (context) => const LanguageScreen(),
         '/notifications': (context) => const NotificationScreen(),
         '/achievements': (context) => const AchievementScreen(),
+        '/about': (context) => const AboutScreen(),
+        '/help': (context) => const HelpScreen(),
       },
-    );
-  }
-}
-
-// Placeholder screens for About and Help
-class AboutScreen extends ConsumerWidget {
-  const AboutScreen({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final navigationNotifier = ref.read(navigationNotifierProvider.notifier);
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('about'.tr()),
-        leading: IconButton(
-          onPressed: () => navigationNotifier.goBack(),
-          icon: const Icon(Icons.arrow_back),
-        ),
-      ),
-      body: const Center(
-        child: Padding(
-          padding: EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.info, size: 64, color: Colors.blue),
-              SizedBox(height: 24),
-              Text(
-                'Checklister App',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 16),
-              Text(
-                'A checklist-driven task management app',
-                style: TextStyle(fontSize: 16, color: Colors.grey),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class HelpScreen extends ConsumerWidget {
-  const HelpScreen({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final navigationNotifier = ref.read(navigationNotifierProvider.notifier);
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('help'.tr()),
-        leading: IconButton(
-          onPressed: () => navigationNotifier.goBack(),
-          icon: const Icon(Icons.arrow_back),
-        ),
-      ),
-      body: const Center(
-        child: Padding(
-          padding: EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.help, size: 64, color: Colors.blue),
-              SizedBox(height: 24),
-              Text(
-                'Help & Support',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 16),
-              Text(
-                'Need help? Contact our support team.',
-                style: TextStyle(fontSize: 16, color: Colors.grey),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

@@ -25,9 +25,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     return Consumer(
       builder: (context, ref, child) {
         final currentUser = ref.watch(currentUserProvider);
-        final navigationNotifier = ref.read(
-          navigationNotifierProvider.notifier,
-        );
         final authNotifier = ref.read(authNotifierProvider.notifier);
 
         // Watch the translation provider to trigger rebuilds when language changes
@@ -198,14 +195,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       leading: const Icon(Icons.help, color: Colors.blue),
                       title: Text(TranslationService.translate('help')),
                       trailing: const Icon(Icons.arrow_forward_ios),
-                      onTap: () => navigationNotifier.navigateToHelp(),
+                      onTap: () => Navigator.pushNamed(context, '/help'),
                     ),
                     const Divider(height: 1),
                     ListTile(
                       leading: const Icon(Icons.info, color: Colors.blue),
                       title: Text(TranslationService.translate('about')),
                       trailing: const Icon(Icons.arrow_forward_ios),
-                      onTap: () => navigationNotifier.navigateToAbout(),
+                      onTap: () => Navigator.pushNamed(context, '/about'),
                     ),
                   ],
                 ),
