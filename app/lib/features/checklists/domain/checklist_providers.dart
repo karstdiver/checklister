@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/checklist_repository.dart';
 import 'checklist_notifier.dart';
 import 'checklist.dart';
+import '../../achievements/domain/achievement_providers.dart';
 
 // Repository provider
 final checklistRepositoryProvider = Provider<ChecklistRepository>((ref) {
@@ -14,7 +15,17 @@ final checklistNotifierProvider =
       ref,
     ) {
       final repository = ref.watch(checklistRepositoryProvider);
-      return ChecklistNotifier(repository);
+
+      // Ensure achievement notifier is initialized
+      ref.watch(achievementNotifierProvider);
+      final achievementNotifier = ref.read(
+        achievementNotifierProvider.notifier,
+      );
+
+      return ChecklistNotifier(
+        repository,
+        achievementNotifier: achievementNotifier,
+      );
     });
 
 // User checklists provider (auto-disposes when not used)

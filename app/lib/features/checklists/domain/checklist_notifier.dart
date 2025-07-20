@@ -2,14 +2,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/checklist_repository.dart';
 import 'checklist.dart';
 import '../../../core/services/analytics_service.dart';
+import '../../achievements/domain/achievement_notifier.dart';
 
 class ChecklistNotifier extends StateNotifier<AsyncValue<List<Checklist>>> {
   final ChecklistRepository _repository;
   final AnalyticsService _analytics;
+  final AchievementNotifier? _achievementNotifier;
 
-  ChecklistNotifier(this._repository)
-    : _analytics = AnalyticsService(),
-      super(const AsyncValue.loading());
+  ChecklistNotifier(
+    this._repository, {
+    AchievementNotifier? achievementNotifier,
+  }) : _analytics = AnalyticsService(),
+       _achievementNotifier = achievementNotifier,
+       super(const AsyncValue.loading());
 
   // Load user's checklists
   Future<void> loadUserChecklists(String userId) async {
@@ -54,6 +59,21 @@ class ChecklistNotifier extends StateNotifier<AsyncValue<List<Checklist>>> {
 
       // Log analytics
       await _analytics.logChecklistCreated(checklistId: createdChecklist.id);
+
+      // Check achievements for checklist creation
+      if (_achievementNotifier != null) {
+        try {
+          await _achievementNotifier!.checkChecklistCreationAchievements();
+          print(
+            '🎯 Achievement checking completed for checklist creation: ${createdChecklist.id}',
+          );
+        } catch (e) {
+          print('Error checking achievements for checklist creation: $e');
+          // Don't let achievement errors break checklist creation
+        }
+      } else {
+        print('Achievement notifier is null, skipping achievement checking');
+      }
 
       return createdChecklist;
     } catch (error, stackTrace) {

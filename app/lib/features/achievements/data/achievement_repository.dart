@@ -397,6 +397,131 @@ class AchievementRepository {
     ];
   }
 
+  // Increment checklist creation count
+  Future<void> incrementChecklistCreated() async {
+    try {
+      final userId = currentUserId;
+      if (userId == null) {
+        throw Exception('User not authenticated');
+      }
+
+      final stats = await loadAchievementStats();
+      final currentCount = stats['totalCreated'] ?? 0;
+
+      await updateAchievementStats({
+        ...stats,
+        'totalCreated': currentCount + 1,
+      });
+    } catch (e) {
+      throw Exception('Failed to increment checklist created count: $e');
+    }
+  }
+
+  // Increment session completion count
+  Future<void> incrementSessionCompleted({
+    required int completedItems,
+    required DateTime completedAt,
+  }) async {
+    try {
+      final userId = currentUserId;
+      if (userId == null) {
+        throw Exception('User not authenticated');
+      }
+
+      final stats = await loadAchievementStats();
+      final currentCompletions = stats['totalCompletions'] ?? 0;
+      final currentItemsCompleted = stats['totalItemsCompleted'] ?? 0;
+      final currentStreak = stats['currentStreak'] ?? 0;
+      final longestStreak = stats['longestStreak'] ?? 0;
+
+      // Update completion counts
+      final newStats = {
+        ...stats,
+        'totalCompletions': currentCompletions + 1,
+        'totalItemsCompleted': currentItemsCompleted + completedItems,
+      };
+
+      // Update streak logic
+      final today = DateTime.now();
+      final lastCompletionDate = stats['lastCompletionDate'];
+
+      if (lastCompletionDate != null) {
+        final lastDate = (lastCompletionDate as Timestamp).toDate();
+        final daysDifference = today.difference(lastDate).inDays;
+
+        if (daysDifference == 1) {
+          // Consecutive day
+          final newStreak = currentStreak + 1;
+          newStats['currentStreak'] = newStreak;
+          newStats['longestStreak'] = newStreak > longestStreak
+              ? newStreak
+              : longestStreak;
+        } else if (daysDifference > 1) {
+          // Streak broken
+          newStats['currentStreak'] = 1;
+        }
+      } else {
+        // First completion
+        newStats['currentStreak'] = 1;
+        newStats['longestStreak'] = 1;
+      }
+
+      newStats['lastCompletionDate'] = Timestamp.fromDate(today);
+
+      await updateAchievementStats(newStats);
+    } catch (e) {
+      throw Exception('Failed to increment session completed count: $e');
+    }
+  }
+
+  // Track daily completions for efficiency achievements
+  Future<void> trackDailyCompletion(DateTime completedAt) async {
+    try {
+      final userId = currentUserId;
+      if (userId == null) {
+        throw Exception('User not authenticated');
+      }
+
+      final stats = await loadAchievementStats();
+      final today = DateTime(
+        completedAt.year,
+        completedAt.month,
+        completedAt.day,
+      );
+      final lastCompletionDate = stats['lastCompletionDate'];
+
+      int dailyCompletions = stats['dailyCompletions'] ?? 0;
+
+      if (lastCompletionDate != null) {
+        final lastDate = (lastCompletionDate as Timestamp).toDate();
+        final lastDateOnly = DateTime(
+          lastDate.year,
+          lastDate.month,
+          lastDate.day,
+        );
+
+        if (today.isAtSameMomentAs(lastDateOnly)) {
+          // Same day, increment count
+          dailyCompletions++;
+        } else {
+          // New day, reset count
+          dailyCompletions = 1;
+        }
+      } else {
+        // First completion ever
+        dailyCompletions = 1;
+      }
+
+      await updateAchievementStats({
+        ...stats,
+        'dailyCompletions': dailyCompletions,
+        'lastCompletionDate': Timestamp.fromDate(completedAt),
+      });
+    } catch (e) {
+      throw Exception('Failed to track daily completion: $e');
+    }
+  }
+
   // Clear all achievements (for testing)
   Future<void> clearAllAchievements() async {
     try {

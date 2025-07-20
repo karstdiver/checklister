@@ -3,6 +3,7 @@ import 'session_notifier.dart';
 import 'session_state.dart';
 import '../data/session_repository.dart';
 import '../../../core/providers/providers.dart';
+import '../../achievements/domain/achievement_providers.dart';
 
 // Repository provider
 final sessionRepositoryProvider = Provider<SessionRepository>((ref) {
@@ -15,7 +16,17 @@ final sessionRepositoryProvider = Provider<SessionRepository>((ref) {
 final sessionNotifierProvider =
     StateNotifierProvider<SessionNotifier, SessionState?>((ref) {
       final repository = ref.watch(sessionRepositoryProvider);
-      return SessionNotifier(repository);
+
+      // Ensure achievement notifier is initialized
+      ref.watch(achievementNotifierProvider);
+      final achievementNotifier = ref.read(
+        achievementNotifierProvider.notifier,
+      );
+
+      return SessionNotifier(
+        repository,
+        achievementNotifier: achievementNotifier,
+      );
     });
 
 // Current session state provider

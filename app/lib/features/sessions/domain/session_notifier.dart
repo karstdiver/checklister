@@ -3,15 +3,18 @@ import 'package:logger/logger.dart';
 import 'session_state.dart';
 import '../data/session_repository.dart';
 import '../../../core/services/analytics_service.dart';
+import '../../achievements/domain/achievement_notifier.dart';
 
 final logger = Logger();
 
 class SessionNotifier extends StateNotifier<SessionState?> {
   final SessionRepository _repository;
   final AnalyticsService _analytics;
+  final AchievementNotifier? _achievementNotifier;
 
-  SessionNotifier(this._repository)
+  SessionNotifier(this._repository, {AchievementNotifier? achievementNotifier})
     : _analytics = AnalyticsService(),
+      _achievementNotifier = achievementNotifier,
       super(null) {
     logger.d('SessionNotifier created: ${DateTime.now()}');
   }
@@ -236,6 +239,26 @@ class SessionNotifier extends StateNotifier<SessionState?> {
 
     // Clean up any other active sessions for the same checklist
     await _cleanupOtherActiveSessions(state!.checklistId, state!.sessionId);
+
+    // Check achievements for session completion
+    if (_achievementNotifier != null) {
+      try {
+        await _achievementNotifier!.checkSessionCompletionAchievements(
+          sessionStartedAt: state!.startedAt,
+          sessionCompletedAt: now,
+          totalItems: state!.totalItems,
+          completedItems: state!.completedItems,
+        );
+        logger.i(
+          '🎯 Achievement checking completed for session: ${state!.sessionId}',
+        );
+      } catch (e) {
+        logger.e('Error checking achievements for session completion: $e');
+        // Don't let achievement errors break session completion
+      }
+    } else {
+      logger.w('Achievement notifier is null, skipping achievement checking');
+    }
   }
 
   Future<void> abandonSession() async {

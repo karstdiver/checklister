@@ -151,6 +151,7 @@ class AchievementNotifier extends StateNotifier<AchievementState> {
     bool? isWeekendCompletion,
     bool? isPremiumUpgrade,
     bool? isProUpgrade,
+    bool? isFastCompletion,
   }) async {
     try {
       for (final achievement in state.achievements) {
@@ -220,6 +221,12 @@ class AchievementNotifier extends StateNotifier<AchievementState> {
               shouldUpdate = true;
             }
             break;
+          case 'fastCompletions':
+            if (isFastCompletion == true) {
+              newProgress = 1;
+              shouldUpdate = true;
+            }
+            break;
         }
 
         if (shouldUpdate) {
@@ -254,6 +261,112 @@ class AchievementNotifier extends StateNotifier<AchievementState> {
   // Get achievements with progress
   List<Achievement> get achievementsWithProgress {
     return state.achievementsWithProgress;
+  }
+
+  // Check if session completion is fast (under 5 minutes)
+  bool _isFastCompletion(DateTime startedAt, DateTime completedAt) {
+    final duration = completedAt.difference(startedAt);
+    return duration.inMinutes < 5;
+  }
+
+  // Check if completion time is early (before 9 AM)
+  bool _isEarlyCompletion(DateTime completedAt) {
+    return completedAt.hour < 9;
+  }
+
+  // Check if completion time is late (after 10 PM)
+  bool _isLateCompletion(DateTime completedAt) {
+    return completedAt.hour >= 22;
+  }
+
+  // Check if completion is on weekend
+  bool _isWeekendCompletion(DateTime completedAt) {
+    final weekday = completedAt.weekday;
+    return weekday == DateTime.saturday || weekday == DateTime.sunday;
+  }
+
+  // Check achievements when session is completed
+  Future<void> checkSessionCompletionAchievements({
+    required DateTime sessionStartedAt,
+    required DateTime sessionCompletedAt,
+    required int totalItems,
+    required int completedItems,
+  }) async {
+    try {
+      // Validate inputs
+      if (completedItems < 0) {
+        print('Warning: completedItems is negative: $completedItems');
+        return;
+      }
+
+      // First, increment the session completion stats
+      await _repository.incrementSessionCompleted(
+        completedItems: completedItems,
+        completedAt: sessionCompletedAt,
+      );
+
+      // Track daily completion for efficiency achievements
+      await _repository.trackDailyCompletion(sessionCompletedAt);
+
+      // Check time-based achievements
+      final isEarly = _isEarlyCompletion(sessionCompletedAt);
+      final isLate = _isLateCompletion(sessionCompletedAt);
+      final isWeekend = _isWeekendCompletion(sessionCompletedAt);
+      final isFast = _isFastCompletion(sessionStartedAt, sessionCompletedAt);
+
+      // Get updated stats after incrementing
+      final stats = await _repository.loadAchievementStats();
+      final totalCompletions = stats['totalCompletions'] ?? 0;
+      final totalItemsCompleted = stats['totalItemsCompleted'] ?? 0;
+      final consecutiveDays = stats['currentStreak'] ?? 0;
+      final dailyCompletions = stats['dailyCompletions'] ?? 0;
+
+      await checkAchievements(
+        checklistsCompleted: totalCompletions,
+        itemsCompleted: totalItemsCompleted,
+        consecutiveDays: consecutiveDays,
+        dailyCompletions: dailyCompletions,
+        isEarlyCompletion: isEarly,
+        isLateCompletion: isLate,
+        isWeekendCompletion: isWeekend,
+        isFastCompletion: isFast,
+      );
+    } catch (e) {
+      print('Error checking session completion achievements: $e');
+      // Don't rethrow - achievements shouldn't break session completion
+    }
+  }
+
+  // Check achievements when checklist is created
+  Future<void> checkChecklistCreationAchievements() async {
+    try {
+      // First, increment the checklist creation count
+      await _repository.incrementChecklistCreated();
+
+      // Get updated stats after incrementing
+      final stats = await _repository.loadAchievementStats();
+      final totalCreated = stats['totalCreated'] ?? 0;
+
+      await checkAchievements(checklistsCreated: totalCreated);
+    } catch (e) {
+      print('Error checking checklist creation achievements: $e');
+      // Don't rethrow - achievements shouldn't break checklist creation
+    }
+  }
+
+  // Check achievements when user tier changes
+  Future<void> checkUserTierAchievements({
+    required bool isPremiumUpgrade,
+    required bool isProUpgrade,
+  }) async {
+    try {
+      await checkAchievements(
+        isPremiumUpgrade: isPremiumUpgrade,
+        isProUpgrade: isProUpgrade,
+      );
+    } catch (e) {
+      print('Error checking user tier achievements: $e');
+    }
   }
 
   // Clear all achievements (for testing)
