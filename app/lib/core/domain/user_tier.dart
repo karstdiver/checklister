@@ -104,6 +104,15 @@ class UserPrivileges {
         'canUseAdvancedFeatures': false,
         'profileCustomization': false,
         'profilePictures': false,
+        // Notification features
+        'basicNotifications': true,
+        'reminderNotifications': true,
+        'progressNotifications': false,
+        'achievementNotifications': false,
+        'weeklyReports': false,
+        'customReminders': false,
+        'smartSuggestions': false,
+        'teamNotifications': false,
       },
       usage: {'checklistsCreated': 0, 'sessionsCompleted': 0},
     );
@@ -131,6 +140,15 @@ class UserPrivileges {
         'canUseAdvancedFeatures': true,
         'profileCustomization': true,
         'profilePictures': false,
+        // Notification features
+        'basicNotifications': true,
+        'reminderNotifications': true,
+        'progressNotifications': true,
+        'achievementNotifications': true,
+        'weeklyReports': false,
+        'customReminders': false,
+        'smartSuggestions': false,
+        'teamNotifications': false,
       },
       usage: {'checklistsCreated': 0, 'sessionsCompleted': 0},
     );
@@ -158,6 +176,15 @@ class UserPrivileges {
         'canUseAdvancedFeatures': true,
         'profileCustomization': true,
         'profilePictures': true,
+        // Notification features
+        'basicNotifications': true,
+        'reminderNotifications': true,
+        'progressNotifications': true,
+        'achievementNotifications': true,
+        'weeklyReports': true,
+        'customReminders': true,
+        'smartSuggestions': true,
+        'teamNotifications': false,
       },
       usage: {'checklistsCreated': 0, 'sessionsCompleted': 0},
     );
@@ -185,6 +212,15 @@ class UserPrivileges {
         'canUseAdvancedFeatures': true,
         'profileCustomization': true,
         'profilePictures': true,
+        // Notification features
+        'basicNotifications': true,
+        'reminderNotifications': true,
+        'progressNotifications': true,
+        'achievementNotifications': true,
+        'weeklyReports': true,
+        'customReminders': true,
+        'smartSuggestions': true,
+        'teamNotifications': true,
       },
       usage: {'checklistsCreated': 0, 'sessionsCompleted': 0},
     );

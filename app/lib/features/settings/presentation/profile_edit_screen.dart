@@ -511,7 +511,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                 color: textColor,
               ),
               onTap: () {
-                // TODO: Navigate to notification settings
+                Navigator.pushNamed(context, '/notifications');
               },
             ),
           ],

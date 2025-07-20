@@ -99,6 +99,15 @@ class PrivilegeNotifier extends StateNotifier<UserPrivileges?> {
           'profilePictures': false,
           'itemPhotos': false,
           'publicChecklists': false,
+          // Notification features
+          'basicNotifications': true,
+          'reminderNotifications': true,
+          'progressNotifications': false,
+          'achievementNotifications': false,
+          'weeklyReports': false,
+          'customReminders': false,
+          'smartSuggestions': false,
+          'teamNotifications': false,
         };
       case UserTier.free:
         return {
@@ -121,6 +130,15 @@ class PrivilegeNotifier extends StateNotifier<UserPrivileges?> {
           'profilePictures': false,
           'itemPhotos': false,
           'publicChecklists': false,
+          // Notification features
+          'basicNotifications': true,
+          'reminderNotifications': true,
+          'progressNotifications': true,
+          'achievementNotifications': true,
+          'weeklyReports': false,
+          'customReminders': false,
+          'smartSuggestions': false,
+          'teamNotifications': false,
         };
       case UserTier.premium:
         return {
@@ -143,6 +161,15 @@ class PrivilegeNotifier extends StateNotifier<UserPrivileges?> {
           'profilePictures': true,
           'itemPhotos': true,
           'publicChecklists': true,
+          // Notification features
+          'basicNotifications': true,
+          'reminderNotifications': true,
+          'progressNotifications': true,
+          'achievementNotifications': true,
+          'weeklyReports': true,
+          'customReminders': true,
+          'smartSuggestions': true,
+          'teamNotifications': false,
         };
       case UserTier.pro:
         return {
@@ -165,6 +192,15 @@ class PrivilegeNotifier extends StateNotifier<UserPrivileges?> {
           'profilePictures': true,
           'itemPhotos': true,
           'publicChecklists': true,
+          // Notification features
+          'basicNotifications': true,
+          'reminderNotifications': true,
+          'progressNotifications': true,
+          'achievementNotifications': true,
+          'weeklyReports': true,
+          'customReminders': true,
+          'smartSuggestions': true,
+          'teamNotifications': true,
         };
     }
   }

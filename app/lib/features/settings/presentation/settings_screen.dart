@@ -122,7 +122,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       ),
                       trailing: const Icon(Icons.arrow_forward_ios),
                       onTap: () {
-                        // TODO: Navigate to notifications settings
+                        Navigator.pushNamed(context, '/notifications');
                       },
                     ),
                     const Divider(height: 1),

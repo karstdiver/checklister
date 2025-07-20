@@ -308,6 +308,71 @@ class ProfilePicturesGuard extends ConsumerWidget {
   }
 }
 
+// Notification feature guards
+class WeeklyReportsGuard extends ConsumerWidget {
+  final Widget child;
+  final Widget? fallback;
+
+  const WeeklyReportsGuard({super.key, required this.child, this.fallback});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return FeatureGuard(
+      feature: 'weeklyReports',
+      child: child,
+      fallback: fallback,
+    );
+  }
+}
+
+class CustomRemindersGuard extends ConsumerWidget {
+  final Widget child;
+  final Widget? fallback;
+
+  const CustomRemindersGuard({super.key, required this.child, this.fallback});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return FeatureGuard(
+      feature: 'customReminders',
+      child: child,
+      fallback: fallback,
+    );
+  }
+}
+
+class SmartSuggestionsGuard extends ConsumerWidget {
+  final Widget child;
+  final Widget? fallback;
+
+  const SmartSuggestionsGuard({super.key, required this.child, this.fallback});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return FeatureGuard(
+      feature: 'smartSuggestions',
+      child: child,
+      fallback: fallback,
+    );
+  }
+}
+
+class TeamNotificationsGuard extends ConsumerWidget {
+  final Widget child;
+  final Widget? fallback;
+
+  const TeamNotificationsGuard({super.key, required this.child, this.fallback});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return FeatureGuard(
+      feature: 'teamNotifications',
+      child: child,
+      fallback: fallback,
+    );
+  }
+}
+
 class DataBackupGuard extends ConsumerWidget {
   final Widget child;
   final Widget? fallback;
