@@ -396,4 +396,37 @@ class AchievementRepository {
       ),
     ];
   }
+
+  // Clear all achievements (for testing)
+  Future<void> clearAllAchievements() async {
+    try {
+      final userId = currentUserId;
+      if (userId == null) {
+        throw Exception('User not authenticated');
+      }
+
+      // Get all user achievements
+      final achievements = await loadUserAchievements();
+
+      // Reset each achievement
+      for (final achievement in achievements) {
+        final resetAchievement = achievement.copyWith(
+          isUnlocked: false,
+          unlockedAt: null,
+          progress: 0,
+        );
+        await saveAchievement(resetAchievement);
+      }
+
+      // Reset stats
+      await updateAchievementStats({
+        'unlockedAchievements': 0,
+        'achievementPoints': 0,
+        'currentStreak': 0,
+        'longestStreak': 0,
+      });
+    } catch (e) {
+      throw Exception('Failed to clear achievements: $e');
+    }
+  }
 }

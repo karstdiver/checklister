@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/privilege_provider.dart';
 import '../domain/user_tier.dart';
 import '../services/translation_service.dart';
+import '../../features/achievements/domain/achievement_providers.dart';
 
 class PrivilegeTestPanel extends ConsumerWidget {
   const PrivilegeTestPanel({super.key});
@@ -66,6 +67,8 @@ class PrivilegeTestPanel extends ConsumerWidget {
               ),
               const SizedBox(height: 8),
               _buildPrivilegeList(privileges),
+              const SizedBox(height: 16),
+              _buildDevTools(context, ref, privileges),
             ],
           ),
         ),
@@ -141,5 +144,81 @@ class PrivilegeTestPanel extends ConsumerWidget {
         duration: const Duration(seconds: 2),
       ),
     );
+  }
+
+  Widget _buildDevTools(
+    BuildContext context,
+    WidgetRef ref,
+    UserPrivileges? privileges,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          TranslationService.translate('dev_tools'),
+          style: Theme.of(context).textTheme.titleSmall,
+        ),
+        const SizedBox(height: 8),
+        ElevatedButton.icon(
+          onPressed: () => _clearAchievements(context, ref),
+          icon: const Icon(Icons.clear_all, size: 16),
+          label: Text(TranslationService.translate('clear_achievements')),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.red[100],
+            foregroundColor: Colors.red[800],
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _clearAchievements(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(TranslationService.translate('clear_achievements')),
+        content: Text(
+          TranslationService.translate('clear_achievements_confirm'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(TranslationService.translate('cancel')),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _performClearAchievements(context, ref);
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: Text(TranslationService.translate('clear')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _performClearAchievements(BuildContext context, WidgetRef ref) {
+    // Clear all achievements by resetting their progress and unlocked status
+    final achievementNotifier = ref.read(achievementNotifierProvider.notifier);
+
+    try {
+      achievementNotifier.clearAllAchievements();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(TranslationService.translate('achievements_cleared')),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error clearing achievements: $e'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
   }
 }

@@ -369,6 +369,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     actions: [
                                       TextButton(
                                         onPressed: () {
+                                          Navigator.pop(context);
+                                        },
+                                        child: Text(
+                                          TranslationService.translate(
+                                            'cancel',
+                                          ),
+                                        ),
+                                      ),
+                                      TextButton(
+                                        onPressed: () {
                                           ref
                                               .read(
                                                 sessionNotifierProvider

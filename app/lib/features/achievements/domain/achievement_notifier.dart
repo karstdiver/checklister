@@ -255,4 +255,33 @@ class AchievementNotifier extends StateNotifier<AchievementState> {
   List<Achievement> get achievementsWithProgress {
     return state.achievementsWithProgress;
   }
+
+  // Clear all achievements (for testing)
+  Future<void> clearAllAchievements() async {
+    try {
+      // Reset all achievements to initial state
+      final resetAchievements = state.achievements.map((achievement) {
+        return achievement.copyWith(
+          isUnlocked: false,
+          unlockedAt: null,
+          progress: 0,
+        );
+      }).toList();
+
+      // Update state
+      state = state.copyWith(
+        achievements: resetAchievements,
+        unlockedAchievements: 0,
+        achievementPoints: 0,
+        currentStreak: 0,
+        longestStreak: 0,
+      );
+
+      // Clear from repository
+      await _repository.clearAllAchievements();
+    } catch (e) {
+      print('Error clearing achievements: $e');
+      rethrow;
+    }
+  }
 }
