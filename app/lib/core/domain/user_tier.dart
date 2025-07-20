@@ -112,6 +112,7 @@ class UserPrivileges {
         'canUseAdvancedFeatures': false,
         'profileCustomization': false,
         'profilePictures': false,
+        'itemPhotos': false,
         // Notification features
         'basicNotifications': true,
         'reminderNotifications': true,
@@ -152,6 +153,7 @@ class UserPrivileges {
         'canUseAdvancedFeatures': true,
         'profileCustomization': true,
         'profilePictures': false,
+        'itemPhotos': false,
         // Notification features
         'basicNotifications': true,
         'reminderNotifications': true,
@@ -192,6 +194,7 @@ class UserPrivileges {
         'canUseAdvancedFeatures': true,
         'profileCustomization': true,
         'profilePictures': true,
+        'itemPhotos': true,
         // Notification features
         'basicNotifications': true,
         'reminderNotifications': true,
@@ -232,6 +235,7 @@ class UserPrivileges {
         'canUseAdvancedFeatures': true,
         'profileCustomization': true,
         'profilePictures': true,
+        'itemPhotos': true,
         // Notification features
         'basicNotifications': true,
         'reminderNotifications': true,

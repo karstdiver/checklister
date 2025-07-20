@@ -71,6 +71,10 @@ dependencies:
 
   image_picker: ^1.0.7
   firebase_storage: ^12.4.7
+  
+  # Image processing and WebP support
+  image: ^4.1.7
+  flutter_image_compress: ^2.1.0
 
 dev_dependencies:
   flutter_test:

@@ -4,11 +4,13 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:logger/logger.dart';
 import '../../../core/services/translation_service.dart';
+import '../../../core/services/webp_image_service.dart';
 
 class ItemPhotoService {
   final FirebaseStorage _storage = FirebaseStorage.instance;
   final ImagePicker _picker = ImagePicker();
   final Logger _logger = Logger();
+  final WebPImageService _webpService = WebPImageService();
 
   /// Pick an image from gallery
   Future<File?> pickImageFromGallery() async {
@@ -128,14 +130,55 @@ class ItemPhotoService {
   /// Upload image to Firebase Storage for a checklist item
   Future<String> uploadItemPhoto(File imageFile, String itemId) async {
     try {
+      _logger.i('Uploading item photo: ${imageFile.path}');
+
+      // Get original file size for logging
+      final int originalSize = await _webpService.getFileSize(imageFile);
+      _logger.i(
+        'Original file size: ${_webpService.getFileSizeString(originalSize)}',
+      );
+
+      // Convert to WebP if not already WebP format
+      File processedImage = imageFile;
+      if (!_webpService.isWebPFormat(imageFile)) {
+        _logger.i('Converting image to WebP format');
+        processedImage = await _webpService.convertAndCompressToWebP(
+          imageFile,
+          quality: 85,
+          maxWidth: 1024,
+          maxHeight: 1024,
+        );
+
+        final int processedSize = await _webpService.getFileSize(
+          processedImage,
+        );
+        _logger.i(
+          'Processed file size: ${_webpService.getFileSizeString(processedSize)}',
+        );
+        _logger.i(
+          'Size reduction: ${((originalSize - processedSize) / originalSize * 100).toStringAsFixed(1)}%',
+        );
+      }
+
+      // Create filename with WebP extension
       final fileName =
-          'item_${itemId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+          'item_${itemId}_${DateTime.now().millisecondsSinceEpoch}.webp';
       final storageRef = _storage.ref().child('item_photos/$fileName');
-      final uploadTask = storageRef.putFile(imageFile);
+
+      // Upload the processed image
+      final uploadTask = storageRef.putFile(processedImage);
       final snapshot = await uploadTask;
       final downloadUrl = await snapshot.ref.getDownloadURL();
+
+      // Clean up temporary processed file if it's different from original
+      if (processedImage.path != imageFile.path) {
+        await _webpService.cleanupTempFiles([processedImage]);
+      }
+
+      _logger.i('Successfully uploaded item photo: $downloadUrl');
       return downloadUrl;
     } catch (e) {
+      _logger.e('Failed to upload item photo: $e');
       throw Exception('Failed to upload item photo: $e');
     }
   }
