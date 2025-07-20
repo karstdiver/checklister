@@ -308,6 +308,63 @@ class ProfilePicturesGuard extends ConsumerWidget {
   }
 }
 
+// Achievement feature guards
+class AchievementsGuard extends ConsumerWidget {
+  final Widget child;
+  final Widget? fallback;
+
+  const AchievementsGuard({super.key, required this.child, this.fallback});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return FeatureGuard(
+      feature: 'achievements',
+      child: child,
+      fallback: fallback,
+    );
+  }
+}
+
+class AchievementSharingGuard extends ConsumerWidget {
+  final Widget child;
+  final Widget? fallback;
+
+  const AchievementSharingGuard({
+    super.key,
+    required this.child,
+    this.fallback,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return FeatureGuard(
+      feature: 'achievementSharing',
+      child: child,
+      fallback: fallback,
+    );
+  }
+}
+
+class AchievementLeaderboardsGuard extends ConsumerWidget {
+  final Widget child;
+  final Widget? fallback;
+
+  const AchievementLeaderboardsGuard({
+    super.key,
+    required this.child,
+    this.fallback,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return FeatureGuard(
+      feature: 'achievementLeaderboards',
+      child: child,
+      fallback: fallback,
+    );
+  }
+}
+
 // Notification feature guards
 class WeeklyReportsGuard extends ConsumerWidget {
   final Widget child;

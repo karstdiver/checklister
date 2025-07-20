@@ -389,21 +389,46 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
             },
           ),
           const Divider(height: 1),
-          ListTile(
-            dense: true,
-            leading: const Icon(
-              Icons.emoji_events,
-              color: Colors.orange,
-              size: 20,
+          AchievementsGuard(
+            child: ListTile(
+              dense: true,
+              leading: const Icon(
+                Icons.emoji_events,
+                color: Colors.orange,
+                size: 20,
+              ),
+              title: Text(
+                TranslationService.translate('achievements'),
+                style: TextStyle(fontSize: 14, color: textColor),
+              ),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+              onTap: () {
+                Navigator.pushNamed(context, '/achievements');
+              },
             ),
-            title: Text(
-              TranslationService.translate('achievements'),
-              style: TextStyle(fontSize: 14, color: textColor),
+            fallback: ListTile(
+              dense: true,
+              leading: const Icon(
+                Icons.emoji_events,
+                color: Colors.grey,
+                size: 20,
+              ),
+              title: Text(
+                TranslationService.translate('achievements'),
+                style: TextStyle(fontSize: 14, color: Colors.grey),
+              ),
+              trailing: const Icon(Icons.lock, color: Colors.grey, size: 16),
+              onTap: () {
+                // Show upgrade encouragement
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      TranslationService.translate('upgrade_flow_coming_soon'),
+                    ),
+                  ),
+                );
+              },
             ),
-            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-            onTap: () {
-              // TODO: Navigate to user souvenir screen
-            },
           ),
         ],
       ),

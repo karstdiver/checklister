@@ -53,6 +53,14 @@ class UserPrivileges {
   bool get canCustomizeProfile => features['profileCustomization'] == true;
   bool get canUseProfilePictures => features['profilePictures'] == true;
 
+  // Achievement features
+  bool get hasAchievements => features['achievements'] == true;
+  bool get hasAchievementNotifications =>
+      features['achievementNotifications'] == true;
+  bool get hasAchievementSharing => features['achievementSharing'] == true;
+  bool get hasAchievementLeaderboards =>
+      features['achievementLeaderboards'] == true;
+
   // Tier status getters
   bool get isAnonymous => tier == UserTier.anonymous;
   bool get isFree => tier == UserTier.free;
@@ -113,6 +121,10 @@ class UserPrivileges {
         'customReminders': false,
         'smartSuggestions': false,
         'teamNotifications': false,
+        // Achievement features
+        'achievements': false,
+        'achievementSharing': false,
+        'achievementLeaderboards': false,
       },
       usage: {'checklistsCreated': 0, 'sessionsCompleted': 0},
     );
@@ -149,6 +161,10 @@ class UserPrivileges {
         'customReminders': false,
         'smartSuggestions': false,
         'teamNotifications': false,
+        // Achievement features
+        'achievements': true,
+        'achievementSharing': false,
+        'achievementLeaderboards': false,
       },
       usage: {'checklistsCreated': 0, 'sessionsCompleted': 0},
     );
@@ -185,6 +201,10 @@ class UserPrivileges {
         'customReminders': true,
         'smartSuggestions': true,
         'teamNotifications': false,
+        // Achievement features
+        'achievements': true,
+        'achievementSharing': true,
+        'achievementLeaderboards': false,
       },
       usage: {'checklistsCreated': 0, 'sessionsCompleted': 0},
     );
@@ -221,6 +241,10 @@ class UserPrivileges {
         'customReminders': true,
         'smartSuggestions': true,
         'teamNotifications': true,
+        // Achievement features
+        'achievements': true,
+        'achievementSharing': true,
+        'achievementLeaderboards': true,
       },
       usage: {'checklistsCreated': 0, 'sessionsCompleted': 0},
     );

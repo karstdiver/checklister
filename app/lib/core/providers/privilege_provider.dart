@@ -41,6 +41,7 @@ class PrivilegeNotifier extends StateNotifier<UserPrivileges?> {
         await _createUserDocumentWithTier(userId);
       }
     } catch (e) {
+      print('🔍 DEBUG: Error loading user privileges: $e');
       // Fallback to free tier if there's an error
       state = UserPrivileges.free();
     }
@@ -49,15 +50,29 @@ class PrivilegeNotifier extends StateNotifier<UserPrivileges?> {
   UserPrivileges _buildPrivilegesFromUserDoc(UserDocument userDoc) {
     final subscription = userDoc.subscription;
     final tier = _getTierFromSubscription(subscription);
-    final features = _getFeaturesForTier(tier);
     final usage =
         userDoc.usage ?? {'checklistsCreated': 0, 'sessionsCompleted': 0};
 
-    return UserPrivileges(
-      tier: tier,
+    // Use the factory methods from UserPrivileges to ensure all features are included
+    UserPrivileges basePrivileges;
+    switch (tier) {
+      case UserTier.anonymous:
+        basePrivileges = UserPrivileges.anonymous();
+        break;
+      case UserTier.free:
+        basePrivileges = UserPrivileges.free();
+        break;
+      case UserTier.premium:
+        basePrivileges = UserPrivileges.premium();
+        break;
+      case UserTier.pro:
+        basePrivileges = UserPrivileges.pro();
+        break;
+    }
+
+    return basePrivileges.copyWith(
       isActive: subscription?.status == 'active',
       expiresAt: subscription?.endDate,
-      features: features,
       usage: usage,
     );
   }
@@ -73,135 +88,6 @@ class PrivilegeNotifier extends StateNotifier<UserPrivileges?> {
       case 'free':
       default:
         return UserTier.free;
-    }
-  }
-
-  Map<String, dynamic> _getFeaturesForTier(UserTier tier) {
-    switch (tier) {
-      case UserTier.anonymous:
-        return {
-          'maxChecklists': 1,
-          'maxItemsPerChecklist': 3,
-          'sessionPersistence': false,
-          'analytics': false,
-          'export': false,
-          'sharing': false,
-          'customThemes': false,
-          'prioritySupport': false,
-          'canEditChecklists': false,
-          'canDeleteChecklists': false,
-          'canDuplicateChecklists': false,
-          'sessionHistory': false,
-          'checklistTemplates': false,
-          'dataBackup': false,
-          'canUseAdvancedFeatures': false,
-          'profileCustomization': false,
-          'profilePictures': false,
-          'itemPhotos': false,
-          'publicChecklists': false,
-          // Notification features
-          'basicNotifications': true,
-          'reminderNotifications': true,
-          'progressNotifications': false,
-          'achievementNotifications': false,
-          'weeklyReports': false,
-          'customReminders': false,
-          'smartSuggestions': false,
-          'teamNotifications': false,
-        };
-      case UserTier.free:
-        return {
-          'maxChecklists': 5,
-          'maxItemsPerChecklist': 15,
-          'sessionPersistence': true,
-          'analytics': false,
-          'export': false,
-          'sharing': false,
-          'customThemes': false,
-          'prioritySupport': false,
-          'canEditChecklists': true,
-          'canDeleteChecklists': true,
-          'canDuplicateChecklists': true,
-          'sessionHistory': true,
-          'checklistTemplates': true,
-          'dataBackup': true,
-          'canUseAdvancedFeatures': true,
-          'profileCustomization': true,
-          'profilePictures': false,
-          'itemPhotos': false,
-          'publicChecklists': false,
-          // Notification features
-          'basicNotifications': true,
-          'reminderNotifications': true,
-          'progressNotifications': true,
-          'achievementNotifications': true,
-          'weeklyReports': false,
-          'customReminders': false,
-          'smartSuggestions': false,
-          'teamNotifications': false,
-        };
-      case UserTier.premium:
-        return {
-          'maxChecklists': 50,
-          'maxItemsPerChecklist': 100,
-          'sessionPersistence': true,
-          'analytics': true,
-          'export': true,
-          'sharing': true,
-          'customThemes': false,
-          'prioritySupport': false,
-          'canEditChecklists': true,
-          'canDeleteChecklists': true,
-          'canDuplicateChecklists': true,
-          'sessionHistory': true,
-          'checklistTemplates': true,
-          'dataBackup': true,
-          'canUseAdvancedFeatures': true,
-          'profileCustomization': true,
-          'profilePictures': true,
-          'itemPhotos': true,
-          'publicChecklists': true,
-          // Notification features
-          'basicNotifications': true,
-          'reminderNotifications': true,
-          'progressNotifications': true,
-          'achievementNotifications': true,
-          'weeklyReports': true,
-          'customReminders': true,
-          'smartSuggestions': true,
-          'teamNotifications': false,
-        };
-      case UserTier.pro:
-        return {
-          'maxChecklists': -1, // unlimited
-          'maxItemsPerChecklist': -1, // unlimited
-          'sessionPersistence': true,
-          'analytics': true,
-          'export': true,
-          'sharing': true,
-          'customThemes': true,
-          'prioritySupport': true,
-          'canEditChecklists': true,
-          'canDeleteChecklists': true,
-          'canDuplicateChecklists': true,
-          'sessionHistory': true,
-          'checklistTemplates': true,
-          'dataBackup': true,
-          'canUseAdvancedFeatures': true,
-          'profileCustomization': true,
-          'profilePictures': true,
-          'itemPhotos': true,
-          'publicChecklists': true,
-          // Notification features
-          'basicNotifications': true,
-          'reminderNotifications': true,
-          'progressNotifications': true,
-          'achievementNotifications': true,
-          'weeklyReports': true,
-          'customReminders': true,
-          'smartSuggestions': true,
-          'teamNotifications': true,
-        };
     }
   }
 
@@ -253,11 +139,23 @@ class PrivilegeNotifier extends StateNotifier<UserPrivileges?> {
 
   // TESTING ONLY - Switch tier without database update
   void testSwitchTier(UserTier newTier) {
-    final features = _getFeaturesForTier(newTier);
-    state = UserPrivileges(
-      tier: newTier,
-      isActive: true,
-      features: features,
+    UserPrivileges basePrivileges;
+    switch (newTier) {
+      case UserTier.anonymous:
+        basePrivileges = UserPrivileges.anonymous();
+        break;
+      case UserTier.free:
+        basePrivileges = UserPrivileges.free();
+        break;
+      case UserTier.premium:
+        basePrivileges = UserPrivileges.premium();
+        break;
+      case UserTier.pro:
+        basePrivileges = UserPrivileges.pro();
+        break;
+    }
+
+    state = basePrivileges.copyWith(
       usage: state?.usage ?? {'checklistsCreated': 0, 'sessionsCompleted': 0},
     );
   }

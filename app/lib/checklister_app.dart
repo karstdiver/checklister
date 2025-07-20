@@ -12,6 +12,7 @@ import 'features/settings/presentation/profile_overview_screen.dart';
 import 'features/settings/presentation/profile_edit_screen.dart';
 import 'features/settings/presentation/language_screen.dart';
 import 'features/settings/presentation/notification_screen.dart';
+import 'features/achievements/presentation/achievement_screen.dart';
 import 'shared/themes/app_theme.dart';
 
 class ChecklisterApp extends ConsumerWidget {
@@ -44,6 +45,7 @@ class ChecklisterApp extends ConsumerWidget {
         '/profile/edit': (context) => const ProfileEditScreen(),
         '/language': (context) => const LanguageScreen(),
         '/notifications': (context) => const NotificationScreen(),
+        '/achievements': (context) => const AchievementScreen(),
       },
     );
   }
