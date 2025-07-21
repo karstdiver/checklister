@@ -7,6 +7,7 @@ import '../../../core/widgets/anonymous_profile_encouragement.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../core/providers/privilege_provider.dart';
 import '../../../core/providers/providers.dart';
+import '../../settings/presentation/upgrade_screen.dart';
 
 class AchievementScreen extends ConsumerStatefulWidget {
   const AchievementScreen({super.key});
@@ -355,13 +356,9 @@ class _AchievementScreenState extends ConsumerState<AchievementScreen>
               const SizedBox(height: 32),
               ElevatedButton(
                 onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        TranslationService.translate(
-                          'upgrade_flow_coming_soon',
-                        ),
-                      ),
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const UpgradeScreen(),
                     ),
                   );
                 },

@@ -13,6 +13,7 @@ import '../../../core/widgets/anonymous_profile_encouragement.dart';
 import '../../../core/domain/user_tier.dart';
 import '../../../core/providers/privilege_provider.dart';
 import 'account_settings_screen.dart';
+import 'upgrade_screen.dart';
 
 class ProfileOverviewScreen extends ConsumerStatefulWidget {
   const ProfileOverviewScreen({super.key});
@@ -199,14 +200,9 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
                   );
                 },
                 onUpgrade: () {
-                  // TODO: Navigate to upgrade screen
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        TranslationService.translate(
-                          'upgrade_flow_coming_soon',
-                        ),
-                      ),
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const UpgradeScreen(),
                     ),
                   );
                 },

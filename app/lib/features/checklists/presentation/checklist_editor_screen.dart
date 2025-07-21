@@ -12,6 +12,7 @@ import '../../../core/widgets/signup_encouragement.dart';
 import '../../../core/services/analytics_service.dart';
 import '../../../core/services/translation_service.dart';
 import '../../../shared/widgets/app_card.dart';
+import '../../settings/presentation/upgrade_screen.dart';
 
 class ChecklistEditorScreen extends ConsumerStatefulWidget {
   final Checklist? checklist; // null for creating new, non-null for editing
@@ -498,7 +499,9 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
           ElevatedButton(
             onPressed: () {
               Navigator.of(context).pop();
-              // TODO: Navigate to upgrade/signup flow
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => const UpgradeScreen()),
+              );
             },
             child: Text(TranslationService.translate('upgrade')),
           ),

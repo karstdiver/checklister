@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/privilege_provider.dart';
 import '../domain/user_tier.dart';
 import '../services/translation_service.dart';
+import '../../features/settings/presentation/upgrade_screen.dart';
 
 class SignupEncouragement extends ConsumerWidget {
   final String title;
@@ -216,7 +217,14 @@ class ProfilePictureEncouragement extends ConsumerWidget {
             child: ElevatedButton(
               onPressed: currentTier == UserTier.anonymous
                   ? onSignUp
-                  : onUpgrade,
+                  : onUpgrade ??
+                        () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const UpgradeScreen(),
+                            ),
+                          );
+                        },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.primary,
                 foregroundColor: Theme.of(context).colorScheme.onPrimary,
@@ -299,7 +307,15 @@ class ProfilePictureDetailsDialog extends ConsumerWidget {
           ElevatedButton(
             onPressed: () {
               Navigator.of(context).pop();
-              // TODO: Navigate to signup/upgrade flow
+              if (userTier == UserTier.free) {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const UpgradeScreen(),
+                  ),
+                );
+              } else {
+                Navigator.pushReplacementNamed(context, '/login');
+              }
             },
             child: Text(
               userTier == UserTier.anonymous
