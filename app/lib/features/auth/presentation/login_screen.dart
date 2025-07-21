@@ -165,18 +165,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
               const SizedBox(height: 32),
 
-              // Debug info
-              Text(
-                'Auth Status: ${authState.status}',
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
-              ),
-              if (authState.user != null)
-                Text(
-                  'User: ${authState.user!.uid}',
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
-                ),
-              const SizedBox(height: 16),
-
               // Email Field
               TextFormField(
                 controller: _emailController,

@@ -409,5 +409,6 @@
   "team_notifications_curious_description": "Enable team collaboration with shared checklists and real-time notifications",
   "unlock_notification_features": "Unlock Advanced Notifications",
   "upgrade_for_notifications": "Upgrade your account to access advanced notification features and improve your productivity",
-  "error_saving_settings": "Error saving settings. Please try again."
+  "error_saving_settings": "Error saving settings. Please try again.",
+  "checklist_copy_suffix": " (Copy)"
 }

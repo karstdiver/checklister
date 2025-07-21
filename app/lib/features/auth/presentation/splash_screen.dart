@@ -127,22 +127,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                           ),
                           const SizedBox(height: 24),
                         ],
-                        Text(
-                          'Auth Status:  {authState.status}',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.white70,
-                          ),
-                        ),
-                        if (authState.user != null)
-                          Text(
-                            'User: ${authState.user!.uid}',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Colors.white70,
-                            ),
-                          ),
-                        const SizedBox(height: 24),
                         if (authState.hasError) ...[
                           const SizedBox(height: 16),
                           Text(

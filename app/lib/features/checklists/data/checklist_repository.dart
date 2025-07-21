@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../domain/checklist.dart';
+import '../../../core/services/translation_service.dart';
 
 class ChecklistRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -247,7 +248,8 @@ class ChecklistRepository {
       }
 
       final duplicatedChecklist = Checklist.create(
-        title: '${originalChecklist.title} (Copy)',
+        title:
+            '${originalChecklist.title}${TranslationService.translate('checklist_copy_suffix')}',
         description: originalChecklist.description,
         userId: newUserId,
         items: originalChecklist.items

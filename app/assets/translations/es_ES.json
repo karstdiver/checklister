@@ -409,5 +409,6 @@
   "team_notifications_curious_description": "Habilita la colaboración en equipo con listas compartidas y notificaciones en tiempo real",
   "unlock_notification_features": "Desbloquear Notificaciones Avanzadas",
   "upgrade_for_notifications": "Actualiza tu cuenta para acceder a funciones de notificación avanzadas y mejorar tu productividad",
-  "error_saving_settings": "Error al guardar la configuración. Por favor, inténtalo de nuevo."
+  "error_saving_settings": "Error al guardar la configuración. Por favor, inténtalo de nuevo.",
+  "checklist_copy_suffix": " (Copia)"
 }
