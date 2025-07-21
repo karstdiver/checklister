@@ -29,19 +29,15 @@ final checklistNotifierProvider =
     });
 
 // User checklists provider (auto-disposes when not used)
-final userChecklistsProvider = FutureProvider.family<List<Checklist>, String>((
+final userChecklistsProvider = Provider.family<List<Checklist>, String>((
   ref,
   userId,
-) async {
-  final notifier = ref.read(checklistNotifierProvider.notifier);
-  await notifier.loadUserChecklists(userId);
-  return ref
-      .watch(checklistNotifierProvider)
-      .when(
-        data: (checklists) => checklists,
-        loading: () => [],
-        error: (error, stack) => throw error,
-      );
+) {
+  final asyncChecklists = ref.watch(checklistNotifierProvider);
+  return asyncChecklists.maybeWhen(
+    data: (checklists) => checklists,
+    orElse: () => [],
+  );
 });
 
 // Individual checklist provider
@@ -100,24 +96,8 @@ final userChecklistStatsProvider = Provider.family<ChecklistStats, String>((
   ref,
   userId,
 ) {
-  final checklistsAsync = ref.watch(userChecklistsProvider(userId));
-  return checklistsAsync.when(
-    data: (checklists) => ref.watch(checklistStatsProvider(checklists)),
-    loading: () => const ChecklistStats(
-      totalChecklists: 0,
-      completedChecklists: 0,
-      totalItems: 0,
-      completedItems: 0,
-      recentChecklists: [],
-    ),
-    error: (error, stack) => const ChecklistStats(
-      totalChecklists: 0,
-      completedChecklists: 0,
-      totalItems: 0,
-      completedItems: 0,
-      recentChecklists: [],
-    ),
-  );
+  final checklists = ref.watch(userChecklistsProvider(userId));
+  return ref.watch(checklistStatsProvider(checklists));
 });
 
 // Checklist stats data class

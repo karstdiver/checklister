@@ -87,6 +87,9 @@ class ChecklistNotifier extends StateNotifier<AsyncValue<List<Checklist>>> {
   // Update a checklist
   Future<bool> updateChecklist(Checklist checklist) async {
     try {
+      print(
+        '[DEBUG] updateChecklist CALLED: id=${checklist.id}, completedItems=${checklist.completedItems}, totalItems=${checklist.totalItems}, isComplete=${checklist.isComplete}',
+      );
       await _repository.updateChecklist(checklist);
 
       // Update state
@@ -98,6 +101,12 @@ class ChecklistNotifier extends StateNotifier<AsyncValue<List<Checklist>>> {
           return c;
         }).toList();
         state = AsyncValue.data(updatedChecklists);
+        print('[DEBUG] All checklists after update:');
+        for (final c in updatedChecklists) {
+          print(
+            '  id=${c.id}, completedItems=${c.completedItems}, totalItems=${c.totalItems}, isComplete=${c.isComplete}',
+          );
+        }
       });
 
       return true;
