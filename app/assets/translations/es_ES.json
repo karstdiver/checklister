@@ -411,5 +411,8 @@
   "unlock_notification_features": "Desbloquear Notificaciones Avanzadas",
   "upgrade_for_notifications": "Actualiza tu cuenta para acceder a funciones de notificación avanzadas y mejorar tu productividad",
   "error_saving_settings": "Error al guardar la configuración. Por favor, inténtalo de nuevo.",
-  "checklist_copy_suffix": " (Copia)"
+  "checklist_copy_suffix": " (Copia)",
+  "discard_changes_title": "¿Descartar cambios?",
+  "discard_changes_message": "Tienes cambios sin guardar. ¿Estás seguro de que deseas salir sin guardar?",
+  "discard": "Descartar"
 }

@@ -411,5 +411,8 @@
   "unlock_notification_features": "Unlock Advanced Notifications",
   "upgrade_for_notifications": "Upgrade your account to access advanced notification features and improve your productivity",
   "error_saving_settings": "Error saving settings. Please try again.",
-  "checklist_copy_suffix": " (Copy)"
+  "checklist_copy_suffix": " (Copy)",
+  "discard_changes_title": "Discard Changes?",
+  "discard_changes_message": "You have unsaved changes. Are you sure you want to leave without saving?",
+  "discard": "Discard"
 }

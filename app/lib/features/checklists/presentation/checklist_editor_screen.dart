@@ -59,289 +59,358 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
     super.dispose();
   }
 
+  bool _isDirty() {
+    if (widget.checklist == null) {
+      // New checklist: check if any field is non-empty or items/tags changed
+      return _titleController.text.trim().isNotEmpty ||
+          _descriptionController.text.trim().isNotEmpty ||
+          _items.isNotEmpty ||
+          _tags.isNotEmpty ||
+          _isPublic;
+    } else {
+      // Editing: check if any field changed
+      return _titleController.text.trim() != widget.checklist!.title.trim() ||
+          (_descriptionController.text.trim() !=
+              (widget.checklist!.description ?? '').trim()) ||
+          _isPublic != widget.checklist!.isPublic ||
+          !_listEquals(_items, widget.checklist!.items) ||
+          !_listEquals(_tags, widget.checklist!.tags);
+    }
+  }
+
+  bool _listEquals<T>(List<T> a, List<T> b) {
+    if (a.length != b.length) return false;
+    for (int i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
+
+  Future<bool> _confirmDiscardChanges(BuildContext context) async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text(TranslationService.translate('discard_changes_title')),
+            content: Text(
+              TranslationService.translate('discard_changes_message'),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text(TranslationService.translate('cancel')),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: Text(TranslationService.translate('discard')),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isEditing = widget.checklist != null;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          isEditing
-              ? TranslationService.translate('edit_checklist')
-              : TranslationService.translate('create_checklist'),
-        ),
-        leading: IconButton(
-          onPressed: () => Navigator.of(context).pop(),
-          icon: const Icon(Icons.arrow_back),
-        ),
-        actions: [
-          if (_isLoading)
-            const Padding(
-              padding: EdgeInsets.all(16.0),
-              child: SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2),
+    return WillPopScope(
+      onWillPop: () async {
+        if (_isDirty()) {
+          final discard = await _confirmDiscardChanges(context);
+          return discard;
+        }
+        return true;
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(
+            isEditing
+                ? TranslationService.translate('edit_checklist')
+                : TranslationService.translate('create_checklist'),
+          ),
+          leading: IconButton(
+            onPressed: () async {
+              if (_isDirty()) {
+                final discard = await _confirmDiscardChanges(context);
+                if (!discard) return;
+              }
+              Navigator.of(context).pop();
+            },
+            icon: const Icon(Icons.arrow_back),
+          ),
+          actions: [
+            if (_isLoading)
+              const Padding(
+                padding: EdgeInsets.all(16.0),
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              )
+            else
+              TextButton(
+                onPressed: _saveChecklist,
+                child: Text(TranslationService.translate('save')),
               ),
-            )
-          else
-            TextButton(
-              onPressed: _saveChecklist,
-              child: Text(TranslationService.translate('save')),
-            ),
-        ],
-      ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16.0),
-          children: [
-            // Basic Information
-            AppCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    TranslationService.translate('basic_information'),
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Title
-                  TextFormField(
-                    controller: _titleController,
-                    decoration: InputDecoration(
-                      labelText: TranslationService.translate('title'),
-                      hintText: TranslationService.translate(
-                        'enter_checklist_title',
-                      ),
-                      border: const OutlineInputBorder(),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return TranslationService.translate('title_required');
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Description
-                  TextFormField(
-                    controller: _descriptionController,
-                    decoration: InputDecoration(
-                      labelText: TranslationService.translate('description'),
-                      hintText: TranslationService.translate(
-                        'enter_checklist_description',
-                      ),
-                      border: const OutlineInputBorder(),
-                    ),
-                    maxLines: 3,
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Public toggle with privilege guard (curious user method)
-                  SwitchListTile(
-                    title: Text(TranslationService.translate('make_public')),
-                    subtitle: Text(
-                      TranslationService.translate(
-                        'public_checklist_description',
+          ],
+        ),
+        body: Form(
+          key: _formKey,
+          child: ListView(
+            padding: const EdgeInsets.all(16.0),
+            children: [
+              // Basic Information
+              AppCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      TranslationService.translate('basic_information'),
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                    value: _isPublic,
-                    onChanged: (value) {
-                      // Check privilege before allowing public toggle
-                      final privileges = ref.read(privilegeProvider);
-                      final hasPublicChecklists =
-                          privileges?.features['publicChecklists'] == true;
-
-                      if (hasPublicChecklists) {
-                        setState(() {
-                          _isPublic = value;
-                        });
-                      } else {
-                        // Show encouragement dialog for curious users
-                        _showPublicChecklistsEncouragement();
-                      }
-                    },
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // Tags
-            AppCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    TranslationService.translate('tags'),
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Add tag
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextFormField(
-                          controller: _tagController,
-                          decoration: InputDecoration(
-                            labelText: TranslationService.translate('add_tag'),
-                            hintText: TranslationService.translate('enter_tag'),
-                            border: const OutlineInputBorder(),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      ElevatedButton(
-                        onPressed: _addTag,
-                        child: Text(TranslationService.translate('add')),
-                      ),
-                    ],
-                  ),
-
-                  // Tags list
-                  if (_tags.isNotEmpty) ...[
                     const SizedBox(height: 16),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: _tags
-                          .map(
-                            (tag) => Chip(
-                              label: Text(tag),
-                              onDeleted: () => _removeTag(tag),
-                            ),
-                          )
-                          .toList(),
-                    ),
-                  ],
-                ],
-              ),
-            ),
 
-            const SizedBox(height: 16),
-
-            // Items
-            AppCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        TranslationService.translate('items'),
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
+                    // Title
+                    TextFormField(
+                      controller: _titleController,
+                      decoration: InputDecoration(
+                        labelText: TranslationService.translate('title'),
+                        hintText: TranslationService.translate(
+                          'enter_checklist_title',
                         ),
+                        border: const OutlineInputBorder(),
                       ),
-                      ElevatedButton.icon(
-                        onPressed: _addItem,
-                        icon: const Icon(Icons.add),
-                        label: Text(TranslationService.translate('add_item')),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-
-                  if (_items.isEmpty)
-                    Center(
-                      child: Column(
-                        children: [
-                          Icon(
-                            Icons.checklist_outlined,
-                            size: 64,
-                            color: theme.colorScheme.onSurface.withValues(
-                              alpha: 0.3,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            TranslationService.translate('no_items_yet'),
-                            style: theme.textTheme.bodyLarge?.copyWith(
-                              color: theme.colorScheme.onSurface.withValues(
-                                alpha: 0.6,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            TranslationService.translate(
-                              'add_items_description',
-                            ),
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.onSurface.withValues(
-                                alpha: 0.5,
-                              ),
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    )
-                  else
-                    ReorderableListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: _items.length,
-                      onReorder: _reorderItems,
-                      itemBuilder: (context, index) {
-                        final item = _items[index];
-                        return Card(
-                          key: ValueKey(item.id),
-                          margin: const EdgeInsets.only(bottom: 8),
-                          child: ListTile(
-                            leading:
-                                item.imageUrl != null &&
-                                    item.imageUrl!.isNotEmpty
-                                ? ClipRRect(
-                                    borderRadius: BorderRadius.circular(4),
-                                    child: Image.network(
-                                      item.imageUrl!,
-                                      width: 48,
-                                      height: 48,
-                                      fit: BoxFit.cover,
-                                      errorBuilder:
-                                          (context, error, stackTrace) =>
-                                              const Icon(Icons.broken_image),
-                                    ),
-                                  )
-                                : const Icon(Icons.drag_handle),
-                            title: Text(item.text),
-                            subtitle: item.notes != null
-                                ? Text(item.notes!)
-                                : null,
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  onPressed: () => _editItem(index),
-                                  icon: const Icon(Icons.edit),
-                                ),
-                                IconButton(
-                                  onPressed: () => _removeItem(index),
-                                  icon: const Icon(Icons.delete),
-                                  color: Colors.red,
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return TranslationService.translate('title_required');
+                        }
+                        return null;
                       },
                     ),
-                ],
+                    const SizedBox(height: 16),
+
+                    // Description
+                    TextFormField(
+                      controller: _descriptionController,
+                      decoration: InputDecoration(
+                        labelText: TranslationService.translate('description'),
+                        hintText: TranslationService.translate(
+                          'enter_checklist_description',
+                        ),
+                        border: const OutlineInputBorder(),
+                      ),
+                      maxLines: 3,
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Public toggle with privilege guard (curious user method)
+                    SwitchListTile(
+                      title: Text(TranslationService.translate('make_public')),
+                      subtitle: Text(
+                        TranslationService.translate(
+                          'public_checklist_description',
+                        ),
+                      ),
+                      value: _isPublic,
+                      onChanged: (value) {
+                        // Check privilege before allowing public toggle
+                        final privileges = ref.read(privilegeProvider);
+                        final hasPublicChecklists =
+                            privileges?.features['publicChecklists'] == true;
+
+                        if (hasPublicChecklists) {
+                          setState(() {
+                            _isPublic = value;
+                          });
+                        } else {
+                          // Show encouragement dialog for curious users
+                          _showPublicChecklistsEncouragement();
+                        }
+                      },
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+
+              const SizedBox(height: 16),
+
+              // Tags
+              AppCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      TranslationService.translate('tags'),
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Add tag
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: _tagController,
+                            decoration: InputDecoration(
+                              labelText: TranslationService.translate(
+                                'add_tag',
+                              ),
+                              hintText: TranslationService.translate(
+                                'enter_tag',
+                              ),
+                              border: const OutlineInputBorder(),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          onPressed: _addTag,
+                          child: Text(TranslationService.translate('add')),
+                        ),
+                      ],
+                    ),
+
+                    // Tags list
+                    if (_tags.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: _tags
+                            .map(
+                              (tag) => Chip(
+                                label: Text(tag),
+                                onDeleted: () => _removeTag(tag),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Items
+              AppCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          TranslationService.translate('items'),
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        ElevatedButton.icon(
+                          onPressed: _addItem,
+                          icon: const Icon(Icons.add),
+                          label: Text(TranslationService.translate('add_item')),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    if (_items.isEmpty)
+                      Center(
+                        child: Column(
+                          children: [
+                            Icon(
+                              Icons.checklist_outlined,
+                              size: 64,
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.3,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              TranslationService.translate('no_items_yet'),
+                              style: theme.textTheme.bodyLarge?.copyWith(
+                                color: theme.colorScheme.onSurface.withValues(
+                                  alpha: 0.6,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              TranslationService.translate(
+                                'add_items_description',
+                              ),
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.colorScheme.onSurface.withValues(
+                                  alpha: 0.5,
+                                ),
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      ReorderableListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: _items.length,
+                        onReorder: _reorderItems,
+                        itemBuilder: (context, index) {
+                          final item = _items[index];
+                          return Card(
+                            key: ValueKey(item.id),
+                            margin: const EdgeInsets.only(bottom: 8),
+                            child: ListTile(
+                              leading:
+                                  item.imageUrl != null &&
+                                      item.imageUrl!.isNotEmpty
+                                  ? ClipRRect(
+                                      borderRadius: BorderRadius.circular(4),
+                                      child: Image.network(
+                                        item.imageUrl!,
+                                        width: 48,
+                                        height: 48,
+                                        fit: BoxFit.cover,
+                                        errorBuilder:
+                                            (context, error, stackTrace) =>
+                                                const Icon(Icons.broken_image),
+                                      ),
+                                    )
+                                  : const Icon(Icons.drag_handle),
+                              title: Text(item.text),
+                              subtitle: item.notes != null
+                                  ? Text(item.notes!)
+                                  : null,
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    onPressed: () => _editItem(index),
+                                    icon: const Icon(Icons.edit),
+                                  ),
+                                  IconButton(
+                                    onPressed: () => _removeItem(index),
+                                    icon: const Icon(Icons.delete),
+                                    color: Colors.red,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
