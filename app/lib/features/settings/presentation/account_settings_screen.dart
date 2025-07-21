@@ -9,6 +9,7 @@ import '../../../core/widgets/tier_indicator.dart';
 import '../../../core/providers/privilege_provider.dart';
 import '../../../core/domain/user_tier.dart';
 import '../../../core/widgets/privilege_test_panel.dart';
+import 'upgrade_screen.dart';
 
 class AccountSettingsScreen extends ConsumerStatefulWidget {
   const AccountSettingsScreen({super.key});
@@ -112,14 +113,9 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
                         if (!isMaxTier)
                           ElevatedButton(
                             onPressed: () {
-                              // TODO: Implement upgrade flow
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    TranslationService.translate(
-                                      'upgrade_flow_coming_soon',
-                                    ),
-                                  ),
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => const UpgradeScreen(),
                                 ),
                               );
                             },
