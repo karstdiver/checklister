@@ -12,6 +12,7 @@ import '../../../core/widgets/signup_encouragement.dart';
 import '../../../core/widgets/anonymous_profile_encouragement.dart';
 import '../../../core/domain/user_tier.dart';
 import '../../../core/providers/privilege_provider.dart';
+import 'account_settings_screen.dart';
 
 class ProfileOverviewScreen extends ConsumerStatefulWidget {
   const ProfileOverviewScreen({super.key});
@@ -159,10 +160,6 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
 
           // Profile Actions
           _buildProfileActions(navigationNotifier),
-          const SizedBox(height: 16),
-
-          // Account Information
-          _buildAccountInfo(currentUser, preferences),
           const SizedBox(height: 16),
 
           // Advanced Features
@@ -535,7 +532,12 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
             ),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
             onTap: () {
-              // TODO: Navigate to account settings screen
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const AccountSettingsScreen(),
+                ),
+              );
             },
           ),
           const Divider(height: 1),

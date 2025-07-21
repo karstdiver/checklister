@@ -232,10 +232,6 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
           _buildPreferencesSection(),
           const SizedBox(height: 16),
 
-          // TESTING: Privilege Test Panel (DEV ONLY)
-          const PrivilegeTestPanel(),
-          const SizedBox(height: 16),
-
           // Save Button
           _buildSaveButton(),
           const SizedBox(height: 16),

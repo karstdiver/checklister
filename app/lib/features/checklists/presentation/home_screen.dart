@@ -14,6 +14,7 @@ import '../../sessions/presentation/session_screen.dart';
 import '../domain/checklist_providers.dart';
 import 'widgets/checklist_card.dart';
 import 'checklist_editor_screen.dart';
+import '../../../core/widgets/tier_indicator.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -77,72 +78,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget _buildTierIndicator(WidgetRef ref) {
     final privileges = ref.watch(privilegeProvider);
     final currentTier = privileges?.tier ?? UserTier.anonymous;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: _getTierColor(currentTier),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(_getTierIcon(currentTier), color: Colors.white, size: 16),
-          const SizedBox(width: 6),
-          Text(
-            _getTierDisplayName(currentTier),
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Color _getTierColor(UserTier tier) {
-    switch (tier) {
-      case UserTier.anonymous:
-        return Colors.grey;
-      case UserTier.free:
-        return Colors.blue;
-      case UserTier.premium:
-        return Colors.purple;
-      case UserTier.pro:
-        return Colors.orange;
-    }
-  }
-
-  IconData _getTierIcon(UserTier tier) {
-    switch (tier) {
-      case UserTier.anonymous:
-        return Icons.person_outline;
-      case UserTier.free:
-        return Icons.star_outline;
-      case UserTier.premium:
-        return Icons.star;
-      case UserTier.pro:
-        return Icons.star_rounded;
-    }
-  }
-
-  String _getTierDisplayName(UserTier tier) {
-    switch (tier) {
-      case UserTier.anonymous:
-        //return 'Anonymous';
-        return (TranslationService.translate('anonymous'));
-      case UserTier.free:
-        //return 'Free';
-        return (TranslationService.translate('free'));
-      case UserTier.premium:
-        //return 'Premium';
-        return (TranslationService.translate('premium'));
-      case UserTier.pro:
-        //return 'Pro';
-        return (TranslationService.translate('pro'));
-    }
+    return TierIndicator(tier: currentTier);
   }
 
   @override
