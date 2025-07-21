@@ -75,6 +75,7 @@ dependencies:
   # Image processing and WebP support
   image: ^4.1.7
   flutter_image_compress: ^2.1.0
+  flutter_markdown: ^0.6.18
 
 dev_dependencies:
   flutter_test:
@@ -105,6 +106,10 @@ flutter:
   assets:
     - assets/translations/
     - assets/icons/
+    - assets/privacy_policy_en.md
+    - assets/privacy_policy_es.md
+    - assets/terms_of_service_en.md
+    - assets/terms_of_service_es.md
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

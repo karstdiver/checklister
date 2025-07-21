@@ -414,5 +414,6 @@
   "checklist_copy_suffix": " (Copy)",
   "discard_changes_title": "Discard Changes?",
   "discard_changes_message": "You have unsaved changes. Are you sure you want to leave without saving?",
-  "discard": "Discard"
+  "discard": "Discard",
+  "tos_load_error": "Failed to load terms of service."
 }

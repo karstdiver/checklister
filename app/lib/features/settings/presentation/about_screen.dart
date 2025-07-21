@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/services/translation_service.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:checklister/features/settings/presentation/privacy_policy_screen.dart';
+import 'package:checklister/features/settings/presentation/terms_of_service_screen.dart';
 
 class AboutScreen extends ConsumerStatefulWidget {
   const AboutScreen({super.key});
@@ -265,7 +267,11 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
                     title: Text(TranslationService.translate('privacy_policy')),
                     trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                     onTap: () {
-                      // TODO: Implement privacy policy
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const PrivacyPolicyScreen(),
+                        ),
+                      );
                     },
                   ),
                   const Divider(height: 1),
@@ -276,7 +282,11 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
                     ),
                     trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                     onTap: () {
-                      // TODO: Implement terms of service
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const TermsOfServiceScreen(),
+                        ),
+                      );
                     },
                   ),
                 ],

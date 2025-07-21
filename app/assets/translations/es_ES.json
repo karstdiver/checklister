@@ -414,5 +414,6 @@
   "checklist_copy_suffix": " (Copia)",
   "discard_changes_title": "¿Descartar cambios?",
   "discard_changes_message": "Tienes cambios sin guardar. ¿Estás seguro de que deseas salir sin guardar?",
-  "discard": "Descartar"
+  "discard": "Descartar",
+  "tos_load_error": "No se pudo cargar los términos de servicio."
 }
