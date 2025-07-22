@@ -5,6 +5,7 @@ import '../../auth/domain/auth_state.dart';
 import '../../../core/services/translation_service.dart';
 import '../../../core/services/acceptance_service.dart';
 import '../../../checklister_app.dart';
+import 'package:flutter/services.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -121,6 +122,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     ref.watch(translationProvider);
     final authState = ref.watch(authStateProvider);
 
+    Future<void> handleDeclineAndLogout(
+      BuildContext context,
+      WidgetRef ref,
+    ) async {
+      print('Decline pressed: signing out...');
+      await ref.read(authNotifierProvider.notifier).signOut();
+      print('Sign out complete, navigating to login...');
+      if (context.mounted) {
+        Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+          (route) => false,
+        );
+      } else {
+        print('Context not mounted, cannot navigate.');
+      }
+    }
+
     ref.listen<AuthState>(authNotifierProvider, (prev, next) async {
       if (next.status == AuthStatus.authenticated) {
         final needsAcceptance = await AcceptanceService.isAcceptanceRequired();
@@ -129,21 +147,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             context,
             MaterialPageRoute(
               builder: (_) => AcceptanceScreen(
-                onDecline: () async {
-                  print('Decline pressed: signing out...');
-                  await ref.read(authNotifierProvider.notifier).signOut();
-                  print('Sign out complete, navigating to login...');
-                  if (context.mounted) {
-                    Navigator.of(
-                      context,
-                      rootNavigator: true,
-                    ).pushAndRemoveUntil(
-                      MaterialPageRoute(builder: (_) => const LoginScreen()),
-                      (route) => false,
-                    );
-                  } else {
-                    print('Context not mounted, cannot navigate.');
-                  }
+                onDecline: () {
+                  print('Decline pressed: exiting app...');
+                  SystemNavigator.pop();
                 },
               ),
             ),

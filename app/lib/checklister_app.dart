@@ -229,11 +229,7 @@ class _AcceptanceScreenState extends State<AcceptanceScreen> {
                 }
               },
               style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
-              child: Text(
-                isLogout
-                    ? TranslationService.translate('decline_and_logout')
-                    : TranslationService.translate('decline_and_exit'),
-              ),
+              child: Text(TranslationService.translate('decline_and_exit')),
             ),
           ],
         ),

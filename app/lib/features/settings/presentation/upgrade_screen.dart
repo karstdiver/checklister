@@ -58,16 +58,6 @@ class UpgradeScreen extends ConsumerWidget {
               child: Text(TranslationService.translate('upgrade_now')),
             ),
             const SizedBox(height: 16),
-            // DEV ONLY PANEL
-            const Divider(height: 32, thickness: 2),
-            Text(
-              'DEV ONLY',
-              style: Theme.of(
-                context,
-              ).textTheme.labelLarge?.copyWith(color: Colors.red),
-            ),
-            const SizedBox(height: 8),
-            _AcceptanceStatusSwitch(),
           ],
         ),
       ),
