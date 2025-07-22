@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/services.dart'; // For SystemNavigator.pop
 
 import 'core/providers/providers.dart';
 import 'core/providers/settings_provider.dart';
@@ -71,7 +72,8 @@ class ChecklisterApp extends ConsumerWidget {
 }
 
 class AcceptanceScreen extends StatefulWidget {
-  const AcceptanceScreen({super.key});
+  final VoidCallback? onDecline;
+  const AcceptanceScreen({super.key, this.onDecline});
 
   @override
   State<AcceptanceScreen> createState() => _AcceptanceScreenState();
@@ -149,6 +151,7 @@ class _AcceptanceScreenState extends State<AcceptanceScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isLogout = widget.onDecline != null;
     return Scaffold(
       appBar: AppBar(
         title: Text(TranslationService.translate('accept_privacy_and_terms')),
@@ -208,6 +211,29 @@ class _AcceptanceScreenState extends State<AcceptanceScreen> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : Text(TranslationService.translate('accept_and_continue')),
+            ),
+            const SizedBox(height: 16),
+            OutlinedButton(
+              onPressed: () {
+                print(
+                  'Decline button pressed. onDecline is ${widget.onDecline != null ? 'provided' : 'not provided'}',
+                );
+                print('Context mounted: $mounted');
+                if (widget.onDecline != null) {
+                  print('Calling onDecline callback...');
+                  widget.onDecline!();
+                  print('onDecline callback finished.');
+                } else {
+                  print('No onDecline provided, calling SystemNavigator.pop()');
+                  SystemNavigator.pop();
+                }
+              },
+              style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
+              child: Text(
+                isLogout
+                    ? TranslationService.translate('decline_and_logout')
+                    : TranslationService.translate('decline_and_exit'),
+              ),
             ),
           ],
         ),

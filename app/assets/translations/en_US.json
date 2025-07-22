@@ -424,5 +424,7 @@
   "accept_privacy_policy": "I accept the Privacy Policy",
   "accept_terms_of_service": "I accept the Terms of Service",
   "read": "Read",
-  "accept_and_continue": "Accept and Continue"
+  "accept_and_continue": "Accept and Continue",
+  "decline_and_exit": "Decline and Exit",
+  "decline_and_logout": "Decline and Logout"
 }

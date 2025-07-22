@@ -419,5 +419,7 @@
   "discard_changes_title": "¿Descartar cambios?",
   "discard_changes_message": "Tienes cambios sin guardar. ¿Estás seguro de que deseas salir sin guardar?",
   "discard": "Descartar",
-  "tos_load_error": "No se pudo cargar los términos de servicio."
+  "tos_load_error": "No se pudo cargar los términos de servicio.",
+  "decline_and_exit": "Rechazar y Salir",
+  "decline_and_logout": "Rechazar y Cerrar Sesión"
 }

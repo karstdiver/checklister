@@ -10,6 +10,8 @@ import '../../../core/providers/privilege_provider.dart';
 import '../../../core/domain/user_tier.dart';
 import '../../../core/widgets/privilege_test_panel.dart';
 import 'upgrade_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../../core/services/acceptance_service.dart';
 
 class AccountSettingsScreen extends ConsumerStatefulWidget {
   const AccountSettingsScreen({super.key});
@@ -132,6 +134,15 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
                 const SizedBox(height: 16),
                 // Test Privilege Panel (DEV ONLY)
                 const PrivilegeTestPanel(),
+                const Divider(height: 32, thickness: 2),
+                Text(
+                  'DEV ONLY',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelLarge?.copyWith(color: Colors.red),
+                ),
+                const SizedBox(height: 8),
+                AcceptanceStatusSwitch(),
               ],
             ),
     );
@@ -253,5 +264,81 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
     } catch (e) {
       return TranslationService.translate('not_available');
     }
+  }
+}
+
+class AcceptanceStatusSwitch extends StatefulWidget {
+  const AcceptanceStatusSwitch({super.key});
+  @override
+  State<AcceptanceStatusSwitch> createState() => _AcceptanceStatusSwitchState();
+}
+
+class _AcceptanceStatusSwitchState extends State<AcceptanceStatusSwitch> {
+  bool _accepted = false;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStatus();
+  }
+
+  Future<void> _loadStatus() async {
+    final status = await AcceptanceService.loadAcceptance();
+    setState(() {
+      _accepted =
+          status.privacyAccepted &&
+          status.tosAccepted &&
+          status.acceptedVersion >= AcceptanceService.currentPolicyVersion;
+      _loading = false;
+    });
+  }
+
+  Future<void> _setAcceptance(bool value) async {
+    setState(() => _loading = true);
+    if (value) {
+      await AcceptanceService.saveAcceptance(
+        privacyAccepted: true,
+        tosAccepted: true,
+      );
+    } else {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('privacyAccepted');
+      await prefs.remove('tosAccepted');
+      await prefs.remove('acceptedVersion');
+      await prefs.remove('acceptedAt');
+    }
+    await _loadStatus();
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            value
+                ? 'Acceptance set (DEV ONLY)'
+                : 'Acceptance cleared (DEV ONLY)',
+          ),
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    return Row(
+      children: [
+        Switch(value: _accepted, onChanged: (v) => _setAcceptance(v)),
+        const SizedBox(width: 12),
+        Text(
+          _accepted ? 'Acceptance: ON' : 'Acceptance: OFF',
+          style: TextStyle(
+            color: _accepted ? Colors.green : Colors.red,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    );
   }
 }

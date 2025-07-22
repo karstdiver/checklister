@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/services/analytics_service.dart';
 import '../../../core/services/translation_service.dart';
+import '../../../core/services/acceptance_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class UpgradeScreen extends ConsumerWidget {
   const UpgradeScreen({super.key});
@@ -56,9 +58,95 @@ class UpgradeScreen extends ConsumerWidget {
               child: Text(TranslationService.translate('upgrade_now')),
             ),
             const SizedBox(height: 16),
+            // DEV ONLY PANEL
+            const Divider(height: 32, thickness: 2),
+            Text(
+              'DEV ONLY',
+              style: Theme.of(
+                context,
+              ).textTheme.labelLarge?.copyWith(color: Colors.red),
+            ),
+            const SizedBox(height: 8),
+            _AcceptanceStatusSwitch(),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _AcceptanceStatusSwitch extends StatefulWidget {
+  @override
+  State<_AcceptanceStatusSwitch> createState() =>
+      _AcceptanceStatusSwitchState();
+}
+
+class _AcceptanceStatusSwitchState extends State<_AcceptanceStatusSwitch> {
+  bool _accepted = false;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStatus();
+  }
+
+  Future<void> _loadStatus() async {
+    final status = await AcceptanceService.loadAcceptance();
+    setState(() {
+      _accepted =
+          status.privacyAccepted &&
+          status.tosAccepted &&
+          status.acceptedVersion >= AcceptanceService.currentPolicyVersion;
+      _loading = false;
+    });
+  }
+
+  Future<void> _setAcceptance(bool value) async {
+    setState(() => _loading = true);
+    if (value) {
+      await AcceptanceService.saveAcceptance(
+        privacyAccepted: true,
+        tosAccepted: true,
+      );
+    } else {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('privacyAccepted');
+      await prefs.remove('tosAccepted');
+      await prefs.remove('acceptedVersion');
+      await prefs.remove('acceptedAt');
+    }
+    await _loadStatus();
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            value
+                ? 'Acceptance set (DEV ONLY)'
+                : 'Acceptance cleared (DEV ONLY)',
+          ),
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    return Row(
+      children: [
+        Switch(value: _accepted, onChanged: (v) => _setAcceptance(v)),
+        const SizedBox(width: 12),
+        Text(
+          _accepted ? 'Acceptance: ON' : 'Acceptance: OFF',
+          style: TextStyle(
+            color: _accepted ? Colors.green : Colors.red,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
     );
   }
 }

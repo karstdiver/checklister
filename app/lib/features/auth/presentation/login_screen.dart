@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/providers/providers.dart';
 import '../../auth/domain/auth_state.dart';
 import '../../../core/services/translation_service.dart';
+import '../../../core/services/acceptance_service.dart';
+import '../../../checklister_app.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -119,9 +121,36 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     ref.watch(translationProvider);
     final authState = ref.watch(authStateProvider);
 
-    ref.listen<AuthState>(authNotifierProvider, (prev, next) {
+    ref.listen<AuthState>(authNotifierProvider, (prev, next) async {
       if (next.status == AuthStatus.authenticated) {
-        Navigator.pushReplacementNamed(context, '/home');
+        final needsAcceptance = await AcceptanceService.isAcceptanceRequired();
+        if (needsAcceptance) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => AcceptanceScreen(
+                onDecline: () async {
+                  print('Decline pressed: signing out...');
+                  await ref.read(authNotifierProvider.notifier).signOut();
+                  print('Sign out complete, navigating to login...');
+                  if (context.mounted) {
+                    Navigator.of(
+                      context,
+                      rootNavigator: true,
+                    ).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (_) => const LoginScreen()),
+                      (route) => false,
+                    );
+                  } else {
+                    print('Context not mounted, cannot navigate.');
+                  }
+                },
+              ),
+            ),
+          );
+        } else {
+          Navigator.pushReplacementNamed(context, '/home');
+        }
       }
     });
 
