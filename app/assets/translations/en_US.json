@@ -419,5 +419,10 @@
   "discard_changes_title": "Discard Changes?",
   "discard_changes_message": "You have unsaved changes. Are you sure you want to leave without saving?",
   "discard": "Discard",
-  "tos_load_error": "Failed to load terms of service."
+  "tos_load_error": "Failed to load terms of service.",
+  "accept_privacy_and_terms": "Accept Privacy & Terms",
+  "accept_privacy_policy": "I accept the Privacy Policy",
+  "accept_terms_of_service": "I accept the Terms of Service",
+  "read": "Read",
+  "accept_and_continue": "Accept and Continue"
 }
