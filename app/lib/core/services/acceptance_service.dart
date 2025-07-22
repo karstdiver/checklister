@@ -1,4 +1,6 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class AcceptanceService {
   static const String _privacyAcceptedKey = 'privacyAccepted';
@@ -21,6 +23,24 @@ class AcceptanceService {
     await prefs.setString(_acceptedAtKey, now);
   }
 
+  /// Save acceptance to Firestore for the current user
+  static Future<void> saveAcceptanceRemote({
+    required bool privacyAccepted,
+    required bool tosAccepted,
+  }) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    final now = DateTime.now().toUtc().toIso8601String();
+    await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+      'policyAcceptance': {
+        'privacyAccepted': privacyAccepted,
+        'tosAccepted': tosAccepted,
+        'acceptedVersion': currentPolicyVersion,
+        'acceptedAt': now,
+      },
+    }, SetOptions(merge: true));
+  }
+
   /// Load acceptance status from local storage
   static Future<AcceptanceStatus> loadAcceptance() async {
     final prefs = await SharedPreferences.getInstance();
@@ -33,6 +53,24 @@ class AcceptanceService {
       tosAccepted: tosAccepted,
       acceptedVersion: acceptedVersion,
       acceptedAt: acceptedAt,
+    );
+  }
+
+  /// Load acceptance status from Firestore for the current user
+  static Future<AcceptanceStatus?> loadAcceptanceRemote() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return null;
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .get();
+    final data = doc.data()?['policyAcceptance'];
+    if (data == null) return null;
+    return AcceptanceStatus(
+      privacyAccepted: data['privacyAccepted'] ?? false,
+      tosAccepted: data['tosAccepted'] ?? false,
+      acceptedVersion: data['acceptedVersion'] ?? 0,
+      acceptedAt: data['acceptedAt'],
     );
   }
 

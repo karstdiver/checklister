@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/services.dart'; // For SystemNavigator.pop
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 import 'core/providers/providers.dart';
 import 'core/providers/settings_provider.dart';
 import 'features/auth/presentation/splash_screen.dart';
@@ -137,6 +140,10 @@ class _AcceptanceScreenState extends State<AcceptanceScreen> {
         privacyAccepted: _privacyAccepted,
         tosAccepted: _tosAccepted,
       );
+      await AcceptanceService.saveAcceptanceRemote(
+        privacyAccepted: _privacyAccepted,
+        tosAccepted: _tosAccepted,
+      );
       setState(() {
         _isAccepted = true;
       });
@@ -147,6 +154,22 @@ class _AcceptanceScreenState extends State<AcceptanceScreen> {
         _error = 'Failed to save acceptance: $e';
       });
     }
+  }
+
+  // Helper to check both local and remote acceptance status
+  Future<bool> isAcceptanceRequiredHybrid() async {
+    final local = await AcceptanceService.loadAcceptance();
+    final remote = await AcceptanceService.loadAcceptanceRemote();
+    final localRequired =
+        !local.privacyAccepted ||
+        !local.tosAccepted ||
+        local.acceptedVersion < AcceptanceService.currentPolicyVersion;
+    final remoteRequired =
+        remote == null ||
+        !remote.privacyAccepted ||
+        !remote.tosAccepted ||
+        remote.acceptedVersion < AcceptanceService.currentPolicyVersion;
+    return localRequired || remoteRequired;
   }
 
   @override

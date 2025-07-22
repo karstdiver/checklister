@@ -6,6 +6,8 @@ import '../../../core/services/translation_service.dart';
 import '../../../core/services/acceptance_service.dart';
 import '../../../checklister_app.dart';
 import 'package:flutter/services.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -20,6 +22,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _passwordController = TextEditingController();
   final _resetEmailController = TextEditingController();
   bool _isSignUp = false;
+
+  Future<bool> _isAcceptanceRequiredHybrid() async {
+    final local = await AcceptanceService.loadAcceptance();
+    final remote = await AcceptanceService.loadAcceptanceRemote();
+    final localRequired =
+        !local.privacyAccepted ||
+        !local.tosAccepted ||
+        local.acceptedVersion < AcceptanceService.currentPolicyVersion;
+    final remoteRequired =
+        remote == null ||
+        !remote.privacyAccepted ||
+        !remote.tosAccepted ||
+        remote.acceptedVersion < AcceptanceService.currentPolicyVersion;
+    return localRequired || remoteRequired;
+  }
 
   @override
   void dispose() {
@@ -141,7 +158,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     ref.listen<AuthState>(authNotifierProvider, (prev, next) async {
       if (next.status == AuthStatus.authenticated) {
-        final needsAcceptance = await AcceptanceService.isAcceptanceRequired();
+        final needsAcceptance = await _isAcceptanceRequiredHybrid();
         if (needsAcceptance) {
           Navigator.pushReplacement(
             context,

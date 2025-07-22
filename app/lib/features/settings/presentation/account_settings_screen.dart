@@ -301,12 +301,23 @@ class _AcceptanceStatusSwitchState extends State<AcceptanceStatusSwitch> {
         privacyAccepted: true,
         tosAccepted: true,
       );
+      await AcceptanceService.saveAcceptanceRemote(
+        privacyAccepted: true,
+        tosAccepted: true,
+      );
     } else {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('privacyAccepted');
       await prefs.remove('tosAccepted');
       await prefs.remove('acceptedVersion');
       await prefs.remove('acceptedAt');
+      // Remove from Firestore as well
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+          'policyAcceptance': FieldValue.delete(),
+        }, SetOptions(merge: true));
+      }
     }
     await _loadStatus();
     if (context.mounted) {
