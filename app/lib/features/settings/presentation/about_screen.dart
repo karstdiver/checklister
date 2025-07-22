@@ -225,7 +225,15 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
                     title: Text(TranslationService.translate('email_support')),
                     subtitle: const Text('support@checklister.app'),
                     onTap: () {
-                      // TODO: Implement email support
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            TranslationService.translate(
+                              'future_feature_coming_soon',
+                            ),
+                          ),
+                        ),
+                      );
                     },
                   ),
                   const Divider(height: 1),
@@ -234,7 +242,15 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
                     title: Text(TranslationService.translate('website')),
                     subtitle: const Text('checklister.app'),
                     onTap: () {
-                      // TODO: Implement website link
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            TranslationService.translate(
+                              'future_feature_coming_soon',
+                            ),
+                          ),
+                        ),
+                      );
                     },
                   ),
                   const Divider(height: 1),
@@ -242,7 +258,15 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
                     leading: const Icon(Icons.bug_report),
                     title: Text(TranslationService.translate('report_bug')),
                     onTap: () {
-                      // TODO: Implement bug reporting
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            TranslationService.translate(
+                              'future_feature_coming_soon',
+                            ),
+                          ),
+                        ),
+                      );
                     },
                   ),
                 ],

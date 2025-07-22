@@ -426,5 +426,6 @@
   "read": "Read",
   "accept_and_continue": "Accept and Continue",
   "decline_and_exit": "Decline and Exit",
-  "decline_and_logout": "Decline and Logout"
+  "decline_and_logout": "Decline and Logout",
+  "future_feature_coming_soon": "Future Feature: This will be available in a future update."
 }

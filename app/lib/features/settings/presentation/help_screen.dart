@@ -11,45 +11,64 @@ class HelpScreen extends ConsumerStatefulWidget {
 
 class _HelpScreenState extends ConsumerState<HelpScreen> {
   List<FAQItem> _faqItems = [];
+  Locale? _lastLocale;
 
   @override
   void initState() {
     super.initState();
-    _updateFAQItems();
+    // Do not access context here!
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final currentLocale = Localizations.localeOf(context);
+    if (_lastLocale != currentLocale) {
+      _lastLocale = currentLocale;
+      _updateFAQItems();
+    }
   }
 
   void _updateFAQItems() {
+    print('[DEBUG] _updateFAQItems called');
     setState(() {
       _faqItems = [
         FAQItem(
+          id: 0,
           question: TranslationService.translate(
             'faq_create_checklist_question',
           ),
           answer: TranslationService.translate('faq_create_checklist_answer'),
         ),
         FAQItem(
+          id: 1,
           question: TranslationService.translate('faq_start_session_question'),
           answer: TranslationService.translate('faq_start_session_answer'),
         ),
         FAQItem(
+          id: 2,
           question: TranslationService.translate('faq_complete_items_question'),
           answer: TranslationService.translate('faq_complete_items_answer'),
         ),
         FAQItem(
+          id: 3,
           question: TranslationService.translate('faq_skip_items_question'),
           answer: TranslationService.translate('faq_skip_items_answer'),
         ),
         FAQItem(
+          id: 4,
           question: TranslationService.translate('faq_achievements_question'),
           answer: TranslationService.translate('faq_achievements_answer'),
         ),
         FAQItem(
+          id: 5,
           question: TranslationService.translate(
             'faq_change_language_question',
           ),
           answer: TranslationService.translate('faq_change_language_answer'),
         ),
         FAQItem(
+          id: 6,
           question: TranslationService.translate(
             'faq_enable_notifications_question',
           ),
@@ -58,23 +77,21 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
           ),
         ),
         FAQItem(
+          id: 7,
           question: TranslationService.translate('faq_offline_use_question'),
           answer: TranslationService.translate('faq_offline_use_answer'),
         ),
       ];
+      print('[DEBUG] FAQ list length: \'${_faqItems.length}\'');
+      for (var i = 0; i < _faqItems.length; i++) {
+        print('[DEBUG] FAQ $i: question="${_faqItems[i].question}"');
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // Watch the translation provider to trigger rebuilds when language changes
     ref.watch(translationProvider);
-
-    // Update FAQ items when language changes
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _updateFAQItems();
-    });
-
     return Scaffold(
       appBar: AppBar(
         title: Text(TranslationService.translate('help')),
@@ -201,17 +218,13 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
             ),
             const SizedBox(height: 16),
             Card(
-              child: ExpansionPanelList(
+              child: ExpansionPanelList.radio(
                 elevation: 0,
                 expandedHeaderPadding: EdgeInsets.zero,
-                expansionCallback: (panelIndex, isExpanded) {
-                  setState(() {
-                    _faqItems[panelIndex].isExpanded = !isExpanded;
-                  });
-                },
                 children: _faqItems.map((faq) {
-                  return ExpansionPanel(
-                    headerBuilder: (context, isExpanded) {
+                  return ExpansionPanelRadio(
+                    value: faq.id,
+                    headerBuilder: (context, _) {
                       return ListTile(
                         title: Text(
                           faq.question,
@@ -226,7 +239,6 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
                         style: TextStyle(color: Colors.grey[700]),
                       ),
                     ),
-                    isExpanded: faq.isExpanded,
                   );
                 }).toList(),
               ),
@@ -362,7 +374,9 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(TranslationService.translate('getting_started')),
-        content: const Text('Getting started guide will be implemented here.'),
+        content: Text(
+          TranslationService.translate('future_feature_coming_soon'),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -378,7 +392,9 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(TranslationService.translate('video_tutorials')),
-        content: const Text('Video tutorials will be implemented here.'),
+        content: Text(
+          TranslationService.translate('future_feature_coming_soon'),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -394,7 +410,9 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(TranslationService.translate('contact_support')),
-        content: const Text('Contact support will be implemented here.'),
+        content: Text(
+          TranslationService.translate('future_feature_coming_soon'),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -410,8 +428,8 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(TranslationService.translate('sync_issues')),
-        content: const Text(
-          'Sync troubleshooting guide will be implemented here.',
+        content: Text(
+          TranslationService.translate('future_feature_coming_soon'),
         ),
         actions: [
           TextButton(
@@ -428,8 +446,8 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(TranslationService.translate('notification_issues')),
-        content: const Text(
-          'Notification troubleshooting guide will be implemented here.',
+        content: Text(
+          TranslationService.translate('future_feature_coming_soon'),
         ),
         actions: [
           TextButton(
@@ -446,7 +464,9 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(TranslationService.translate('report_bug')),
-        content: const Text('Bug reporting will be implemented here.'),
+        content: Text(
+          TranslationService.translate('future_feature_coming_soon'),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -459,13 +479,8 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
 }
 
 class FAQItem {
+  final int id;
   final String question;
   final String answer;
-  bool isExpanded;
-
-  FAQItem({
-    required this.question,
-    required this.answer,
-    this.isExpanded = false,
-  });
+  FAQItem({required this.id, required this.question, required this.answer});
 }
