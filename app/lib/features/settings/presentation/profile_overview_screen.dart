@@ -155,10 +155,6 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
           _buildProfileHeader(currentUser),
           const SizedBox(height: 16),
 
-          // Quick Stats
-          _buildQuickStats(stats),
-          const SizedBox(height: 16),
-
           // Profile Actions
           _buildProfileActions(navigationNotifier),
           const SizedBox(height: 16),
@@ -249,70 +245,6 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
                   fontSize: 12,
                 ),
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildQuickStats(Map<String, dynamic> stats) {
-    final textColor = Theme.of(context).colorScheme.onSurface;
-    return AppCard(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              TranslationService.translate('statistics'),
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: textColor,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildStatItem(
-                    icon: Icons.checklist,
-                    label: TranslationService.translate('total_checklists'),
-                    value: '${stats['totalChecklists'] ?? 0}',
-                    textColor: textColor,
-                  ),
-                ),
-                Expanded(
-                  child: _buildStatItem(
-                    icon: Icons.check_circle,
-                    label: TranslationService.translate('completed_checklists'),
-                    value: '${stats['completedChecklists'] ?? 0}',
-                    textColor: textColor,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildStatItem(
-                    icon: Icons.list,
-                    label: TranslationService.translate('total_items'),
-                    value: '${stats['totalItems'] ?? 0}',
-                    textColor: textColor,
-                  ),
-                ),
-                Expanded(
-                  child: _buildStatItem(
-                    icon: Icons.done_all,
-                    label: TranslationService.translate('completed_items'),
-                    value: '${stats['completedItems'] ?? 0}',
-                    textColor: textColor,
-                  ),
-                ),
-              ],
             ),
           ],
         ),
