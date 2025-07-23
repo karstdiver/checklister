@@ -8,6 +8,12 @@ import '../../../checklister_app.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import '../../checklists/data/checklist_repository.dart';
+
+final connectivityProvider = StreamProvider<ConnectivityResult>(
+  (ref) => Connectivity().onConnectivityChanged,
+);
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -24,7 +30,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _isSignUp = false;
 
   Future<bool> _isAcceptanceRequiredHybrid() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
     final local = await AcceptanceService.loadAcceptance();
+
+    // For anonymous users, only check local acceptance
+    if (currentUser?.isAnonymous == true) {
+      return !local.privacyAccepted ||
+          !local.tosAccepted ||
+          local.acceptedVersion < AcceptanceService.currentPolicyVersion;
+    }
+
+    // For authenticated users, check both local and remote
     final remote = await AcceptanceService.loadAcceptanceRemote();
     final localRequired =
         !local.privacyAccepted ||
@@ -47,6 +63,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _submitForm() async {
+    final connectivity = ref.read(connectivityProvider).value;
+    if (connectivity == ConnectivityResult.none) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'You are offline. Please connect to the internet to log in or sign up.',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+          ),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 4),
+          action: SnackBarAction(
+            label: 'OK',
+            textColor: Colors.white,
+            onPressed: () {
+              ScaffoldMessenger.of(context).hideCurrentSnackBar();
+            },
+          ),
+        ),
+      );
+      return;
+    }
     if (_formKey.currentState!.validate()) {
       final authNotifier = ref.read(authNotifierProvider.notifier);
 
@@ -66,6 +103,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Future<void> _signInAnonymously() async {
     final authNotifier = ref.read(authNotifierProvider.notifier);
+
+    // Clear any existing user's checklists before signing in anonymously
+    try {
+      final repository = ChecklistRepository();
+      print(
+        '[DEBUG] LoginScreen: About to clear ALL local checklists before anonymous sign-in',
+      );
+      // Clear ALL cached checklists to ensure no data leakage
+      await repository.clearAllLocalChecklists();
+      print(
+        '[DEBUG] LoginScreen: Successfully cleared ALL local checklists before anonymous sign-in',
+      );
+    } catch (e) {
+      print('[DEBUG] LoginScreen: Failed to clear local checklists: $e');
+      // Don't fail sign-in if cache clearing fails
+    }
+
     await authNotifier.signInAnonymously();
 
     // Navigate to home after successful anonymous sign-in
@@ -138,6 +192,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     // Watch the translation provider to trigger rebuilds when language changes
     ref.watch(translationProvider);
     final authState = ref.watch(authStateProvider);
+
+    // If already authenticated, go to HomeScreen
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser != null) {
+      Future.microtask(() {
+        if (mounted) {
+          Navigator.pushReplacementNamed(context, '/home');
+        }
+      });
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
 
     Future<void> handleDeclineAndLogout(
       BuildContext context,

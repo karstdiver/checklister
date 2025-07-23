@@ -24,15 +24,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final firebaseAuth = FirebaseAuth.instance;
       final currentUser = firebaseAuth.currentUser;
-      if (currentUser != null && mounted) {
+      if (currentUser != null) {
+        // User is already authenticated (session cached), go to HomeScreen even if offline
         Navigator.pushReplacementNamed(context, '/home');
-      } else if (mounted) {
-        // Add a short delay for branding effect
-        Future.delayed(widget.delay, () {
-          if (mounted) {
-            Navigator.pushReplacementNamed(context, '/login');
-          }
-        });
+      } else {
+        // Not authenticated, go to LoginScreen
+        Navigator.pushReplacementNamed(context, '/login');
       }
     });
   }

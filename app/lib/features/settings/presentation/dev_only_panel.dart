@@ -44,19 +44,24 @@ class _DevOnlyPanelState extends ConsumerState<DevOnlyPanel> {
         privacyAccepted: true,
         tosAccepted: true,
       );
-      await AcceptanceService.saveAcceptanceRemote(
-        privacyAccepted: true,
-        tosAccepted: true,
-      );
+
+      // Only save to remote if user is not anonymous
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null && !user.isAnonymous) {
+        await AcceptanceService.saveAcceptanceRemote(
+          privacyAccepted: true,
+          tosAccepted: true,
+        );
+      }
     } else {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('privacyAccepted');
       await prefs.remove('tosAccepted');
       await prefs.remove('acceptedVersion');
       await prefs.remove('acceptedAt');
-      // Remove from Firestore as well
+      // Remove from Firestore as well (only for non-anonymous users)
       final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
+      if (user != null && !user.isAnonymous) {
         await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
           'policyAcceptance': FieldValue.delete(),
         }, SetOptions(merge: true));

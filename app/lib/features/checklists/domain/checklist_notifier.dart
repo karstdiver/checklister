@@ -3,6 +3,7 @@ import '../data/checklist_repository.dart';
 import 'checklist.dart';
 import '../../../core/services/analytics_service.dart';
 import '../../achievements/domain/achievement_notifier.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 class ChecklistNotifier extends StateNotifier<AsyncValue<List<Checklist>>> {
   final ChecklistRepository _repository;
@@ -17,16 +18,110 @@ class ChecklistNotifier extends StateNotifier<AsyncValue<List<Checklist>>> {
        super(const AsyncValue.loading());
 
   // Load user's checklists
-  Future<void> loadUserChecklists(String userId) async {
+  Future<void> loadUserChecklists(
+    String userId, {
+    ConnectivityResult? connectivity,
+  }) async {
+    print(
+      '[DEBUG] ChecklistNotifier: loadUserChecklists called for userId=$userId, connectivity=$connectivity',
+    );
+    print(
+      '[DEBUG] ChecklistNotifier: Current state before loading: ${state.toString()}',
+    );
+    print('[DEBUG] ChecklistNotifier: Starting loadUserChecklists...');
     try {
       state = const AsyncValue.loading();
-      final checklists = await _repository.getUserChecklists(userId);
-      state = AsyncValue.data(checklists);
+
+      final conn = connectivity;
+      print('[DEBUG] ChecklistNotifier: Connectivity value = $conn');
+
+      // Simplified approach: always try local first, then online if available
+      try {
+        // Always try to load from local first
+        final checklists = await _repository.loadChecklistsFromLocal(
+          userId: userId,
+        );
+        print(
+          '[DEBUG] ChecklistNotifier: loaded ${checklists.length} checklists from Hive for userId=$userId',
+        );
+
+        // If local storage is empty and we're online, try Firestore
+        if (checklists.isEmpty && conn != ConnectivityResult.none) {
+          print(
+            '[DEBUG] ChecklistNotifier: Local storage empty, trying Firestore...',
+          );
+          try {
+            final firestoreChecklists = await _repository.getUserChecklists(
+              userId,
+            );
+            print(
+              '[DEBUG] ChecklistNotifier: loaded ${firestoreChecklists.length} checklists from Firestore for userId=$userId',
+            );
+            state = AsyncValue.data(firestoreChecklists);
+            print('[DEBUG] ChecklistNotifier: set state to data (Firestore)');
+            await _repository.saveChecklistsToLocal(
+              firestoreChecklists,
+              userId: userId,
+            );
+            print(
+              '[DEBUG] ChecklistNotifier: saved checklists to Hive for userId=$userId',
+            );
+          } catch (firestoreError) {
+            print(
+              '[DEBUG] ChecklistNotifier: Firestore load failed: $firestoreError',
+            );
+            // If Firestore fails, use empty local data
+            state = AsyncValue.data(checklists);
+            print(
+              '[DEBUG] ChecklistNotifier: set state to data (Hive - empty)',
+            );
+          }
+        } else {
+          // Local storage has data or we're offline, use local data
+          state = AsyncValue.data(checklists);
+          print('[DEBUG] ChecklistNotifier: set state to data (Hive)');
+        }
+      } catch (e) {
+        print('[DEBUG] ChecklistNotifier: Local load failed: $e');
+
+        // If local fails and we're online, try Firestore
+        if (conn != ConnectivityResult.none) {
+          try {
+            print('[DEBUG] ChecklistNotifier: Trying Firestore...');
+            final checklists = await _repository.getUserChecklists(userId);
+            print(
+              '[DEBUG] ChecklistNotifier: loaded ${checklists.length} checklists from Firestore for userId=$userId',
+            );
+            state = AsyncValue.data(checklists);
+            print('[DEBUG] ChecklistNotifier: set state to data (Firestore)');
+            await _repository.saveChecklistsToLocal(checklists, userId: userId);
+            print(
+              '[DEBUG] ChecklistNotifier: saved checklists to Hive for userId=$userId',
+            );
+          } catch (firestoreError) {
+            print(
+              '[DEBUG] ChecklistNotifier: Firestore load failed: $firestoreError',
+            );
+            // If both fail, return empty list
+            state = AsyncValue.data([]);
+            print('[DEBUG] ChecklistNotifier: set state to empty data');
+          }
+        } else {
+          // Offline and local failed, return empty list
+          print(
+            '[DEBUG] ChecklistNotifier: Offline and local failed, returning empty list',
+          );
+          state = AsyncValue.data([]);
+        }
+      }
     } catch (error, stackTrace) {
-      print('❌ Error loading checklists: $error');
+      print('[DEBUG] ChecklistNotifier: error=$error');
       print(stackTrace);
-      state = AsyncValue.error(error, stackTrace);
+      // Instead of setting error state, set empty data to prevent spinning
+      print('[DEBUG] ChecklistNotifier: Setting empty data due to error');
+      state = AsyncValue.data([]);
     }
+    print('[DEBUG] ChecklistNotifier: loadUserChecklists completed');
   }
 
   // Create a new checklist
@@ -300,6 +395,23 @@ class ChecklistNotifier extends StateNotifier<AsyncValue<List<Checklist>>> {
 
   // Clear state
   void clear() {
-    state = const AsyncValue.data([]);
+    print('[DEBUG] ChecklistNotifier: clear() called');
+    print('[DEBUG] ChecklistNotifier: Previous state: ${state.toString()}');
+    state = const AsyncValue.loading();
+    print('[DEBUG] ChecklistNotifier: New state: ${state.toString()}');
+  }
+
+  // Refresh checklists from Firestore (clears local cache first)
+  Future<void> refreshFromFirestore(String userId) async {
+    print(
+      '[DEBUG] ChecklistNotifier: refreshFromFirestore called for userId=$userId',
+    );
+
+    // Clear local storage first to ensure fresh data
+    await _repository.clearLocalChecklists(userId: userId);
+    print('[DEBUG] ChecklistNotifier: Cleared local storage for refresh');
+
+    // Then load with current connectivity
+    await loadUserChecklists(userId);
   }
 }

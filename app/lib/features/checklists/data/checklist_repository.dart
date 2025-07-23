@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../domain/checklist.dart';
 import '../../../core/services/translation_service.dart';
+import 'package:hive/hive.dart';
 
 class ChecklistRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -39,16 +40,44 @@ class ChecklistRepository {
   // Get all checklists for a user
   Future<List<Checklist>> getUserChecklists(String userId) async {
     try {
+      print(
+        '[DEBUG] ChecklistRepository: Starting getUserChecklists for userId=$userId',
+      );
+      print(
+        '[DEBUG] ChecklistRepository: Executing Firestore query for userId=$userId',
+      );
       final querySnapshot = await _firestore
           .collection('checklists')
           .where('userId', isEqualTo: userId)
           .orderBy('updatedAt', descending: true)
           .get();
 
-      return querySnapshot.docs
-          .map((doc) => Checklist.fromFirestore(doc))
-          .toList();
+      print(
+        '[DEBUG] ChecklistRepository: Firestore query returned ${querySnapshot.docs.length} documents',
+      );
+
+      final checklists = <Checklist>[];
+      for (final doc in querySnapshot.docs) {
+        try {
+          print('[DEBUG] ChecklistRepository: Processing document ${doc.id}');
+          final checklist = Checklist.fromFirestore(doc);
+          checklists.add(checklist);
+          print(
+            '[DEBUG] ChecklistRepository: Successfully parsed document ${doc.id}',
+          );
+        } catch (e) {
+          print(
+            '[DEBUG] ChecklistRepository: Error parsing document ${doc.id}: $e',
+          );
+          // Continue with other documents
+        }
+      }
+      print(
+        '[DEBUG] ChecklistRepository: Loaded ${checklists.length} checklists from Firestore for userId=$userId',
+      );
+      return checklists;
     } catch (e) {
+      print('[DEBUG] ChecklistRepository: Error in getUserChecklists: $e');
       throw Exception('Failed to get user checklists: $e');
     }
   }
@@ -271,5 +300,68 @@ class ChecklistRepository {
     } catch (e) {
       throw Exception('Failed to duplicate checklist: $e');
     }
+  }
+
+  Future<void> saveChecklistsToLocal(
+    List<Checklist> checklists, {
+    String? userId,
+  }) async {
+    final box = await Hive.openBox('checklists');
+    final key = userId ?? 'anonymous';
+    print(
+      '[DEBUG] ChecklistRepository: Saving ${checklists.length} checklists to Hive with key="$key"',
+    );
+    await box.put(key, checklists.map((c) => c.toJson()).toList());
+    print(
+      '[DEBUG] ChecklistRepository: Successfully saved checklists to Hive with key="$key"',
+    );
+  }
+
+  Future<List<Checklist>> loadChecklistsFromLocal({String? userId}) async {
+    try {
+      print(
+        '[DEBUG] ChecklistRepository: Starting loadChecklistsFromLocal for userId=$userId',
+      );
+      final box = await Hive.openBox('checklists');
+      final key = userId ?? 'anonymous';
+      print(
+        '[DEBUG] ChecklistRepository: Loading checklists from Hive with key="$key"',
+      );
+      final list = box.get(key, defaultValue: []) as List<dynamic>;
+      print('[DEBUG] ChecklistRepository: Raw data from Hive: $list');
+      final checklists = list
+          .map((json) => Checklist.fromJson(Map<String, dynamic>.from(json)))
+          .toList();
+      print(
+        '[DEBUG] ChecklistRepository: Loaded ${checklists.length} checklists from Hive with key="$key"',
+      );
+      return checklists;
+    } catch (e) {
+      print(
+        '[DEBUG] ChecklistRepository: Error in loadChecklistsFromLocal: $e',
+      );
+      rethrow;
+    }
+  }
+
+  Future<void> clearLocalChecklists({String? userId}) async {
+    final box = await Hive.openBox('checklists');
+    final key = userId ?? 'anonymous';
+    print(
+      '[DEBUG] ChecklistRepository: Clearing checklists from Hive with key="$key"',
+    );
+    await box.delete(key);
+    print(
+      '[DEBUG] ChecklistRepository: Successfully cleared checklists from Hive with key="$key"',
+    );
+  }
+
+  Future<void> clearAllLocalChecklists() async {
+    final box = await Hive.openBox('checklists');
+    print('[DEBUG] ChecklistRepository: Clearing ALL checklists from Hive');
+    await box.clear();
+    print(
+      '[DEBUG] ChecklistRepository: Successfully cleared ALL checklists from Hive',
+    );
   }
 }

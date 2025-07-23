@@ -12,9 +12,18 @@ import '../../sessions/domain/session_state.dart' as sessions;
 import '../../sessions/domain/session_providers.dart';
 import '../../sessions/presentation/session_screen.dart';
 import '../domain/checklist_providers.dart';
+import '../../achievements/domain/achievement_providers.dart';
 import 'widgets/checklist_card.dart';
+import 'widgets/connectivity_test_panel.dart';
 import 'checklist_editor_screen.dart';
 import '../../../core/widgets/tier_indicator.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+
+final connectivityProvider = StreamProvider<ConnectivityResult>((ref) async* {
+  final initial = await Connectivity().checkConnectivity();
+  yield initial;
+  yield* Connectivity().onConnectivityChanged;
+});
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -27,71 +36,77 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser != null) {
-      Future.microtask(
-        () => ref
-            .read(checklistNotifierProvider.notifier)
-            .loadUserChecklists(currentUser.uid),
-      );
-    }
-  }
-
-  Widget _buildWelcomeText(User? currentUser) {
-    if (currentUser == null) {
-      return Text(
-        TranslationService.translate('welcome_user', [
-          TranslationService.translate('anonymous'),
-        ]),
-        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-      );
-    }
-    return FutureBuilder<DocumentSnapshot>(
-      future: FirebaseFirestore.instance
-          .collection('users')
-          .doc(currentUser.uid)
-          .get(),
-      builder: (context, snapshot) {
-        String displayName =
-            currentUser.email ?? TranslationService.translate('anonymous');
-        if (snapshot.hasData && snapshot.data!.exists) {
-          final data = snapshot.data!.data() as Map<String, dynamic>;
-          if (data['displayName'] != null &&
-              data['displayName'].toString().isNotEmpty) {
-            displayName = data['displayName'];
-          } else if (currentUser.displayName != null &&
-              currentUser.displayName!.isNotEmpty) {
-            displayName = currentUser.displayName!;
-          }
-        } else if (currentUser.displayName != null &&
-            currentUser.displayName!.isNotEmpty) {
-          displayName = currentUser.displayName!;
-        }
-        return Text(
-          TranslationService.translate('welcome_user', [displayName]),
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+    // Load checklists for the current user on app start
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final currentUser = ref.read(currentUserProvider);
+      if (currentUser != null) {
+        final userId = currentUser.uid;
+        final connectivity = ref.read(connectivityProvider).asData?.value;
+        print(
+          '[DEBUG] HomeScreen: Initial load for userId=$userId, connectivity=$connectivity',
         );
-      },
-    );
-  }
-
-  Widget _buildTierIndicator(WidgetRef ref) {
-    final privileges = ref.watch(privilegeProvider);
-    final currentTier = privileges?.tier ?? UserTier.anonymous;
-    return TierIndicator(tier: currentTier);
+        ref
+            .read(checklistNotifierProvider.notifier)
+            .loadUserChecklists(userId, connectivity: connectivity);
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    // Always listen for user changes and reload checklists with the latest connectivity
+    ref.listen<User?>(currentUserProvider, (prev, next) {
+      // If the user has changed (different UID or null), clear and reload
+      if (prev?.uid != next?.uid) {
+        final userId = next?.uid ?? 'anonymous';
+        final connectivity = ref.read(connectivityProvider).asData?.value;
+        print(
+          '[DEBUG] HomeScreen: Auth state changed, clearing and loading checklists for userId=$userId',
+        );
+        print(
+          '[DEBUG] HomeScreen: prev user: ${prev?.uid}, next user: ${next?.uid}',
+        );
+        print(
+          '[DEBUG] HomeScreen: next user isAnonymous: ${next?.isAnonymous}',
+        );
+        print(
+          '[DEBUG] HomeScreen: prev user isAnonymous: ${prev?.isAnonymous}',
+        );
+
+        // Immediately clear the state to prevent showing stale data
+        ref.read(checklistNotifierProvider.notifier).clear();
+
+        // Clear any active sessions from the previous user
+        ref.read(sessionNotifierProvider.notifier).clearSession();
+
+        // Clear achievements from the previous user
+        ref.read(achievementNotifierProvider.notifier).clearAllAchievements();
+
+        // Load checklists for the new user
+        print(
+          '[DEBUG] HomeScreen: About to load checklists with connectivity=$connectivity',
+        );
+
+        // Just pass the connectivity value (can be null, our simplified logic handles it)
+        ref
+            .read(checklistNotifierProvider.notifier)
+            .loadUserChecklists(userId, connectivity: connectivity);
+      } else {
+        print(
+          '[DEBUG] HomeScreen: User UID unchanged, skipping reload (prev: ${prev?.uid}, next: ${next?.uid})',
+        );
+      }
+    });
+
+    // Watch the translation provider to trigger rebuilds when language changes
+    ref.watch(translationProvider);
+
+    final currentUser = ref.watch(currentUserProvider);
+    final authNotifier = ref.read(authNotifierProvider.notifier);
+    final checklistsAsync = ref.watch(checklistNotifierProvider);
+
     return Consumer(
       builder: (context, ref, child) {
-        // Watch the translation provider to trigger rebuilds when language changes
-        ref.watch(translationProvider);
-
-        final currentUser = ref.watch(currentUserProvider);
-        final authNotifier = ref.read(authNotifierProvider.notifier);
-        final checklistsAsync = ref.watch(checklistNotifierProvider);
-
         return Scaffold(
           appBar: AppBar(
             title: Text(TranslationService.translate('home')),
@@ -169,6 +184,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 _buildTierIndicator(ref),
                 const SizedBox(height: 16),
 
+                // Development: Connectivity Test Panel (only in debug mode)
+                if (const bool.fromEnvironment('dart.vm.product') == false) ...[
+                  const ConnectivityTestPanel(),
+                  const SizedBox(height: 16),
+                ],
+
                 // Sign-up encouragement for anonymous users
                 const SignupEncouragement(
                   title: 'Unlock More Features',
@@ -230,7 +251,48 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 // Checklists list
                 checklistsAsync.when(
                   data: (checklists) {
+                    // Use the latest connectivity state in the UI
+                    final connectivity = ref.watch(connectivityProvider);
+                    final isOffline =
+                        connectivity.asData?.value == ConnectivityResult.none;
+                    final isUnknown = connectivity.asData == null;
+                    print(
+                      '[DEBUG] HomeScreen: UI connectivity = ${connectivity.asData?.value}',
+                    );
                     if (checklists.isEmpty) {
+                      if (isOffline || isUnknown) {
+                        print(
+                          '[DEBUG] HomeScreen: Showing offline/empty state widget',
+                        );
+                        return Column(
+                          children: [
+                            const Icon(
+                              Icons.cloud_off,
+                              size: 64,
+                              color: Colors.red,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'No checklists available offline.',
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.red,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Connect to the internet to sync your checklists.',
+                              style: const TextStyle(color: Colors.grey),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        );
+                      }
+                      print(
+                        '[DEBUG] HomeScreen: Showing normal empty state widget',
+                      );
                       return Column(
                         children: [
                           const Icon(
@@ -565,6 +627,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   loading: () =>
                       const Center(child: CircularProgressIndicator()),
                   error: (error, stack) {
+                    print('[DEBUG] HomeScreen: checklistsAsync error: $error');
                     return Column(
                       children: [
                         const Icon(
@@ -587,11 +650,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           onPressed: () {
                             final currentUser =
                                 FirebaseAuth.instance.currentUser;
-                            if (currentUser != null) {
-                              ref
-                                  .read(checklistNotifierProvider.notifier)
-                                  .loadUserChecklists(currentUser.uid);
-                            }
+                            final userId = currentUser?.uid ?? 'anonymous';
+                            final connectivity = ref
+                                .read(connectivityProvider)
+                                .asData
+                                ?.value;
+                            ref
+                                .read(checklistNotifierProvider.notifier)
+                                .loadUserChecklists(
+                                  userId,
+                                  connectivity: connectivity,
+                                );
                           },
                           child: Text(TranslationService.translate('retry')),
                         ),
@@ -605,5 +674,49 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         );
       },
     );
+  }
+
+  Widget _buildWelcomeText(User? currentUser) {
+    if (currentUser == null) {
+      return Text(
+        TranslationService.translate('welcome_user', [
+          TranslationService.translate('anonymous'),
+        ]),
+        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+      );
+    }
+    return FutureBuilder<DocumentSnapshot>(
+      future: FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser.uid)
+          .get(),
+      builder: (context, snapshot) {
+        String displayName =
+            currentUser.email ?? TranslationService.translate('anonymous');
+        if (snapshot.hasData && snapshot.data!.exists) {
+          final data = snapshot.data!.data() as Map<String, dynamic>;
+          if (data['displayName'] != null &&
+              data['displayName'].toString().isNotEmpty) {
+            displayName = data['displayName'];
+          } else if (currentUser.displayName != null &&
+              currentUser.displayName!.isNotEmpty) {
+            displayName = currentUser.displayName!;
+          }
+        } else if (currentUser.displayName != null &&
+            currentUser.displayName!.isNotEmpty) {
+          displayName = currentUser.displayName!;
+        }
+        return Text(
+          TranslationService.translate('welcome_user', [displayName]),
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        );
+      },
+    );
+  }
+
+  Widget _buildTierIndicator(WidgetRef ref) {
+    final privileges = ref.watch(privilegeProvider);
+    final currentTier = privileges?.tier ?? UserTier.anonymous;
+    return TierIndicator(tier: currentTier);
   }
 }
