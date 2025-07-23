@@ -88,6 +88,22 @@ flutter drive --driver=test_driver/integration_test.dart
 
 ---
 
+## 🛠️ Development Roadmap & TODOs
+
+1. **Install Sourcetree** and use it to visualize and manage your repo's branch structure.
+2. **Set up a new git branching model** (`main`, `develop`, `feature/*`, `release/*`, `hotfix/*`) and consider branch protection rules.
+3. **Create a feature branch for profile offline caching** and plan its implementation to avoid checklist-style complexity.
+4. **Design and implement checklist JSON import/export**, including defining the file format and UI.
+5. **Implement public checklist sharing**, including backend and UI for sharing and browsing.
+6. **Design and implement the upgrade flow and capabilities** (e.g., premium features, privilege gating).
+7. **Write and update help, developer, and user documentation.**
+8. **Produce a deployable release candidate** after all features are tested and documented.
+9. **Plan and implement multiple concurrent checklist sessions** as a privilege-guarded feature.
+10. **Estimate and monitor Firebase costs** for new features (multi-session, audit logs, etc.), and implement cleanup strategies (TTL, Cloud Functions).
+11. **Add TTL to anonymous user documents and related data**, and set up cascading deletion (Cloud Function or TTL on related collections).
+
+---
+
 ## 📇 License
 
 [MIT License](LICENSE)
