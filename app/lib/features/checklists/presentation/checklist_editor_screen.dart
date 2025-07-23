@@ -104,6 +104,13 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
                 onPressed: () => Navigator.of(context).pop(true),
                 child: Text(TranslationService.translate('discard')),
               ),
+              ElevatedButton(
+                onPressed: () async {
+                  Navigator.of(context).pop(false); // Close dialog
+                  await _saveChecklist(); // Save and navigate back
+                },
+                child: Text(TranslationService.translate('save')),
+              ),
             ],
           ),
         ) ??

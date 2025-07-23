@@ -84,6 +84,13 @@ class _ItemEditScreenState extends ConsumerState<ItemEditScreen> {
                 onPressed: () => Navigator.of(context).pop(true),
                 child: Text(TranslationService.translate('discard')),
               ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop(false); // Close dialog
+                  _saveItem(); // Save and navigate back
+                },
+                child: Text(TranslationService.translate('save')),
+              ),
             ],
           ),
         ) ??
