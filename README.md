@@ -88,6 +88,27 @@ flutter drive --driver=test_driver/integration_test.dart
 
 ---
 
+## 🛠️ Development Roadmap & TODOs
+
+### ✅ Completed
+- **Sourcetree Installation**: Installed and configured Sourcetree for Git visualization
+- **Git Branching Structure**: Set up git-flow with main/develop branches, feature/release/hotfix prefixes, and version tag prefix 'v'
+
+### 🔄 In Progress
+- **Profile Offline Caching**: Create feature branch and plan implementation to avoid checklist-style complexity
+
+### 📋 Pending
+- **Checklist JSON Import/Export**: Design and implement checklist JSON import/export, including defining the file format and UI
+- **Public Checklist Sharing**: Implement public checklist sharing, including backend and UI for sharing and browsing
+- **Upgrade Flow**: Design and implement the upgrade flow and capabilities (e.g., premium features, privilege gating)
+- **Documentation**: Write and update help, developer, and user documentation
+- **Release Candidate**: Produce a deployable release candidate after all features are tested and documented
+- **Multi-Session Guarded**: Plan and implement multiple concurrent checklist sessions as a privilege-guarded feature
+- **Firebase Costs & Cleanup**: Estimate and monitor Firebase costs for new features (multi-session, audit logs, etc.), and implement cleanup strategies (TTL, Cloud Functions)
+- **Anonymous TTL Cascade**: Add TTL to anonymous user documents and related data, and set up cascading deletion (Cloud Function or TTL on related collections)
+
+---
+
 ## 📇 License
 
 [MIT License](LICENSE)
