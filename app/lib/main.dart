@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'dart:convert';
 import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 //import 'package:checklister/checklister.dart'; // be sure to add new code to the lib/checklister.dart exports
 import 'checklister_app.dart';
@@ -74,6 +75,8 @@ class UnderscoreAssetLoader extends AssetLoader {
 void main() async {
   // Initialize Flutter bindings first (outside of any zone)
   WidgetsFlutterBinding.ensureInitialized();
+  await Hive.initFlutter();
+  await Hive.openBox('checklists');
 
   // Global Flutter error handler
   FlutterError.onError = (FlutterErrorDetails details) {

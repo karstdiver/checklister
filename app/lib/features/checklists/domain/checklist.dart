@@ -77,8 +77,12 @@ class Checklist {
               .toList() ??
           [],
       coverImageUrl: data['coverImageUrl'],
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
-      updatedAt: (data['updatedAt'] as Timestamp).toDate(),
+      createdAt: data['createdAt'] != null
+          ? (data['createdAt'] as Timestamp).toDate()
+          : DateTime.now(),
+      updatedAt: data['updatedAt'] != null
+          ? (data['updatedAt'] as Timestamp).toDate()
+          : DateTime.now(),
       isPublic: data['isPublic'] ?? false,
       tags: List<String>.from(data['tags'] ?? []),
       totalItems: data['totalItems'] ?? 0,
@@ -169,6 +173,51 @@ class Checklist {
 
   @override
   int get hashCode => id.hashCode;
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'description': description,
+      'userId': userId,
+      'items': items.map((item) => item.toJson()).toList(),
+      'coverImageUrl': coverImageUrl,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
+      'isPublic': isPublic,
+      'tags': tags,
+      'totalItems': totalItems,
+      'completedItems': completedItems,
+      'lastUsedAt': lastUsedAt?.toIso8601String(),
+    };
+  }
+
+  factory Checklist.fromJson(Map<String, dynamic> json) {
+    return Checklist(
+      id: json['id'] ?? '',
+      title: json['title'] ?? '',
+      description: json['description'],
+      userId: json['userId'] ?? '',
+      items:
+          (json['items'] as List<dynamic>?)
+              ?.map(
+                (item) =>
+                    ChecklistItem.fromJson(Map<String, dynamic>.from(item)),
+              )
+              .toList() ??
+          [],
+      coverImageUrl: json['coverImageUrl'],
+      createdAt: DateTime.parse(json['createdAt']),
+      updatedAt: DateTime.parse(json['updatedAt']),
+      isPublic: json['isPublic'] ?? false,
+      tags: List<String>.from(json['tags'] ?? []),
+      totalItems: json['totalItems'] ?? 0,
+      completedItems: json['completedItems'] ?? 0,
+      lastUsedAt: json['lastUsedAt'] != null
+          ? DateTime.parse(json['lastUsedAt'])
+          : null,
+    );
+  }
 }
 
 class ChecklistItem {
@@ -281,6 +330,39 @@ class ChecklistItem {
 
   @override
   int get hashCode => id.hashCode;
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'text': text,
+      'imageUrl': imageUrl,
+      'status': status.name,
+      'order': order,
+      'notes': notes,
+      'completedAt': completedAt?.toIso8601String(),
+      'skippedAt': skippedAt?.toIso8601String(),
+    };
+  }
+
+  factory ChecklistItem.fromJson(Map<String, dynamic> json) {
+    return ChecklistItem(
+      id: json['id'] ?? '',
+      text: json['text'] ?? '',
+      imageUrl: json['imageUrl'],
+      status: ItemStatus.values.firstWhere(
+        (e) => e.name == json['status'],
+        orElse: () => ItemStatus.pending,
+      ),
+      order: json['order'] ?? 0,
+      notes: json['notes'],
+      completedAt: json['completedAt'] != null
+          ? DateTime.parse(json['completedAt'])
+          : null,
+      skippedAt: json['skippedAt'] != null
+          ? DateTime.parse(json['skippedAt'])
+          : null,
+    );
+  }
 }
 
 enum ItemStatus { pending, completed, skipped, reviewed }

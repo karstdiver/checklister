@@ -140,10 +140,16 @@ class _AcceptanceScreenState extends State<AcceptanceScreen> {
         privacyAccepted: _privacyAccepted,
         tosAccepted: _tosAccepted,
       );
-      await AcceptanceService.saveAcceptanceRemote(
-        privacyAccepted: _privacyAccepted,
-        tosAccepted: _tosAccepted,
-      );
+
+      // Only save to remote if user is not anonymous
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser != null && !currentUser.isAnonymous) {
+        await AcceptanceService.saveAcceptanceRemote(
+          privacyAccepted: _privacyAccepted,
+          tosAccepted: _tosAccepted,
+        );
+      }
+
       setState(() {
         _isAccepted = true;
       });
@@ -158,7 +164,17 @@ class _AcceptanceScreenState extends State<AcceptanceScreen> {
 
   // Helper to check both local and remote acceptance status
   Future<bool> isAcceptanceRequiredHybrid() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
     final local = await AcceptanceService.loadAcceptance();
+
+    // For anonymous users, only check local acceptance
+    if (currentUser?.isAnonymous == true) {
+      return !local.privacyAccepted ||
+          !local.tosAccepted ||
+          local.acceptedVersion < AcceptanceService.currentPolicyVersion;
+    }
+
+    // For authenticated users, check both local and remote
     final remote = await AcceptanceService.loadAcceptanceRemote();
     final localRequired =
         !local.privacyAccepted ||

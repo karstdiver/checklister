@@ -4,6 +4,7 @@ import 'auth_state.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../data/user_repository.dart';
 import 'package:checklister/core/services/analytics_service.dart';
+import '../../checklists/data/checklist_repository.dart';
 
 class AuthNotifier extends StateNotifier<AuthState> {
   final FirebaseAuth? _auth;
@@ -258,6 +259,26 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
 
     try {
+      // Clear local checklists before signing out
+      final currentUser = _auth.currentUser;
+      if (currentUser != null) {
+        try {
+          final repository = ChecklistRepository();
+          print(
+            '[DEBUG] AuthNotifier: About to clear local checklists for userId=${currentUser.uid}',
+          );
+          await repository.clearLocalChecklists(userId: currentUser.uid);
+          print(
+            '[DEBUG] AuthNotifier: Successfully cleared local checklists for userId=${currentUser.uid}',
+          );
+        } catch (e) {
+          print('[DEBUG] AuthNotifier: Failed to clear local checklists: $e');
+          // Don't fail signOut if cache clearing fails
+        }
+      } else {
+        print('[DEBUG] AuthNotifier: No current user to clear checklists for');
+      }
+
       await _auth.signOut();
       // Log analytics event
       await _analytics.logLogout();
