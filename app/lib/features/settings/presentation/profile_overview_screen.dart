@@ -92,8 +92,10 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
             ),
             actions: [
               IconButton(
-                onPressed: () {
-                  Navigator.pushNamed(context, '/profile/edit');
+                onPressed: () async {
+                  await Navigator.pushNamed(context, '/profile/edit');
+                  // Reload profile after returning from edit
+                  _loadProfile();
                 },
                 icon: const Icon(Icons.edit),
               ),
@@ -298,8 +300,8 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
 
             // User Name
             Text(
-              currentUser?.displayName ??
-                  currentUser?.email ??
+              profile?.displayName ??
+                  profile?.email ??
                   TranslationService.translate('anonymous'),
               style: TextStyle(
                 fontSize: 20,
@@ -377,8 +379,10 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
               style: TextStyle(fontSize: 14, color: textColor),
             ),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-            onTap: () {
-              Navigator.pushNamed(context, '/profile/edit');
+            onTap: () async {
+              await Navigator.pushNamed(context, '/profile/edit');
+              // Reload profile after returning from edit
+              _loadProfile();
             },
           ),
           const Divider(height: 1),
