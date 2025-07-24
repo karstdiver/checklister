@@ -31,6 +31,9 @@ class ChecklisterApp extends ConsumerWidget {
     // Watch settings to get the saved language preference
     final settings = ref.watch(settingsProvider);
 
+    // Set up global auth/profile listener
+    setupGlobalAuthProfileListener(ref);
+
     // Use the saved language from settings, fallback to context.locale
     final currentLocale = settings.language ?? context.locale;
 

@@ -68,3 +68,14 @@ final authAndNavigationProvider =
         navigation: ref.watch(navigationStateProvider),
       );
     });
+
+// Add this at the end of the file to set up a global listener
+
+// This should be called from your app's main widget (e.g., ChecklisterApp) in build or initState
+void setupGlobalAuthProfileListener(WidgetRef ref) {
+  ref.listen<User?>(currentUserProvider, (prev, next) async {
+    if (next == null || next.isAnonymous) {
+      await ref.read(profileNotifierProvider.notifier).clearProfile();
+    }
+  });
+}
