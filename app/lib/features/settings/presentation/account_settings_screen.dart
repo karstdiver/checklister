@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import '../../../core/services/translation_service.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../core/providers/providers.dart';
@@ -13,6 +14,7 @@ import 'upgrade_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/services/acceptance_service.dart';
 import 'dev_only_panel.dart';
+import '../../auth/domain/profile_provider.dart';
 
 class AccountSettingsScreen extends ConsumerStatefulWidget {
   const AccountSettingsScreen({super.key});
@@ -23,50 +25,19 @@ class AccountSettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
-  Map<String, dynamic>? _userData;
-  bool _isLoading = true;
-  String? _error;
-
   @override
   void initState() {
     super.initState();
-    _loadUserData();
+    _loadProfile();
   }
 
-  Future<void> _loadUserData() async {
-    try {
-      setState(() {
-        _isLoading = true;
-        _error = null;
-      });
-      final currentUser = ref.read(currentUserProvider);
-      if (currentUser != null) {
-        final doc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(currentUser.uid)
-            .get();
-        if (doc.exists) {
-          setState(() {
-            _userData = doc.data();
-            _isLoading = false;
-          });
-        } else {
-          setState(() {
-            _error = 'User profile not found';
-            _isLoading = false;
-          });
-        }
-      } else {
-        setState(() {
-          _error = 'No authenticated user';
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _error = 'Failed to load profile: $e';
-        _isLoading = false;
-      });
+  Future<void> _loadProfile() async {
+    final currentUser = ref.read(currentUserProvider);
+    if (currentUser != null) {
+      final connectivity = await Connectivity().checkConnectivity();
+      ref
+          .read(profileNotifierProvider.notifier)
+          .loadProfile(currentUser.uid, connectivity: connectivity);
     }
   }
 
@@ -74,9 +45,18 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
   Widget build(BuildContext context) {
     ref.watch(translationProvider);
     final currentUser = ref.watch(currentUserProvider);
+    final profileState = ref.watch(profileStateProvider);
     final privileges = ref.watch(privilegeProvider);
     final currentTier = privileges?.tier ?? UserTier.anonymous;
     final isMaxTier = currentTier == UserTier.pro;
+
+    // Load profile if not already loaded and not loading
+    if (profileState.isInitial && currentUser != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _loadProfile();
+      });
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text(TranslationService.translate('account_settings')),
@@ -85,10 +65,10 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
-      body: _isLoading
+      body: profileState.isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _error != null
-          ? _buildErrorWidget()
+          : profileState.hasError
+          ? _buildErrorWidget(profileState.errorMessage ?? 'Unknown error')
           : ListView(
               padding: const EdgeInsets.all(16),
               children: [
@@ -140,7 +120,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
     );
   }
 
-  Widget _buildErrorWidget() {
+  Widget _buildErrorWidget(String errorMessage) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -148,13 +128,13 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
           const Icon(Icons.error_outline, size: 64, color: Colors.red),
           const SizedBox(height: 16),
           Text(
-            _error!,
+            errorMessage,
             style: const TextStyle(fontSize: 16, color: Colors.red),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
           ElevatedButton(
-            onPressed: _loadUserData,
+            onPressed: _loadProfile,
             child: Text(TranslationService.translate('retry')),
           ),
         ],
@@ -164,6 +144,8 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
 
   Widget _buildAccountInfo(User? currentUser) {
     final textColor = Theme.of(context).colorScheme.onSurface;
+    final profile = ref.watch(profileDataProvider);
+
     return AppCard(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -199,12 +181,12 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
             ),
             _buildInfoRow(
               TranslationService.translate('account_created'),
-              _formatTimestamp(_userData?['createdAt']),
+              _formatTimestamp(profile?.createdAt),
               textColor,
             ),
             _buildInfoRow(
               TranslationService.translate('last_updated'),
-              _formatTimestamp(_userData?['updatedAt']),
+              _formatTimestamp(profile?.updatedAt),
               textColor,
             ),
           ],
@@ -245,14 +227,10 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
     );
   }
 
-  String _formatTimestamp(dynamic timestamp) {
-    if (timestamp == null) return TranslationService.translate('not_available');
+  String _formatTimestamp(DateTime? dateTime) {
+    if (dateTime == null) return TranslationService.translate('not_available');
     try {
-      if (timestamp is Timestamp) {
-        final date = timestamp.toDate();
-        return '${date.day}/${date.month}/${date.year}';
-      }
-      return TranslationService.translate('not_available');
+      return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
     } catch (e) {
       return TranslationService.translate('not_available');
     }

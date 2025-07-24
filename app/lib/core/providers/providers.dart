@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../features/auth/domain/auth_notifier.dart';
 import '../../features/auth/domain/auth_state.dart';
 import '../../features/auth/data/user_repository.dart';
+import '../../features/auth/domain/profile_provider.dart';
 import '../navigation/navigation_notifier.dart';
 import '../navigation/navigation_state.dart';
 import 'privilege_provider.dart';

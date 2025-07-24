@@ -6,7 +6,6 @@ import '../../../core/providers/privilege_provider.dart';
 import '../../../core/widgets/signup_encouragement.dart';
 import '../../../shared/widgets/logout_dialog.dart';
 import '../../../core/services/translation_service.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../sessions/domain/session_state.dart' as sessions;
 import '../../sessions/domain/session_providers.dart';
@@ -18,6 +17,7 @@ import 'widgets/connectivity_test_panel.dart';
 import 'checklist_editor_screen.dart';
 import '../../../core/widgets/tier_indicator.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import '../../auth/domain/profile_provider.dart';
 
 final connectivityProvider = StreamProvider<ConnectivityResult>((ref) async* {
   final initial = await Connectivity().checkConnectivity();
@@ -45,6 +45,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         print(
           '[DEBUG] HomeScreen: Initial load for userId=$userId, connectivity=$connectivity',
         );
+
+        // Load profile
+        ref
+            .read(profileNotifierProvider.notifier)
+            .loadProfile(userId, connectivity: connectivity);
+
+        // Load checklists
         ref
             .read(checklistNotifierProvider.notifier)
             .loadUserChecklists(userId, connectivity: connectivity);
@@ -81,6 +88,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
         // Clear achievements from the previous user
         ref.read(achievementNotifierProvider.notifier).clearAllAchievements();
+
+        // Load profile for the new user
+        if (next != null) {
+          ref
+              .read(profileNotifierProvider.notifier)
+              .loadProfile(next.uid, connectivity: connectivity);
+        }
 
         // Load checklists for the new user
         print(
@@ -685,32 +699,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
       );
     }
-    return FutureBuilder<DocumentSnapshot>(
-      future: FirebaseFirestore.instance
-          .collection('users')
-          .doc(currentUser.uid)
-          .get(),
-      builder: (context, snapshot) {
-        String displayName =
-            currentUser.email ?? TranslationService.translate('anonymous');
-        if (snapshot.hasData && snapshot.data!.exists) {
-          final data = snapshot.data!.data() as Map<String, dynamic>;
-          if (data['displayName'] != null &&
-              data['displayName'].toString().isNotEmpty) {
-            displayName = data['displayName'];
-          } else if (currentUser.displayName != null &&
-              currentUser.displayName!.isNotEmpty) {
-            displayName = currentUser.displayName!;
-          }
-        } else if (currentUser.displayName != null &&
-            currentUser.displayName!.isNotEmpty) {
-          displayName = currentUser.displayName!;
-        }
-        return Text(
-          TranslationService.translate('welcome_user', [displayName]),
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-        );
-      },
+
+    // Use profile provider for display name
+    final profile = ref.watch(profileDataProvider);
+    final displayName =
+        profile?.displayNameOrEmail ??
+        currentUser.displayName ??
+        currentUser.email ??
+        TranslationService.translate('anonymous');
+
+    return Text(
+      TranslationService.translate('welcome_user', [displayName]),
+      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
     );
   }
 

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import '../../../core/providers/providers.dart';
 import '../../../core/providers/settings_provider.dart';
 import '../../../shared/widgets/app_card.dart';
@@ -12,7 +12,7 @@ import '../../../core/widgets/signup_encouragement.dart';
 import '../../../core/widgets/anonymous_profile_encouragement.dart';
 import '../../../core/domain/user_tier.dart';
 import '../../../core/providers/privilege_provider.dart';
-import '../../../core/widgets/privilege_test_panel.dart';
+import '../../auth/domain/profile_provider.dart';
 
 class ProfileEditScreen extends ConsumerStatefulWidget {
   const ProfileEditScreen({super.key});
@@ -26,8 +26,6 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   final _displayNameController = TextEditingController();
   final _emailController = TextEditingController();
 
-  Map<String, dynamic>? _userData;
-  bool _isLoading = true;
   bool _isSaving = false;
   String? _error;
   ThemeMode? _selectedThemeMode;
@@ -35,7 +33,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   @override
   void initState() {
     super.initState();
-    _loadUserData();
+    _loadProfile();
     _selectedThemeMode = ref.read(settingsProvider).themeMode;
   }
 
@@ -46,46 +44,13 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     super.dispose();
   }
 
-  Future<void> _loadUserData() async {
-    try {
-      setState(() {
-        _isLoading = true;
-        _error = null;
-      });
-
-      final currentUser = ref.read(currentUserProvider);
-      if (currentUser != null) {
-        final doc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(currentUser.uid)
-            .get();
-
-        if (doc.exists) {
-          final data = doc.data()!;
-          setState(() {
-            _userData = data;
-            _displayNameController.text =
-                data['displayName'] ?? currentUser.displayName ?? '';
-            _emailController.text = data['email'] ?? currentUser.email ?? '';
-            _isLoading = false;
-          });
-        } else {
-          setState(() {
-            _error = 'User profile not found';
-            _isLoading = false;
-          });
-        }
-      } else {
-        setState(() {
-          _error = 'No authenticated user';
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _error = 'Failed to load profile: $e';
-        _isLoading = false;
-      });
+  Future<void> _loadProfile() async {
+    final currentUser = ref.read(currentUserProvider);
+    if (currentUser != null) {
+      final connectivity = await Connectivity().checkConnectivity();
+      ref
+          .read(profileNotifierProvider.notifier)
+          .loadProfile(currentUser.uid, connectivity: connectivity);
     }
   }
 
@@ -110,14 +75,12 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       // Update Firebase Auth profile
       await currentUser.updateDisplayName(_displayNameController.text.trim());
 
-      // Update Firestore document
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(currentUser.uid)
-          .update({
+      // Update profile using the profile provider
+      await ref
+          .read(profileNotifierProvider.notifier)
+          .updateProfile(currentUser.uid, {
             'displayName': _displayNameController.text.trim(),
             'email': _emailController.text.trim(),
-            'updatedAt': FieldValue.serverTimestamp(),
           });
 
       // Update theme mode in provider
@@ -155,10 +118,29 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     return Consumer(
       builder: (context, ref, child) {
         final currentUser = ref.watch(currentUserProvider);
+        final profileState = ref.watch(profileStateProvider);
 
         // Show encouragement screen for anonymous users
         if (currentUser == null || currentUser.isAnonymous) {
           return AnonymousProfileEncouragement();
+        }
+
+        // Load profile if not already loaded and not loading
+        if (profileState.isInitial && currentUser != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _loadProfile();
+          });
+        }
+
+        // Update controllers when profile is loaded
+        if (profileState.isLoaded && profileState.profile != null) {
+          final profile = profileState.profile!;
+          if (_displayNameController.text.isEmpty) {
+            _displayNameController.text = profile.displayName ?? '';
+          }
+          if (_emailController.text.isEmpty) {
+            _emailController.text = profile.email ?? '';
+          }
         }
 
         return Scaffold(
@@ -169,7 +151,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
               icon: const Icon(Icons.arrow_back),
             ),
             actions: [
-              if (!_isLoading && _error == null)
+              if (!profileState.isLoading && profileState.errorMessage == null)
                 TextButton(
                   onPressed: _isSaving ? null : _saveProfile,
                   child: _isSaving
@@ -182,17 +164,17 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                 ),
             ],
           ),
-          body: _isLoading
+          body: profileState.isLoading
               ? const Center(child: CircularProgressIndicator())
-              : _error != null
-              ? _buildErrorWidget()
+              : profileState.hasError
+              ? _buildErrorWidget(profileState.errorMessage ?? 'Unknown error')
               : _buildEditForm(),
         );
       },
     );
   }
 
-  Widget _buildErrorWidget() {
+  Widget _buildErrorWidget(String errorMessage) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -200,13 +182,13 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
           const Icon(Icons.error_outline, size: 64, color: Colors.red),
           const SizedBox(height: 16),
           Text(
-            _error!,
+            errorMessage,
             style: const TextStyle(fontSize: 16, color: Colors.red),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
           ElevatedButton(
-            onPressed: _loadUserData,
+            onPressed: _loadProfile,
             child: Text(TranslationService.translate('retry')),
           ),
         ],
@@ -237,7 +219,21 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
           const SizedBox(height: 16),
 
           // Error Display
-          if (_error != null) _buildErrorDisplay(),
+          if (_error != null)
+            Container(
+              padding: const EdgeInsets.all(16),
+              margin: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.red.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.red),
+              ),
+              child: Text(
+                _error!,
+                style: const TextStyle(color: Colors.red),
+                textAlign: TextAlign.center,
+              ),
+            ),
         ],
       ),
     );
@@ -245,7 +241,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
 
   Widget _buildProfilePictureSection() {
     final currentUser = ref.watch(currentUserProvider);
-    final userData = _userData;
+    final profile = ref.watch(profileDataProvider);
 
     return ProfilePicturesGuard(
       child: AppCard(
@@ -264,11 +260,11 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
               const SizedBox(height: 16),
               ProfileImagePicker(
                 currentImageUrl:
-                    userData?['profileImageUrl'] ?? currentUser?.photoURL,
+                    profile?.profileImageUrlOrPhotoURL ?? currentUser?.photoURL,
                 size: 100,
                 onImageChanged: () {
-                  // Reload user data to get the updated profile image
-                  _loadUserData();
+                  // Reload profile to get the updated profile image
+                  _loadProfile();
                 },
               ),
               const SizedBox(height: 12),
@@ -537,30 +533,6 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                   style: const TextStyle(fontSize: 16),
                 ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildErrorDisplay() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.red.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.red),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.error_outline, color: Colors.red, size: 20),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              _error!,
-              style: const TextStyle(color: Colors.red, fontSize: 14),
-            ),
-          ),
-        ],
       ),
     );
   }

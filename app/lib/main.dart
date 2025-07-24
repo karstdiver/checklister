@@ -77,6 +77,8 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
   await Hive.openBox('checklists');
+  await Hive.openBox('profiles');
+  await Hive.openBox('profile_sync_queue');
 
   // Global Flutter error handler
   FlutterError.onError = (FlutterErrorDetails details) {
