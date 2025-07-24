@@ -74,7 +74,7 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
           (_descriptionController.text.trim() !=
               (widget.checklist!.description ?? '').trim()) ||
           _isPublic != widget.checklist!.isPublic ||
-          !_listEquals(_items, widget.checklist!.items) ||
+          !_itemsEqual(_items, widget.checklist!.items) ||
           !_listEquals(_tags, widget.checklist!.tags);
     }
   }
@@ -85,6 +85,24 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
       if (a[i] != b[i]) return false;
     }
     return true;
+  }
+
+  bool _itemsEqual(List<ChecklistItem> a, List<ChecklistItem> b) {
+    if (a.length != b.length) return false;
+    for (int i = 0; i < a.length; i++) {
+      if (!_itemEquals(a[i], b[i])) return false;
+    }
+    return true;
+  }
+
+  bool _itemEquals(ChecklistItem a, ChecklistItem b) {
+    // Compare all relevant fields for dirty checking
+    return a.id == b.id &&
+        a.text.trim() == b.text.trim() &&
+        a.order == b.order &&
+        a.status == b.status &&
+        (a.notes?.trim() ?? '') == (b.notes?.trim() ?? '') &&
+        (a.imageUrl ?? '') == (b.imageUrl ?? '');
   }
 
   Future<bool> _confirmDiscardChanges(BuildContext context) async {
