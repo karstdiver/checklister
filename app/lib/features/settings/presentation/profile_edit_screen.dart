@@ -30,11 +30,17 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   String? _error;
   ThemeMode? _selectedThemeMode;
 
+  // Store initial values for dirty check
+  String? _initialDisplayName;
+  String? _initialEmail;
+  ThemeMode? _initialThemeMode;
+
   @override
   void initState() {
     super.initState();
     _loadProfile();
     _selectedThemeMode = ref.read(settingsProvider).themeMode;
+    _initialThemeMode = _selectedThemeMode;
   }
 
   @override
@@ -48,9 +54,22 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     final currentUser = ref.read(currentUserProvider);
     if (currentUser != null) {
       final connectivity = await Connectivity().checkConnectivity();
-      ref
+      await ref
           .read(profileNotifierProvider.notifier)
           .loadProfile(currentUser.uid, connectivity: connectivity);
+      // Set initial values after loading
+      final profile = ref.read(profileStateProvider).profile;
+      if (profile != null) {
+        _initialDisplayName = profile.displayName ?? '';
+        _initialEmail = profile.email ?? '';
+        // Set controllers if not already set
+        if (_displayNameController.text.isEmpty) {
+          _displayNameController.text = _initialDisplayName!;
+        }
+        if (_emailController.text.isEmpty) {
+          _emailController.text = _initialEmail!;
+        }
+      }
     }
   }
 
@@ -110,6 +129,44 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     }
   }
 
+  bool _isDirty() {
+    final displayName = _displayNameController.text.trim();
+    final email = _emailController.text.trim();
+    return displayName != (_initialDisplayName ?? '') ||
+        email != (_initialEmail ?? '') ||
+        _selectedThemeMode != _initialThemeMode;
+  }
+
+  Future<bool> _confirmDiscardChanges(BuildContext context) async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text(TranslationService.translate('discard_changes_title')),
+            content: Text(
+              TranslationService.translate('discard_changes_message'),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text(TranslationService.translate('cancel')),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: Text(TranslationService.translate('discard')),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  Navigator.of(context).pop(false); // Close dialog
+                  await _saveProfile(); // Save and navigate back
+                },
+                child: Text(TranslationService.translate('save')),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
+
   @override
   Widget build(BuildContext context) {
     // Watch the translation provider to trigger rebuilds when language changes
@@ -132,7 +189,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
           });
         }
 
-        // Update controllers when profile is loaded
+        // Update controllers and initial values when profile is loaded
         if (profileState.isLoaded && profileState.profile != null) {
           final profile = profileState.profile!;
           if (_displayNameController.text.isEmpty) {
@@ -141,34 +198,55 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
           if (_emailController.text.isEmpty) {
             _emailController.text = profile.email ?? '';
           }
+          // Set initial values if not already set
+          _initialDisplayName ??= profile.displayName ?? '';
+          _initialEmail ??= profile.email ?? '';
         }
 
-        return Scaffold(
-          appBar: AppBar(
-            title: Text(TranslationService.translate('edit_profile')),
-            leading: IconButton(
-              onPressed: () => Navigator.of(context).pop(),
-              icon: const Icon(Icons.arrow_back),
+        return WillPopScope(
+          onWillPop: () async {
+            if (_isDirty()) {
+              final discard = await _confirmDiscardChanges(context);
+              return discard;
+            }
+            return true;
+          },
+          child: Scaffold(
+            appBar: AppBar(
+              title: Text(TranslationService.translate('edit_profile')),
+              leading: IconButton(
+                onPressed: () async {
+                  if (_isDirty()) {
+                    final discard = await _confirmDiscardChanges(context);
+                    if (!discard) return;
+                  }
+                  Navigator.of(context).pop();
+                },
+                icon: const Icon(Icons.arrow_back),
+              ),
+              actions: [
+                if (!profileState.isLoading &&
+                    profileState.errorMessage == null)
+                  TextButton(
+                    onPressed: _isSaving ? null : _saveProfile,
+                    child: _isSaving
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Text(TranslationService.translate('save')),
+                  ),
+              ],
             ),
-            actions: [
-              if (!profileState.isLoading && profileState.errorMessage == null)
-                TextButton(
-                  onPressed: _isSaving ? null : _saveProfile,
-                  child: _isSaving
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Text(TranslationService.translate('save')),
-                ),
-            ],
+            body: profileState.isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : profileState.hasError
+                ? _buildErrorWidget(
+                    profileState.errorMessage ?? 'Unknown error',
+                  )
+                : _buildEditForm(),
           ),
-          body: profileState.isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : profileState.hasError
-              ? _buildErrorWidget(profileState.errorMessage ?? 'Unknown error')
-              : _buildEditForm(),
         );
       },
     );
@@ -212,10 +290,6 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
 
           // Preferences Section
           _buildPreferencesSection(),
-          const SizedBox(height: 16),
-
-          // Save Button
-          _buildSaveButton(),
           const SizedBox(height: 16),
 
           // Error Display
@@ -507,31 +581,6 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
               },
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSaveButton() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: SizedBox(
-        width: double.infinity,
-        child: ElevatedButton(
-          onPressed: _isSaving ? null : _saveProfile,
-          style: ElevatedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-          ),
-          child: _isSaving
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : Text(
-                  TranslationService.translate('save_changes'),
-                  style: const TextStyle(fontSize: 16),
-                ),
         ),
       ),
     );
