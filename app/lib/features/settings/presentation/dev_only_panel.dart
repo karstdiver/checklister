@@ -238,7 +238,7 @@ class _DevOnlyPanelState extends ConsumerState<DevOnlyPanel> {
 
   void _switchToTier(BuildContext context, WidgetRef ref, UserTier tier) {
     final privilegeNotifier = ref.read(privilegeProvider.notifier);
-    privilegeNotifier.testSwitchTier(tier);
+    privilegeNotifier.upgradeTier(tier);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(

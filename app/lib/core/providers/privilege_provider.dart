@@ -44,6 +44,9 @@ class PrivilegeNotifier extends StateNotifier<UserPrivileges?> {
     try {
       final userDoc = await _userRepository.getUserDocument(userId);
       if (userDoc != null) {
+        print(
+          '[DEBUG] PrivilegeNotifier: userDoc.subscription = ${userDoc.subscription?.tier}, full subscription: ${userDoc.subscription}',
+        );
         state = _buildPrivilegesFromUserDoc(userDoc);
         print(
           '[DEBUG] PrivilegeNotifier: Set state from userDoc for uid=$userId, tier=${state?.tier}',

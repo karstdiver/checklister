@@ -276,11 +276,24 @@ class AuthNotifier extends StateNotifier<AuthState> {
         password: password,
       );
       final userCredential = await currentUser.linkWithCredential(credential);
+      print(
+        '[DEBUG] upgradeAnonymousUserWithEmailAndPassword: linkWithCredential success for UID: ${userCredential.user?.uid}',
+      );
       // Log analytics event
       await _analytics.logSignUp(method: 'email_password_upgrade');
       await _analytics.setUserId(userId: userCredential.user!.uid);
       // Create user document in Firestore if not exists
       await _userRepository.createUserDocumentIfNotExists(userCredential.user!);
+      print(
+        '[DEBUG] upgradeAnonymousUserWithEmailAndPassword: called createUserDocumentIfNotExists',
+      );
+      // Fetch and print the user document
+      final userDoc = await _userRepository.getUserDocument(
+        userCredential.user!.uid,
+      );
+      print(
+        '[DEBUG] upgradeAnonymousUserWithEmailAndPassword: userDoc after upgrade: ${userDoc != null ? userDoc.subscription?.tier : 'null'}',
+      );
       state = state.copyWith(
         status: AuthStatus.authenticated,
         user: userCredential.user,
