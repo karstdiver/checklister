@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/privilege_provider.dart';
 import '../domain/user_tier.dart';
 import '../services/translation_service.dart';
+import '../../features/settings/presentation/upgrade_screen.dart';
+import '../../features/auth/presentation/login_screen.dart';
 
 class FeatureGuard extends ConsumerWidget {
   final Widget child;
@@ -79,6 +81,8 @@ class FeatureGuard extends ConsumerWidget {
   }
 
   void _showUpgradeDialog(BuildContext context, WidgetRef ref) {
+    final privileges = ref.read(privilegeProvider);
+    final isAnonymous = privileges?.isAnonymous ?? true;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -94,14 +98,19 @@ class FeatureGuard extends ConsumerWidget {
           ElevatedButton(
             onPressed: () {
               Navigator.of(context).pop();
-              // TODO: Implement upgrade flow
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    TranslationService.translate('upgrade_flow_coming_soon'),
+              if (isAnonymous) {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => LoginScreen(initialSignUpMode: true),
                   ),
-                ),
-              );
+                );
+              } else {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const UpgradeScreen(),
+                  ),
+                );
+              }
             },
             child: const Text('Upgrade'),
           ),

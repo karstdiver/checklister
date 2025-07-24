@@ -7,6 +7,7 @@ import '../../../core/widgets/feature_guard.dart';
 import '../../../core/widgets/signup_encouragement.dart';
 import '../../../core/services/translation_service.dart';
 import '../../../shared/widgets/app_card.dart';
+import '../../../features/auth/presentation/login_screen.dart';
 
 class ItemEditScreen extends ConsumerStatefulWidget {
   final ChecklistItem? item; // null for creating new, non-null for editing
@@ -429,7 +430,14 @@ class _ItemEditScreenState extends ConsumerState<ItemEditScreen> {
                                         ElevatedButton.icon(
                                           onPressed: () {
                                             Navigator.of(context).pop();
-                                            // TODO: Navigate to signup/login
+                                            Navigator.of(context).push(
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    LoginScreen(
+                                                      initialSignUpMode: true,
+                                                    ),
+                                              ),
+                                            );
                                           },
                                           icon: const Icon(
                                             Icons.person_add,
