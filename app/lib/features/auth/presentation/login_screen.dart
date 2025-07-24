@@ -425,12 +425,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ],
 
               // Anonymous Login
-              TextButton(
-                onPressed: authState.isLoading ? null : _signInAnonymously,
-                child: Text(
-                  TranslationService.translate('continue_anonymously'),
+              if (currentUser == null || !currentUser.isAnonymous) ...[
+                TextButton(
+                  onPressed: authState.isLoading ? null : _signInAnonymously,
+                  child: Text(
+                    TranslationService.translate('continue_anonymously'),
+                  ),
                 ),
-              ),
+              ],
 
               // Error Message
               if (authState.hasError) ...[
