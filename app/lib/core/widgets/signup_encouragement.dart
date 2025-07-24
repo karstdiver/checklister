@@ -4,6 +4,7 @@ import '../providers/privilege_provider.dart';
 import '../domain/user_tier.dart';
 import '../services/translation_service.dart';
 import '../../features/settings/presentation/upgrade_screen.dart';
+import '../../features/auth/presentation/login_screen.dart';
 
 class SignupEncouragement extends ConsumerWidget {
   final String title;
@@ -145,7 +146,11 @@ class SignupEncouragement extends ConsumerWidget {
           ElevatedButton(
             onPressed: () {
               Navigator.of(context).pop();
-              Navigator.pushReplacementNamed(context, '/login');
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => LoginScreen(initialSignUpMode: true),
+                ),
+              );
             },
             child: Text(TranslationService.translate('signup')),
           ),
