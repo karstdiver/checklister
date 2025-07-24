@@ -94,14 +94,14 @@ flutter drive --driver=test_driver/integration_test.dart
 - **Sourcetree Installation**: Installed and configured Sourcetree for Git visualization
 - **Git Branching Structure**: Set up git-flow with main/develop branches, feature/release/hotfix prefixes, and version tag prefix 'v'
 - **Profile Offline Caching**: Create feature branch and plan implementation to avoid checklist-style complexity
+- **Anonymous User Upgrade Flow**: Implemented upgrade flow for anonymous user sign-in to email/password (data continuity, UI, and privilege persistence for upgrade only)
 
 ### 🔄 In Progress
-- 
+- **Upgrade Flow**: Full privilege level upgrade flow (e.g., free → premium/pro) and related UI/UX polish
 
 ### 📋 Pending
 - **Checklist JSON Import/Export**: Design and implement checklist JSON import/export, including defining the file format and UI
 - **Public Checklist Sharing**: Implement public checklist sharing, including backend and UI for sharing and browsing
-- **Upgrade Flow**: Design and implement the upgrade flow and capabilities (e.g., premium features, privilege gating)
 - **Documentation**: Write and update help, developer, and user documentation
 - **Release Candidate**: Produce a deployable release candidate after all features are tested and documented
 - **Multi-Session Guarded**: Plan and implement multiple concurrent checklist sessions as a privilege-guarded feature
