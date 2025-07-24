@@ -18,6 +18,7 @@ import 'checklist_editor_screen.dart';
 import '../../../core/widgets/tier_indicator.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import '../../auth/domain/profile_provider.dart';
+import '../../auth/presentation/login_screen.dart';
 
 final connectivityProvider = StreamProvider<ConnectivityResult>((ref) async* {
   final initial = await Connectivity().checkConnectivity();
@@ -118,6 +119,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final currentUser = ref.watch(currentUserProvider);
     final authNotifier = ref.read(authNotifierProvider.notifier);
     final checklistsAsync = ref.watch(checklistNotifierProvider);
+    final privileges = ref.watch(privilegeProvider);
+
+    if (privileges == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
 
     return Consumer(
       builder: (context, ref, child) {
@@ -205,11 +211,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ],
 
                 // Sign-up encouragement for anonymous users
-                const SignupEncouragement(
+                SignupEncouragement(
                   title: 'Unlock More Features',
                   message:
                       'Create a free account to save your checklists, edit them later, and track your progress!',
                   featureName: 'Save • Edit • Track Progress',
+                  onSignupPressed: () async {
+                    print(
+                      '[DEBUG] HomeScreen: SignupEncouragement onSignupPressed tapped',
+                    );
+                    await Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            const LoginScreen(initialSignUpMode: true),
+                      ),
+                    );
+                  },
                 ),
                 const SizedBox(height: 24),
 

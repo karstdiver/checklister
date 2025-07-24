@@ -4,6 +4,7 @@ import '../domain/achievement.dart';
 import '../domain/achievement_providers.dart';
 import '../../../core/services/translation_service.dart';
 import '../../../core/widgets/anonymous_profile_encouragement.dart';
+import '../../../features/auth/presentation/login_screen.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../core/providers/privilege_provider.dart';
 import '../../../core/providers/providers.dart';
@@ -52,7 +53,16 @@ class _AchievementScreenState extends ConsumerState<AchievementScreen>
 
         // Show encouragement screen for anonymous users
         if (currentUser == null || currentUser.isAnonymous) {
-          return AnonymousProfileEncouragement();
+          return AnonymousProfileEncouragement(
+            onSignUp: () async {
+              await Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) =>
+                      const LoginScreen(initialSignUpMode: true),
+                ),
+              );
+            },
+          );
         }
 
         // Check if user has achievement access

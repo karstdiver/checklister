@@ -13,6 +13,7 @@ import '../../../core/widgets/anonymous_profile_encouragement.dart';
 import '../../../core/domain/user_tier.dart';
 import '../../../core/providers/privilege_provider.dart';
 import '../../auth/domain/profile_provider.dart';
+import '../../../features/auth/presentation/login_screen.dart';
 
 class ProfileEditScreen extends ConsumerStatefulWidget {
   const ProfileEditScreen({super.key});
@@ -179,7 +180,16 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
 
         // Show encouragement screen for anonymous users
         if (currentUser == null || currentUser.isAnonymous) {
-          return AnonymousProfileEncouragement();
+          return AnonymousProfileEncouragement(
+            onSignUp: () async {
+              await Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) =>
+                      const LoginScreen(initialSignUpMode: true),
+                ),
+              );
+            },
+          );
         }
 
         // Load profile if not already loaded and not loading
@@ -354,13 +364,11 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         ),
       ),
       fallback: ProfilePictureEncouragement(
-        onSignUp: () {
-          // TODO: Navigate to signup screen
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                TranslationService.translate('signup_flow_coming_soon'),
-              ),
+        onSignUp: () async {
+          print('[DEBUG] ProfilePictureEncouragement: onSignUp tapped');
+          await Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const LoginScreen(initialSignUpMode: true),
             ),
           );
         },

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/translation_service.dart';
 import '../../shared/widgets/app_card.dart';
+import 'package:checklister/features/auth/presentation/login_screen.dart';
 
 class AnonymousProfileEncouragement extends ConsumerWidget {
   final VoidCallback? onSignUp;
@@ -167,14 +168,11 @@ class AnonymousProfileEncouragement extends ConsumerWidget {
                     onPressed:
                         onSignUp ??
                         () {
-                          // TODO: Navigate to signup screen
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                TranslationService.translate(
-                                  'signup_flow_coming_soon',
-                                ),
-                              ),
+                          print('[DEBUG] EncouragementScreen: onSignUp tapped');
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const LoginScreen(initialSignUpMode: true),
                             ),
                           );
                         },

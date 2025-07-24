@@ -24,11 +24,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final firebaseAuth = FirebaseAuth.instance;
       final currentUser = firebaseAuth.currentUser;
-      if (currentUser != null) {
-        // User is already authenticated (session cached), go to HomeScreen even if offline
+      if (currentUser != null && !currentUser.isAnonymous) {
+        // User is authenticated and not anonymous, go to HomeScreen
         Navigator.pushReplacementNamed(context, '/home');
       } else {
-        // Not authenticated, go to LoginScreen
+        // Not authenticated or still anonymous, go to LoginScreen
         Navigator.pushReplacementNamed(context, '/login');
       }
     });

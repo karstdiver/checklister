@@ -249,6 +249,75 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  /// Upgrades an anonymous user to a permanent account using email/password.
+  Future<void> upgradeAnonymousUserWithEmailAndPassword(
+    String email,
+    String password,
+  ) async {
+    if (_auth == null) {
+      state = state.copyWith(
+        status: AuthStatus.error,
+        errorMessage: 'Firebase not available',
+      );
+      return;
+    }
+    final currentUser = _auth.currentUser;
+    if (currentUser == null || !currentUser.isAnonymous) {
+      state = state.copyWith(
+        status: AuthStatus.error,
+        errorMessage: 'No anonymous user to upgrade',
+      );
+      return;
+    }
+    try {
+      state = state.copyWith(status: AuthStatus.loading);
+      final credential = EmailAuthProvider.credential(
+        email: email,
+        password: password,
+      );
+      final userCredential = await currentUser.linkWithCredential(credential);
+      // Log analytics event
+      await _analytics.logSignUp(method: 'email_password_upgrade');
+      await _analytics.setUserId(userId: userCredential.user!.uid);
+      // Create user document in Firestore if not exists
+      await _userRepository.createUserDocumentIfNotExists(userCredential.user!);
+      state = state.copyWith(
+        status: AuthStatus.authenticated,
+        user: userCredential.user,
+        errorMessage: null,
+      );
+    } catch (e) {
+      String userFriendlyMessage;
+      if (e is FirebaseAuthException) {
+        switch (e.code) {
+          case 'email-already-in-use':
+            userFriendlyMessage =
+                'An account with this email already exists. Please sign in instead.';
+            break;
+          case 'weak-password':
+            userFriendlyMessage =
+                'Password is too weak. Please choose a stronger password.';
+            break;
+          case 'invalid-email':
+            userFriendlyMessage = 'Please enter a valid email address.';
+            break;
+          case 'credential-already-in-use':
+            userFriendlyMessage =
+                'This credential is already associated with another account.';
+            break;
+          default:
+            userFriendlyMessage = 'Upgrade failed. Please try again.';
+        }
+      } else {
+        userFriendlyMessage = 'An unexpected error occurred. Please try again.';
+      }
+      state = state.copyWith(
+        status: AuthStatus.error,
+        errorMessage: userFriendlyMessage,
+      );
+    }
+  }
+
   Future<void> signOut() async {
     if (_auth == null) {
       state = state.copyWith(

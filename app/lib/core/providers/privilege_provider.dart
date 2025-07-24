@@ -18,6 +18,7 @@ class PrivilegeNotifier extends StateNotifier<UserPrivileges?> {
   final AuthNotifier _authNotifier;
 
   PrivilegeNotifier(this._userRepository, this._authNotifier) : super(null) {
+    print('[DEBUG] PrivilegeNotifier: constructor called');
     _initializePrivileges();
   }
 
@@ -25,7 +26,16 @@ class PrivilegeNotifier extends StateNotifier<UserPrivileges?> {
     final user = _authNotifier.state.user;
     if (user == null) {
       state = UserPrivileges.anonymous();
+      print('[DEBUG] PrivilegeNotifier: Set state to ANONYMOUS (user==null)');
+    } else if (user.isAnonymous) {
+      state = UserPrivileges.anonymous();
+      print(
+        '[DEBUG] PrivilegeNotifier: Set state to ANONYMOUS (user.isAnonymous, uid=${user.uid})',
+      );
     } else {
+      print(
+        '[DEBUG] PrivilegeNotifier: Loading privileges for user uid=${user.uid}',
+      );
       await _loadUserPrivileges(user.uid);
     }
   }
@@ -35,15 +45,32 @@ class PrivilegeNotifier extends StateNotifier<UserPrivileges?> {
       final userDoc = await _userRepository.getUserDocument(userId);
       if (userDoc != null) {
         state = _buildPrivilegesFromUserDoc(userDoc);
+        print(
+          '[DEBUG] PrivilegeNotifier: Set state from userDoc for uid=$userId, tier=${state?.tier}',
+        );
       } else {
-        // New authenticated user - default to free tier
+        // Only assign free tier for real (non-anonymous) users
         state = UserPrivileges.free();
+        print(
+          '[DEBUG] PrivilegeNotifier: Set state to FREE (no userDoc, uid=$userId)',
+        );
         await _createUserDocumentWithTier(userId);
       }
     } catch (e) {
       print('🔍 DEBUG: Error loading user privileges: $e');
-      // Fallback to free tier if there's an error
-      state = UserPrivileges.free();
+      // Fallback to anonymous if user is anonymous, else free
+      final user = _authNotifier.state.user;
+      if (user != null && user.isAnonymous) {
+        state = UserPrivileges.anonymous();
+        print(
+          '[DEBUG] PrivilegeNotifier: Set state to ANONYMOUS (error fallback, uid=${user.uid})',
+        );
+      } else {
+        state = UserPrivileges.free();
+        print(
+          '[DEBUG] PrivilegeNotifier: Set state to FREE (error fallback, uid=${user?.uid})',
+        );
+      }
     }
   }
 

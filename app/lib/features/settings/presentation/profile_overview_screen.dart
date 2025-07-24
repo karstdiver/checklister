@@ -19,6 +19,7 @@ import '../../auth/data/profile_cache_model.dart';
 import 'account_settings_screen.dart';
 import 'privacy_policy_screen.dart';
 import 'upgrade_screen.dart';
+import '../../../features/auth/presentation/login_screen.dart';
 
 // Connectivity provider for this screen
 final connectivityProvider = StreamProvider<ConnectivityResult>((ref) async* {
@@ -73,7 +74,16 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
 
         // Show encouragement screen for anonymous users
         if (currentUser == null || currentUser.isAnonymous) {
-          return AnonymousProfileEncouragement();
+          return AnonymousProfileEncouragement(
+            onSignUp: () async {
+              await Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) =>
+                      const LoginScreen(initialSignUpMode: true),
+                ),
+              );
+            },
+          );
         }
 
         // Load profile if not already loaded and not loading
@@ -268,13 +278,12 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
                 },
               ),
               fallback: ProfilePictureEncouragement(
-                onSignUp: () {
-                  // TODO: Navigate to signup screen
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        TranslationService.translate('signup_flow_coming_soon'),
-                      ),
+                onSignUp: () async {
+                  print('[DEBUG] ProfilePictureEncouragement: onSignUp tapped');
+                  await Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          const LoginScreen(initialSignUpMode: true),
                     ),
                   );
                 },

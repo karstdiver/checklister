@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/providers/providers.dart';
 import '../../auth/domain/auth_state.dart';
+import '../../auth/domain/profile_provider.dart';
 import '../../../core/services/translation_service.dart';
 import '../../../core/services/acceptance_service.dart';
+import '../../../core/providers/privilege_provider.dart';
 import '../../../checklister_app.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -16,7 +18,8 @@ final connectivityProvider = StreamProvider<ConnectivityResult>(
 );
 
 class LoginScreen extends ConsumerStatefulWidget {
-  const LoginScreen({super.key});
+  final bool initialSignUpMode;
+  const LoginScreen({super.key, this.initialSignUpMode = false});
 
   @override
   ConsumerState<LoginScreen> createState() => _LoginScreenState();
@@ -27,7 +30,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _resetEmailController = TextEditingController();
-  bool _isSignUp = false;
+  late bool _isSignUp;
+
+  @override
+  void initState() {
+    super.initState();
+    _isSignUp = widget.initialSignUpMode;
+    print(
+      '[DEBUG] LoginScreen: initState, initialSignUpMode=${widget.initialSignUpMode}, _isSignUp=$_isSignUp',
+    );
+  }
 
   Future<bool> _isAcceptanceRequiredHybrid() async {
     final currentUser = FirebaseAuth.instance.currentUser;
@@ -86,12 +98,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
     if (_formKey.currentState!.validate()) {
       final authNotifier = ref.read(authNotifierProvider.notifier);
+      final firebaseUser = FirebaseAuth.instance.currentUser;
 
       if (_isSignUp) {
-        await authNotifier.signUpWithEmailAndPassword(
-          _emailController.text.trim(),
-          _passwordController.text,
-        );
+        if (firebaseUser != null && firebaseUser.isAnonymous) {
+          // Upgrade anonymous user
+          await authNotifier.upgradeAnonymousUserWithEmailAndPassword(
+            _emailController.text.trim(),
+            _passwordController.text,
+          );
+        } else {
+          await authNotifier.signUpWithEmailAndPassword(
+            _emailController.text.trim(),
+            _passwordController.text,
+          );
+        }
       } else {
         await authNotifier.signInWithEmailAndPassword(
           _emailController.text.trim(),
@@ -121,6 +142,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
 
     await authNotifier.signInAnonymously();
+
+    // Refresh privileges after anonymous login
+    ref.refresh(privilegeProvider);
 
     // Navigate to home after successful anonymous sign-in
     if (mounted) {
@@ -189,13 +213,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    print('[DEBUG] LoginScreen: build, _isSignUp=$_isSignUp');
     // Watch the translation provider to trigger rebuilds when language changes
     ref.watch(translationProvider);
     final authState = ref.watch(authStateProvider);
 
     // If already authenticated, go to HomeScreen
     final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser != null) {
+    if (currentUser != null && !currentUser.isAnonymous) {
       Future.microtask(() {
         if (mounted) {
           Navigator.pushReplacementNamed(context, '/home');
@@ -211,6 +236,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       print('Decline pressed: signing out...');
       await ref.read(authNotifierProvider.notifier).signOut();
       print('Sign out complete, navigating to login...');
+      ref.refresh(privilegeProvider);
       if (context.mounted) {
         Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
           MaterialPageRoute(builder: (_) => const LoginScreen()),
@@ -223,22 +249,55 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     ref.listen<AuthState>(authNotifierProvider, (prev, next) async {
       if (next.status == AuthStatus.authenticated) {
-        final needsAcceptance = await _isAcceptanceRequiredHybrid();
-        if (needsAcceptance) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (_) => AcceptanceScreen(
-                onDecline: () {
-                  print('Decline pressed: exiting app...');
-                  SystemNavigator.pop();
-                },
-              ),
-            ),
+        final user = next.user;
+        // Only proceed if user is NOT anonymous
+        if (user != null && !user.isAnonymous) {
+          // Force privilege reload for the new user
+          ref.refresh(privilegeProvider);
+          // Show loading dialog while waiting for profile
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) =>
+                const Center(child: CircularProgressIndicator()),
           );
-        } else {
-          Navigator.pushReplacementNamed(context, '/home');
+          bool profileLoaded = false;
+          int attempts = 0;
+          const maxAttempts = 10;
+          while (!profileLoaded && attempts < maxAttempts) {
+            await ref
+                .read(profileNotifierProvider.notifier)
+                .loadProfile(user.uid);
+            final profile = ref.read(profileStateProvider).profile;
+            if (profile != null) {
+              profileLoaded = true;
+              break;
+            }
+            await Future.delayed(const Duration(milliseconds: 500));
+            attempts++;
+          }
+          Navigator.of(
+            context,
+            rootNavigator: true,
+          ).pop(); // Close loading dialog
+          final needsAcceptance = await _isAcceptanceRequiredHybrid();
+          if (needsAcceptance) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (_) => AcceptanceScreen(
+                  onDecline: () {
+                    print('Decline pressed: exiting app...');
+                    SystemNavigator.pop();
+                  },
+                ),
+              ),
+            );
+          } else {
+            Navigator.pushReplacementNamed(context, '/home');
+          }
         }
+        // If still anonymous, do nothing (stay on signup screen)
       }
     });
 

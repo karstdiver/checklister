@@ -97,8 +97,16 @@ class SignupEncouragement extends ConsumerWidget {
             children: [
               Expanded(
                 child: ElevatedButton.icon(
-                  onPressed:
-                      onSignupPressed ?? () => _showSignupDialog(context),
+                  onPressed: () {
+                    if (onSignupPressed != null) {
+                      print(
+                        '[DEBUG] SignupEncouragement: onSignupPressed tapped',
+                      );
+                      onSignupPressed!();
+                    } else {
+                      _showSignupDialog(context);
+                    }
+                  },
                   icon: const Icon(Icons.person_add, size: 18),
                   label: Text(TranslationService.translate('sign_up_free')),
                   style: ElevatedButton.styleFrom(
