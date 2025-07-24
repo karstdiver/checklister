@@ -51,9 +51,10 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
   Future<void> loadProfile(
     String userId, {
     ConnectivityResult? connectivity,
+    bool forceRemote = false,
   }) async {
     print(
-      '[DEBUG] ProfileNotifier: loadProfile called for userId=$userId, connectivity=$connectivity',
+      '[DEBUG] ProfileNotifier: loadProfile called for userId=$userId, connectivity=$connectivity, forceRemote=$forceRemote',
     );
 
     try {
@@ -61,6 +62,53 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
 
       final conn = connectivity;
       print('[DEBUG] ProfileNotifier: Connectivity value = $conn');
+
+      if (forceRemote) {
+        print(
+          '[DEBUG] ProfileNotifier: Forcing Firestore fetch (bypassing cache)',
+        );
+        try {
+          final firestoreProfile = await _cacheService.loadProfileFromFirestore(
+            userId,
+          );
+          if (firestoreProfile != null) {
+            await _cacheService.saveProfileToLocal(firestoreProfile);
+            print(
+              '[DEBUG] ProfileNotifier: Saved profile to local cache (forceRemote)',
+            );
+            state = state.copyWith(
+              status: ProfileStatus.loaded,
+              profile: firestoreProfile,
+              isOffline: false,
+            );
+            print(
+              '[DEBUG] ProfileNotifier: Set state to loaded (Firestore, forceRemote)',
+            );
+          } else {
+            state = state.copyWith(
+              status: ProfileStatus.error,
+              errorMessage: 'Profile not found',
+              isOffline: false,
+            );
+            print(
+              '[DEBUG] ProfileNotifier: Set state to error (not found, forceRemote)',
+            );
+          }
+        } catch (firestoreError) {
+          print(
+            '[DEBUG] ProfileNotifier: Firestore load failed (forceRemote): $firestoreError',
+          );
+          state = state.copyWith(
+            status: ProfileStatus.error,
+            errorMessage: 'Failed to load profile: $firestoreError',
+            isOffline: false,
+          );
+          print(
+            '[DEBUG] ProfileNotifier: Set state to error (Firestore failed, forceRemote)',
+          );
+        }
+        return;
+      }
 
       // Always try local first
       try {

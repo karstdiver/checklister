@@ -44,7 +44,7 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
     // Don't auto-load profile to avoid infinite loops
   }
 
-  Future<void> _loadProfile() async {
+  Future<void> _loadProfile({bool forceRemote = false}) async {
     print('[DEBUG] ProfileOverviewScreen: _loadProfile called');
     final currentUser = ref.read(currentUserProvider);
     print('[DEBUG] ProfileOverviewScreen: currentUser = ${currentUser?.uid}');
@@ -53,7 +53,11 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
       print('[DEBUG] ProfileOverviewScreen: connectivity = $connectivity');
       ref
           .read(profileNotifierProvider.notifier)
-          .loadProfile(currentUser.uid, connectivity: connectivity);
+          .loadProfile(
+            currentUser.uid,
+            connectivity: connectivity,
+            forceRemote: forceRemote,
+          );
     } else {
       print('[DEBUG] ProfileOverviewScreen: No current user');
     }
@@ -261,6 +265,9 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
 
   Widget _buildProfileHeader(User? currentUser, ProfileCacheModel? profile) {
     final textColor = Theme.of(context).colorScheme.onSurface;
+    print(
+      '[DEBUG] ProfileOverviewScreen: Displaying profile image URL: ${profile?.profileImageUrlOrPhotoURL ?? currentUser?.photoURL}',
+    );
     return AppCard(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -273,8 +280,8 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
                     profile?.profileImageUrlOrPhotoURL ?? currentUser?.photoURL,
                 size: 80,
                 onImageChanged: () {
-                  // Reload profile to get the updated profile image
-                  _loadProfile();
+                  // Reload profile from Firestore to get the updated profile image
+                  _loadProfile(forceRemote: true);
                 },
               ),
               fallback: ProfilePictureEncouragement(

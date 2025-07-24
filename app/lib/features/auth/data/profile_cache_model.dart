@@ -38,6 +38,9 @@ class ProfileCacheModel {
   /// Create from Firestore document
   factory ProfileCacheModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
+    print(
+      '[DEBUG] ProfileCacheModel: Loaded profileImageUrl from Firestore: ${data['profileImageUrl']}',
+    );
     return ProfileCacheModel(
       uid: data['uid'] ?? '',
       email: data['email'],

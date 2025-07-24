@@ -80,6 +80,9 @@ class ProfileImageNotifier extends StateNotifier<ProfileImageState> {
       'profileImageUrl': imageUrl,
       'updatedAt': FieldValue.serverTimestamp(),
     });
+    print(
+      '[DEBUG] ProfileImageNotifier: Updated Firestore with new profileImageUrl: $imageUrl',
+    );
 
     // Delete old profile image from storage
     if (currentImageUrl.isNotEmpty) {
