@@ -110,6 +110,30 @@ flutter drive --driver=test_driver/integration_test.dart
 
 ---
 
+## 🗄️ Data Retention & TTL Policy
+
+To control Firebase costs and comply with privacy best practices, Checklister enforces the following data retention and automatic cleanup (TTL) policies:
+
+| Data Type   | Anonymous Users | Registered (Free) | Paid/Pro Users |
+|-------------|----------------|-------------------|---------------|
+| **Sessions**    | 7 days after last activity | 30 days | Indefinite |
+| **Checklists**  | 7 days after last edit | 90 days | Indefinite |
+| **Media (orphaned)** | 7 days | 7 days | 7 days |
+| **Logs/Audit Trails** | 90 days | 90 days | 90 days (or as needed) |
+| **User Account** | 7 days after inactivity | Until deleted | Until deleted |
+
+**Details:**
+- All documents include `createdAt` and `lastActiveAt` timestamps.
+- An `expiresAt` field is set for collections using Firestore TTL.
+- Orphaned media (not referenced by any checklist/session) are deleted after 7 days.
+- When a user is deleted (especially anonymous), all related data is also deleted (cascading delete).
+- Paid users retain all data unless they delete it themselves.
+- Logs and audit trails are kept for 90 days for all users unless compliance requires otherwise.
+
+These policies help keep storage costs predictable and ensure user data is managed responsibly.
+
+---
+
 ## 📇 License
 
 [MIT License](LICENSE)

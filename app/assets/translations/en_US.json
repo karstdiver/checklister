@@ -427,5 +427,8 @@
   "accept_and_continue": "Accept and Continue",
   "decline_and_exit": "Decline and Exit",
   "decline_and_logout": "Decline and Logout",
+  "terms_required": "Terms Required",
+  "terms_required_message": "You must accept the Privacy Policy and Terms of Service to use this app. If you have concerns, please contact us for support.",
+  "ok": "OK",
   "future_feature_coming_soon": "Future Feature: This will be available in a future update."
 }

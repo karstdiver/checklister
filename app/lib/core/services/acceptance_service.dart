@@ -81,6 +81,15 @@ class AcceptanceService {
         !status.tosAccepted ||
         status.acceptedVersion < currentPolicyVersion;
   }
+
+  /// Clear acceptance data (for testing/debug purposes)
+  static Future<void> clearAcceptance() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_privacyAcceptedKey);
+    await prefs.remove(_tosAcceptedKey);
+    await prefs.remove(_acceptedVersionKey);
+    await prefs.remove(_acceptedAtKey);
+  }
 }
 
 class AcceptanceStatus {

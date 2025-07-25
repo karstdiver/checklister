@@ -287,8 +287,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               MaterialPageRoute(
                 builder: (_) => AcceptanceScreen(
                   onDecline: () {
-                    print('Decline pressed: exiting app...');
-                    SystemNavigator.pop();
+                    print('Decline pressed: showing terms required dialog...');
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: Text(
+                          TranslationService.translate('terms_required'),
+                        ),
+                        content: Text(
+                          TranslationService.translate(
+                            'terms_required_message',
+                          ),
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text(TranslationService.translate('ok')),
+                          ),
+                        ],
+                      ),
+                    );
                   },
                 ),
               ),
