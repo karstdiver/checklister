@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'checklist_view_type.dart';
 
 class Checklist {
   final String id;
@@ -14,6 +15,7 @@ class Checklist {
   final int totalItems;
   final int completedItems;
   final DateTime? lastUsedAt;
+  final ChecklistViewType viewType;
 
   const Checklist({
     required this.id,
@@ -29,6 +31,7 @@ class Checklist {
     required this.totalItems,
     required this.completedItems,
     this.lastUsedAt,
+    this.viewType = ChecklistViewType.swipe,
   });
 
   Checklist copyWith({
@@ -45,6 +48,7 @@ class Checklist {
     int? totalItems,
     int? completedItems,
     DateTime? lastUsedAt,
+    ChecklistViewType? viewType,
   }) {
     return Checklist(
       id: id ?? this.id,
@@ -60,6 +64,7 @@ class Checklist {
       totalItems: totalItems ?? this.totalItems,
       completedItems: completedItems ?? this.completedItems,
       lastUsedAt: lastUsedAt ?? this.lastUsedAt,
+      viewType: viewType ?? this.viewType,
     );
   }
 
@@ -90,6 +95,10 @@ class Checklist {
       lastUsedAt: data['lastUsedAt'] != null
           ? (data['lastUsedAt'] as Timestamp).toDate()
           : null,
+      viewType: ChecklistViewType.values.firstWhere(
+        (e) => e.name == data['viewType'],
+        orElse: () => ChecklistViewType.swipe,
+      ),
     );
   }
 
@@ -108,6 +117,7 @@ class Checklist {
       'totalItems': totalItems,
       'completedItems': completedItems,
       'lastUsedAt': lastUsedAt != null ? Timestamp.fromDate(lastUsedAt!) : null,
+      'viewType': viewType.name,
     };
   }
 
@@ -120,6 +130,7 @@ class Checklist {
     String? coverImageUrl,
     bool isPublic = false,
     List<String> tags = const [],
+    ChecklistViewType viewType = ChecklistViewType.swipe,
   }) {
     final now = DateTime.now();
     return Checklist(
@@ -135,6 +146,7 @@ class Checklist {
       tags: tags,
       totalItems: items.length,
       completedItems: 0,
+      viewType: viewType,
     );
   }
 
@@ -189,6 +201,7 @@ class Checklist {
       'totalItems': totalItems,
       'completedItems': completedItems,
       'lastUsedAt': lastUsedAt?.toIso8601String(),
+      'viewType': viewType.name,
     };
   }
 
@@ -216,6 +229,10 @@ class Checklist {
       lastUsedAt: json['lastUsedAt'] != null
           ? DateTime.parse(json['lastUsedAt'])
           : null,
+      viewType: ChecklistViewType.values.firstWhere(
+        (e) => e.name == json['viewType'],
+        orElse: () => ChecklistViewType.swipe,
+      ),
     );
   }
 }

@@ -7,6 +7,10 @@ import '../domain/session_notifier.dart';
 import '../../../core/providers/providers.dart';
 import '../../../core/services/translation_service.dart';
 import '../../../shared/widgets/app_card.dart';
+import '../../checklists/domain/checklist_view_factory.dart';
+import '../../checklists/domain/checklist_view_type.dart';
+import '../../checklists/domain/checklist_providers.dart';
+import '../../checklists/presentation/widgets/view_selector_menu.dart';
 
 final logger = Logger();
 
@@ -126,6 +130,8 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     print('DEBUG: SessionScreen build - session state: $session');
     final sessionNotifier = ref.read(sessionNotifierProvider.notifier);
     final currentUser = ref.watch(currentUserProvider);
+    // Watch checklist changes to rebuild when view type changes
+    final checklists = ref.watch(checklistNotifierProvider);
 
     if (currentUser == null) {
       return const Scaffold(
@@ -158,24 +164,127 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
               ),
             ],
           ),
-          body: GestureDetector(
-            onPanUpdate: (details) => _handleSwipe(details, sessionNotifier),
-            child: Column(
-              children: [
-                // Progress indicator
-                _buildProgressIndicator(session, ref),
-
-                // Current item display
-                Expanded(child: _buildCurrentItem(session)),
-
-                // Navigation controls
-                _buildNavigationControls(session, sessionNotifier, ref),
-              ],
-            ),
-          ),
+          body: _buildViewContent(session, sessionNotifier, ref),
         );
       },
     );
+  }
+
+  Widget _buildViewContent(
+    SessionState session,
+    SessionNotifier sessionNotifier,
+    WidgetRef ref,
+  ) {
+    // Get the current checklist to determine view type
+    final checklistNotifier = ref.read(checklistNotifierProvider.notifier);
+    final checklist = checklistNotifier.getChecklistById(widget.checklistId);
+
+    if (checklist == null) {
+      // Fallback to original swipe view if checklist not found
+      return GestureDetector(
+        onPanUpdate: (details) => _handleSwipe(details, sessionNotifier),
+        child: Column(
+          children: [
+            _buildProgressIndicator(session, ref),
+            Expanded(child: _buildCurrentItem(session)),
+            _buildNavigationControls(session, sessionNotifier, ref),
+          ],
+        ),
+      );
+    }
+
+    // Use view factory to build appropriate view
+    switch (checklist.viewType) {
+      case ChecklistViewType.swipe:
+        return GestureDetector(
+          onPanUpdate: (details) => _handleSwipe(details, sessionNotifier),
+          child: Column(
+            children: [
+              _buildProgressIndicator(session, ref),
+              Expanded(child: _buildCurrentItem(session)),
+              _buildNavigationControls(session, sessionNotifier, ref),
+            ],
+          ),
+        );
+      case ChecklistViewType.list:
+        return Column(
+          children: [
+            _buildProgressIndicator(session, ref),
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.list, size: 64, color: Colors.grey[400]),
+                    const SizedBox(height: 16),
+                    Text(
+                      'List View',
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Checklist: ${checklist.title}',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Items: ${checklist.items.length}',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Coming in Phase 2',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        fontStyle: FontStyle.italic,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      case ChecklistViewType.matrix:
+        return Column(
+          children: [
+            _buildProgressIndicator(session, ref),
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.grid_on, size: 64, color: Colors.grey[400]),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Matrix View',
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Checklist: ${checklist.title}',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Items: ${checklist.items.length}',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Coming in Phase 3',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        fontStyle: FontStyle.italic,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+    }
   }
 
   Widget _buildProgressIndicator(SessionState session, WidgetRef ref) {
@@ -546,39 +655,154 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   }
 
   void _showSessionMenu(BuildContext context, SessionNotifier sessionNotifier) {
+    // Get the current checklist to determine view type
+    final checklistNotifier = ref.read(checklistNotifierProvider.notifier);
+    final checklist = checklistNotifier.getChecklistById(widget.checklistId);
+
     showModalBottomSheet(
       context: context,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.refresh),
-              title: Text(tr(ref, 'restart_session')),
-              onTap: () {
-                Navigator.pop(context);
-                _restartSession(sessionNotifier);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.stop),
-              title: Text(tr(ref, 'abandon_session')),
-              onTap: () {
-                Navigator.pop(context);
-                sessionNotifier.abandonSession();
-                Navigator.of(context).pop();
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.close),
-              title: Text(tr(ref, 'close')),
-              onTap: () => Navigator.pop(context),
-            ),
-          ],
+      isScrollControlled: true,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
+        expand: false,
+        builder: (context, scrollController) => Container(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              // Handle bar
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              // View selector section
+              if (checklist != null) ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: Text(
+                    'View Options',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: ListView(
+                    controller: scrollController,
+                    children: [
+                      ...ChecklistViewType.values.map(
+                        (viewType) => ListTile(
+                          leading: Icon(_getViewIcon(viewType)),
+                          title: Text(viewType.displayName),
+                          subtitle: Text(viewType.description),
+                          trailing: checklist.viewType == viewType
+                              ? Icon(
+                                  Icons.check,
+                                  color: Theme.of(context).primaryColor,
+                                )
+                              : null,
+                          onTap: () async {
+                            Navigator.pop(context);
+                            await checklistNotifier.updateViewType(
+                              widget.checklistId,
+                              viewType,
+                            );
+                            // Force rebuild of the session screen
+                            setState(() {});
+                          },
+                        ),
+                      ),
+                      const Divider(),
+                      // Session options section
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: Text(
+                          'Session Options',
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.refresh),
+                        title: Text(tr(ref, 'restart_session')),
+                        onTap: () {
+                          Navigator.pop(context);
+                          _restartSession(sessionNotifier);
+                        },
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.stop),
+                        title: Text(tr(ref, 'abandon_session')),
+                        onTap: () {
+                          Navigator.pop(context);
+                          sessionNotifier.abandonSession();
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.close),
+                        title: Text(tr(ref, 'close')),
+                        onTap: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                ),
+              ] else ...[
+                // Fallback if no checklist found
+                Expanded(
+                  child: ListView(
+                    controller: scrollController,
+                    children: [
+                      ListTile(
+                        leading: const Icon(Icons.refresh),
+                        title: Text(tr(ref, 'restart_session')),
+                        onTap: () {
+                          Navigator.pop(context);
+                          _restartSession(sessionNotifier);
+                        },
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.stop),
+                        title: Text(tr(ref, 'abandon_session')),
+                        onTap: () {
+                          Navigator.pop(context);
+                          sessionNotifier.abandonSession();
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.close),
+                        title: Text(tr(ref, 'close')),
+                        onTap: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
         ),
       ),
     );
+  }
+
+  IconData _getViewIcon(ChecklistViewType viewType) {
+    switch (viewType.icon) {
+      case 'swipe':
+        return Icons.swipe;
+      case 'list':
+        return Icons.list;
+      case 'grid_on':
+        return Icons.grid_on;
+      default:
+        return Icons.view_list;
+    }
   }
 
   Widget _buildCompletionScreen(SessionState session, BuildContext context) {

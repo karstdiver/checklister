@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/checklist_repository.dart';
 import 'checklist.dart';
+import 'checklist_view_type.dart';
 import '../../../core/services/analytics_service.dart';
 import '../../achievements/domain/achievement_notifier.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -367,6 +368,54 @@ class ChecklistNotifier extends StateNotifier<AsyncValue<List<Checklist>>> {
 
       return true;
     } catch (error, stackTrace) {
+      state = AsyncValue.error(error, stackTrace);
+      return false;
+    }
+  }
+
+  // Update checklist view type
+  Future<bool> updateViewType(
+    String checklistId,
+    ChecklistViewType viewType,
+  ) async {
+    try {
+      // Get current checklist
+      final currentChecklist = getChecklistById(checklistId);
+      if (currentChecklist == null) {
+        print('❌ Checklist not found: $checklistId');
+        return false;
+      }
+
+      // Update the checklist with new view type
+      final updatedChecklist = currentChecklist.copyWith(
+        viewType: viewType,
+        updatedAt: DateTime.now(),
+      );
+
+      // Save to repository
+      await _repository.updateChecklist(updatedChecklist);
+
+      // Update state immediately
+      state.whenData((checklists) {
+        final updatedChecklists = checklists.map((c) {
+          if (c.id == checklistId) {
+            return updatedChecklist;
+          }
+          return c;
+        }).toList();
+        state = AsyncValue.data(updatedChecklists);
+      });
+
+      // Log analytics
+      await _analytics.logCustomEvent(
+        name: 'view_type_changed',
+        parameters: {'checklist_id': checklistId, 'view_type': viewType.name},
+      );
+
+      return true;
+    } catch (error, stackTrace) {
+      print('❌ Error updating view type: $error');
+      print(stackTrace);
       state = AsyncValue.error(error, stackTrace);
       return false;
     }
