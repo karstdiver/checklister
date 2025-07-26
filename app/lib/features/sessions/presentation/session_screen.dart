@@ -193,9 +193,10 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       );
     }
 
-    // Use view factory to build appropriate view
+    // Use view factory to build appropriate view with callbacks
     switch (checklist.viewType) {
       case ChecklistViewType.swipe:
+        // Swipe view needs special handling with gesture detector and navigation controls
         return GestureDetector(
           onPanUpdate: (details) => _handleSwipe(details, sessionNotifier),
           child: Column(
@@ -207,79 +208,54 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           ),
         );
       case ChecklistViewType.list:
-        return Column(
-          children: [
-            _buildProgressIndicator(session, ref),
-            Expanded(
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.list, size: 64, color: Colors.grey[400]),
-                    const SizedBox(height: 16),
-                    Text(
-                      'List View',
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Checklist: ${checklist.title}',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Items: ${checklist.items.length}',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Coming in Phase 2',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        fontStyle: FontStyle.italic,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        );
       case ChecklistViewType.matrix:
+        // List and Matrix views use the factory with callbacks
         return Column(
           children: [
             _buildProgressIndicator(session, ref),
             Expanded(
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.grid_on, size: 64, color: Colors.grey[400]),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Matrix View',
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Checklist: ${checklist.title}',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Items: ${checklist.items.length}',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Coming in Phase 3',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        fontStyle: FontStyle.italic,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                  ],
-                ),
+              child: ChecklistViewFactory.buildViewWithCallbacks(
+                checklist,
+                onItemTap: (item) {
+                  // Toggle item completion status using checklist notifier
+                  final checklistNotifier = ref.read(
+                    checklistNotifierProvider.notifier,
+                  );
+                  checklistNotifier.toggleItemStatus(
+                    widget.checklistId,
+                    item.id,
+                  );
+                },
+                onItemEdit: (item) {
+                  // Navigate to item edit screen
+                  final navigationNotifier = ref.read(
+                    navigationNotifierProvider.notifier,
+                  );
+                  navigationNotifier.navigateToItemEdit(
+                    params: {
+                      'checklistId': widget.checklistId,
+                      'itemId': item.id,
+                    },
+                  );
+                },
+                onItemDelete: (item) {
+                  // Delete the item
+                  final checklistNotifier = ref.read(
+                    checklistNotifierProvider.notifier,
+                  );
+                  checklistNotifier.removeItem(widget.checklistId, item.id);
+                },
+                onItemMove: (item, direction) {
+                  // Move the item up or down
+                  final checklistNotifier = ref.read(
+                    checklistNotifierProvider.notifier,
+                  );
+                  checklistNotifier.moveItem(
+                    widget.checklistId,
+                    item.id,
+                    direction,
+                  );
+                },
               ),
             ),
           ],
