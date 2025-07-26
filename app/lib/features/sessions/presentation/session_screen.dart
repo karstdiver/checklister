@@ -7,10 +7,8 @@ import '../domain/session_notifier.dart';
 import '../../../core/providers/providers.dart';
 import '../../../core/services/translation_service.dart';
 import '../../../shared/widgets/app_card.dart';
-import '../../checklists/domain/checklist_view_factory.dart';
 import '../../checklists/domain/checklist_view_type.dart';
 import '../../checklists/domain/checklist_providers.dart';
-import '../../checklists/presentation/widgets/view_selector_menu.dart';
 
 final logger = Logger();
 
@@ -41,6 +39,83 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   DateTime? _lastSwipeTime;
   static const Duration _swipeDebounceTime = Duration(milliseconds: 500);
   bool _isInitializing = true;
+
+  /// Build a custom session list view that works with session items
+  Widget _buildSessionListView(SessionState session, WidgetRef ref) {
+    if (session.items.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.checklist_outlined, size: 64, color: Colors.grey),
+            const SizedBox(height: 16),
+            Text(
+              TranslationService.translate('no_items_in_checklist'),
+              style: const TextStyle(fontSize: 18, color: Colors.grey),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: session.items.length,
+      itemBuilder: (context, index) {
+        final item = session.items[index];
+        final isCompleted = item.status == ItemStatus.completed;
+
+        return Card(
+          elevation: 2,
+          margin: const EdgeInsets.only(bottom: 8),
+          child: InkWell(
+            onTap: () {
+              // Toggle item completion status using session notifier
+              final sessionNotifier = ref.read(
+                sessionNotifierProvider.notifier,
+              );
+              sessionNotifier.toggleItemStatus(item.id);
+            },
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  // Checkbox
+                  Checkbox(
+                    value: isCompleted,
+                    onChanged: (value) {
+                      // Toggle item completion status using session notifier
+                      final sessionNotifier = ref.read(
+                        sessionNotifierProvider.notifier,
+                      );
+                      sessionNotifier.toggleItemStatus(item.id);
+                    },
+                    activeColor: Theme.of(context).primaryColor,
+                  ),
+                  const SizedBox(width: 12),
+
+                  // Item text
+                  Expanded(
+                    child: Text(
+                      item.text,
+                      style: TextStyle(
+                        fontSize: 16,
+                        decoration: isCompleted
+                            ? TextDecoration.lineThrough
+                            : null,
+                        color: isCompleted ? Colors.grey[600] : null,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   @override
   void initState() {
@@ -130,8 +205,6 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     print('DEBUG: SessionScreen build - session state: $session');
     final sessionNotifier = ref.read(sessionNotifierProvider.notifier);
     final currentUser = ref.watch(currentUserProvider);
-    // Watch checklist changes to rebuild when view type changes
-    final checklists = ref.watch(checklistNotifierProvider);
 
     if (currentUser == null) {
       return const Scaffold(
@@ -211,55 +284,11 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         );
       case ChecklistViewType.list:
       case ChecklistViewType.matrix:
-        // List and Matrix views use the factory with callbacks
+        // List and Matrix views - create a custom session list view
         return Column(
           children: [
             _buildProgressIndicator(session, ref),
-            Expanded(
-              child: ChecklistViewFactory.buildViewWithCallbacks(
-                checklist,
-                onItemTap: (item) {
-                  // Toggle item completion status using checklist notifier
-                  final checklistNotifier = ref.read(
-                    checklistNotifierProvider.notifier,
-                  );
-                  checklistNotifier.toggleItemStatus(
-                    widget.checklistId,
-                    item.id,
-                  );
-                },
-                onItemEdit: (item) {
-                  // Navigate to item edit screen
-                  final navigationNotifier = ref.read(
-                    navigationNotifierProvider.notifier,
-                  );
-                  navigationNotifier.navigateToItemEdit(
-                    params: {
-                      'checklistId': widget.checklistId,
-                      'itemId': item.id,
-                    },
-                  );
-                },
-                onItemDelete: (item) {
-                  // Delete the item
-                  final checklistNotifier = ref.read(
-                    checklistNotifierProvider.notifier,
-                  );
-                  checklistNotifier.removeItem(widget.checklistId, item.id);
-                },
-                onItemMove: (item, direction) {
-                  // Move the item up or down
-                  final checklistNotifier = ref.read(
-                    checklistNotifierProvider.notifier,
-                  );
-                  checklistNotifier.moveItem(
-                    widget.checklistId,
-                    item.id,
-                    direction,
-                  );
-                },
-              ),
-            ),
+            Expanded(child: _buildSessionListView(session, ref)),
           ],
         );
     }

@@ -553,6 +553,55 @@ class SessionNotifier extends StateNotifier<SessionState?> {
     }
   }
 
+  /// Update the status of a specific item in the session
+  Future<void> _updateItemStatus(int itemIndex, ItemStatus newStatus) async {
+    if (state == null || itemIndex < 0 || itemIndex >= state!.items.length)
+      return;
+
+    final updatedItems = List<ChecklistItem>.from(state!.items);
+    final item = updatedItems[itemIndex];
+
+    updatedItems[itemIndex] = item.copyWith(
+      status: newStatus,
+      completedAt: newStatus == ItemStatus.completed ? DateTime.now() : null,
+      skippedAt: newStatus == ItemStatus.skipped ? DateTime.now() : null,
+    );
+
+    final newState = state!.copyWith(items: updatedItems);
+    state = newState;
+
+    // Save to database
+    try {
+      await _repository.saveSession(newState);
+      logger.i(
+        '💾 Updated item status saved to database: ${item.id} -> ${newStatus.name}',
+      );
+    } catch (e) {
+      logger.e('💾 Failed to save updated item status: $e');
+    }
+  }
+
+  /// Toggle the completion status of a specific item by ID
+  Future<void> toggleItemStatus(String itemId) async {
+    if (state == null) return;
+
+    final itemIndex = state!.items.indexWhere((item) => item.id == itemId);
+    if (itemIndex == -1) {
+      logger.w('Item not found: $itemId');
+      return;
+    }
+
+    final currentItem = state!.items[itemIndex];
+    final newStatus = currentItem.status == ItemStatus.completed
+        ? ItemStatus.pending
+        : ItemStatus.completed;
+
+    logger.i(
+      '🔄 Toggling item status: ${currentItem.text} -> ${newStatus.name}',
+    );
+    await _updateItemStatus(itemIndex, newStatus);
+  }
+
   // TODO: Tech Debt - Implement automatic session cleanup and analytics
   //
   // Current Issue: Sessions accumulate indefinitely in Firestore without cleanup,
