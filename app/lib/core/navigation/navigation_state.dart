@@ -3,6 +3,7 @@ enum NavigationRoute {
   login,
   home,
   checklist,
+  itemEdit,
   about,
   help,
   settings,
@@ -39,6 +40,8 @@ class NavigationState {
         return '/home';
       case NavigationRoute.checklist:
         return '/checklist';
+      case NavigationRoute.itemEdit:
+        return '/item-edit';
       case NavigationRoute.about:
         return '/about';
       case NavigationRoute.help:

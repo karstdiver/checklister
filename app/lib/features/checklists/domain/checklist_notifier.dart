@@ -287,6 +287,76 @@ class ChecklistNotifier extends StateNotifier<AsyncValue<List<Checklist>>> {
     }
   }
 
+  // Toggle item completion status
+  Future<bool> toggleItemStatus(String checklistId, String itemId) async {
+    try {
+      final checklist = getChecklistById(checklistId);
+      if (checklist == null) return false;
+
+      final itemIndex = checklist.items.indexWhere((item) => item.id == itemId);
+      if (itemIndex == -1) return false;
+
+      final item = checklist.items[itemIndex];
+      final newStatus = item.status == ItemStatus.completed
+          ? ItemStatus.pending
+          : ItemStatus.completed;
+
+      final updatedItem = item.copyWith(
+        status: newStatus,
+        completedAt: newStatus == ItemStatus.completed ? DateTime.now() : null,
+      );
+
+      await updateItem(checklistId, updatedItem);
+      return true;
+    } catch (error, stackTrace) {
+      print('❌ Error toggling item status: $error');
+      print(stackTrace);
+      state = AsyncValue.error(error, stackTrace);
+      return false;
+    }
+  }
+
+  // Delete item (alias for removeItem)
+  Future<bool> deleteItem(String checklistId, String itemId) async {
+    return removeItem(checklistId, itemId);
+  }
+
+  // Move item up or down in the list
+  Future<bool> moveItem(
+    String checklistId,
+    String itemId,
+    int direction,
+  ) async {
+    try {
+      final checklist = getChecklistById(checklistId);
+      if (checklist == null) return false;
+
+      final itemIndex = checklist.items.indexWhere((item) => item.id == itemId);
+      if (itemIndex == -1) return false;
+
+      final newIndex = itemIndex + direction;
+      if (newIndex < 0 || newIndex >= checklist.items.length) return false;
+
+      final items = List<ChecklistItem>.from(checklist.items);
+      final item = items.removeAt(itemIndex);
+      items.insert(newIndex, item);
+
+      // Update order field for all items
+      final updatedItems = items.asMap().entries.map((entry) {
+        return entry.value.copyWith(order: entry.key);
+      }).toList();
+
+      final updatedChecklist = checklist.copyWith(items: updatedItems);
+      await updateChecklist(updatedChecklist);
+      return true;
+    } catch (error, stackTrace) {
+      print('❌ Error moving item: $error');
+      print(stackTrace);
+      state = AsyncValue.error(error, stackTrace);
+      return false;
+    }
+  }
+
   // Reorder items in a checklist
   Future<bool> reorderItems(String checklistId, List<String> itemIds) async {
     try {

@@ -47,7 +47,27 @@ class ChecklistScreen extends ConsumerWidget {
         ],
       ),
       body: checklist != null
-          ? ChecklistViewFactory.buildView(checklist!)
+          ? ChecklistViewFactory.buildViewWithCallbacks(
+              checklist!,
+              onItemTap: (item) {
+                // Toggle item completion status
+                checklistNotifier.toggleItemStatus(checklistId, item.id);
+              },
+              onItemEdit: (item) {
+                // Navigate to item edit screen
+                navigationNotifier.navigateToItemEdit(
+                  params: {'checklistId': checklistId, 'itemId': item.id},
+                );
+              },
+              onItemDelete: (item) {
+                // Delete the item
+                checklistNotifier.deleteItem(checklistId, item.id);
+              },
+              onItemMove: (item, direction) {
+                // Move item up or down
+                checklistNotifier.moveItem(checklistId, item.id, direction);
+              },
+            )
           : const Center(child: CircularProgressIndicator()),
     );
   }

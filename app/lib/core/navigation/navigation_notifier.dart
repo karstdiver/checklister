@@ -13,6 +13,8 @@ class NavigationNotifier extends StateNotifier<NavigationState> {
   void navigateToHome() => navigateTo(NavigationRoute.home);
   void navigateToChecklist({Map<String, dynamic>? params}) =>
       navigateTo(NavigationRoute.checklist, params: params);
+  void navigateToItemEdit({Map<String, dynamic>? params}) =>
+      navigateTo(NavigationRoute.itemEdit, params: params);
   void navigateToAbout() => navigateTo(NavigationRoute.about);
   void navigateToHelp() => navigateTo(NavigationRoute.help);
   void navigateToSettings() => navigateTo(NavigationRoute.settings);
@@ -28,6 +30,7 @@ class NavigationNotifier extends StateNotifier<NavigationState> {
         navigateToSplash();
         break;
       case NavigationRoute.checklist:
+      case NavigationRoute.itemEdit:
         navigateToHome();
         break;
       case NavigationRoute.about:
