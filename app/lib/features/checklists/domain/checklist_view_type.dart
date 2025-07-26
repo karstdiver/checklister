@@ -1,14 +1,16 @@
+import '../../../core/services/translation_service.dart';
+
 enum ChecklistViewType { swipe, list, matrix }
 
 extension ChecklistViewTypeExtension on ChecklistViewType {
   String get displayName {
     switch (this) {
       case ChecklistViewType.swipe:
-        return 'Swipe';
+        return TranslationService.translate('swipe_view');
       case ChecklistViewType.list:
-        return 'List';
+        return TranslationService.translate('list_view');
       case ChecklistViewType.matrix:
-        return 'Matrix';
+        return TranslationService.translate('matrix_view');
     }
   }
 
@@ -26,11 +28,11 @@ extension ChecklistViewTypeExtension on ChecklistViewType {
   String get description {
     switch (this) {
       case ChecklistViewType.swipe:
-        return 'One item per screen, swipe to advance';
+        return TranslationService.translate('swipe_view_description');
       case ChecklistViewType.list:
-        return 'All items in a scrollable list';
+        return TranslationService.translate('list_view_description');
       case ChecklistViewType.matrix:
-        return 'Grid layout for visual overview';
+        return TranslationService.translate('matrix_view_description');
     }
   }
 }

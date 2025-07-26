@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'checklist.dart';
 import 'checklist_view_type.dart';
 import '../presentation/views/list_view_widget.dart';
+import '../../../core/services/translation_service.dart';
 
 /// Factory class for creating different checklist view widgets
 class ChecklistViewFactory {
@@ -83,15 +84,20 @@ class SwipeViewWidget extends StatelessWidget {
         children: [
           Icon(Icons.swipe, size: 64, color: Colors.grey[400]),
           const SizedBox(height: 16),
-          Text('Swipe View', style: Theme.of(context).textTheme.headlineSmall),
+          Text(
+            TranslationService.translate('swipe_view_title'),
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
           const SizedBox(height: 8),
           Text(
-            'Checklist: ${checklist.title}',
+            TranslationService.translate('checklist_label', [checklist.title]),
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 16),
           Text(
-            'Items: ${checklist.items.length}',
+            TranslationService.translate('items_label', [
+              checklist.items.length.toString(),
+            ]),
             style: Theme.of(context).textTheme.bodySmall,
           ),
         ],
@@ -115,20 +121,25 @@ class MatrixViewWidget extends StatelessWidget {
         children: [
           Icon(Icons.grid_on, size: 64, color: Colors.grey[400]),
           const SizedBox(height: 16),
-          Text('Matrix View', style: Theme.of(context).textTheme.headlineSmall),
+          Text(
+            TranslationService.translate('matrix_view_title'),
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
           const SizedBox(height: 8),
           Text(
-            'Checklist: ${checklist.title}',
+            TranslationService.translate('checklist_label', [checklist.title]),
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 16),
           Text(
-            'Items: ${checklist.items.length}',
+            TranslationService.translate('items_label', [
+              checklist.items.length.toString(),
+            ]),
             style: Theme.of(context).textTheme.bodySmall,
           ),
           const SizedBox(height: 16),
           Text(
-            'Coming in Phase 3',
+            TranslationService.translate('coming_in_phase_3'),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               fontStyle: FontStyle.italic,
               color: Colors.grey[600],

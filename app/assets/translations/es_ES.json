@@ -430,5 +430,22 @@
   "read": "Leer",
   "accept_terms_of_service": "Acepto los Términos de Servicio",
   "accept_and_continue": "Aceptar y Continuar",
-  "future_feature_coming_soon": "Función futura: Esto estará disponible en una actualización futura."
+  "future_feature_coming_soon": "Función futura: Esto estará disponible en una actualización futura.",
+  "view_options": "Opciones de Vista",
+  "session_options": "Opciones de Sesión",
+  "swipe_view": "Deslizar",
+  "list_view": "Lista",
+  "matrix_view": "Matriz",
+  "swipe_view_description": "Un elemento por pantalla, desliza para avanzar",
+  "list_view_description": "Todos los elementos en una lista desplazable",
+  "matrix_view_description": "Diseño de cuadrícula para vista general visual",
+  "swipe_view_title": "Vista de Deslizamiento",
+  "matrix_view_title": "Vista de Matriz",
+  "checklist_label": "Lista: {}",
+  "items_label": "Elementos: {}",
+  "coming_in_phase_3": "Próximamente en Fase 3",
+  "move_up": "Mover Arriba",
+  "move_down": "Mover Abajo",
+  "delete_item": "Eliminar Elemento",
+  "delete_item_confirmation": "¿Estás seguro de que quieres eliminar \"{}\"?"
 }

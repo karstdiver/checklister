@@ -152,7 +152,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       builder: (context, ref, child) {
         return Scaffold(
           appBar: AppBar(
-            title: Text(widget.checklistTitle ?? tr(ref, 'session')),
+            title: Text(
+              widget.checklistTitle ?? TranslationService.translate('session'),
+            ),
             leading: IconButton(
               onPressed: () => Navigator.of(context).pop(),
               icon: const Icon(Icons.arrow_back),
@@ -275,7 +277,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            tr(ref, 'progress', [
+            TranslationService.translate('progress', [
               session.completedItems.toString(),
               session.totalItems.toString(),
             ]),
@@ -288,17 +290,17 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
             alignment: WrapAlignment.spaceEvenly,
             children: [
               _buildStatChip(
-                tr(ref, 'completed'),
+                TranslationService.translate('completed'),
                 session.completedItems,
                 Colors.green,
               ),
               _buildStatChip(
-                tr(ref, 'skipped'),
+                TranslationService.translate('skipped'),
                 session.skippedItems,
                 Colors.orange,
               ),
               _buildStatChip(
-                tr(ref, 'remaining'),
+                TranslationService.translate('remaining'),
                 session.totalItems -
                     session.completedItems -
                     session.skippedItems,
@@ -411,7 +413,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       child: Column(
         children: [
           Text(
-            tr(ref, 'swipe_instructions'),
+            TranslationService.translate('swipe_instructions'),
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w500,
@@ -425,10 +427,26 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
             runSpacing: 8,
             alignment: WrapAlignment.spaceEvenly,
             children: [
-              _buildSwipeInstruction('←', tr(ref, 'complete'), Colors.green),
-              _buildSwipeInstruction('→', tr(ref, 'review'), Colors.blue),
-              _buildSwipeInstruction('↑', tr(ref, 'skip'), Colors.orange),
-              _buildSwipeInstruction('↓', tr(ref, 'pause'), Colors.red),
+              _buildSwipeInstruction(
+                '←',
+                TranslationService.translate('complete'),
+                Colors.green,
+              ),
+              _buildSwipeInstruction(
+                '→',
+                TranslationService.translate('review'),
+                Colors.blue,
+              ),
+              _buildSwipeInstruction(
+                '↑',
+                TranslationService.translate('skip'),
+                Colors.orange,
+              ),
+              _buildSwipeInstruction(
+                '↓',
+                TranslationService.translate('pause'),
+                Colors.red,
+              ),
             ],
           ),
         ],
@@ -484,7 +502,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                     ? () => sessionNotifier.handleSwipeRight()
                     : null,
                 icon: const Icon(Icons.arrow_back),
-                label: Text(tr(ref, 'previous')),
+                label: Text(TranslationService.translate('previous')),
               ),
             ),
           ),
@@ -503,7 +521,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                 },
                 icon: Icon(session.isPaused ? Icons.play_arrow : Icons.pause),
                 label: Text(
-                  session.isPaused ? tr(ref, 'resume') : tr(ref, 'pause'),
+                  session.isPaused
+                      ? TranslationService.translate('resume')
+                      : TranslationService.translate('pause'),
                 ),
               ),
             ),
@@ -520,7 +540,11 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                 icon: isLastItem
                     ? const Icon(Icons.check)
                     : const Icon(Icons.arrow_forward),
-                label: Text(isLastItem ? tr(ref, 'finish') : tr(ref, 'next')),
+                label: Text(
+                  isLastItem
+                      ? TranslationService.translate('finish')
+                      : TranslationService.translate('next'),
+                ),
               ),
             ),
           ),
@@ -662,7 +686,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8.0),
                   child: Text(
-                    'View Options',
+                    TranslationService.translate('view_options'),
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -699,14 +723,16 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8.0),
                         child: Text(
-                          'Session Options',
+                          TranslationService.translate('session_options'),
                           style: Theme.of(context).textTheme.titleMedium
                               ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                       ),
                       ListTile(
                         leading: const Icon(Icons.refresh),
-                        title: Text(tr(ref, 'restart_session')),
+                        title: Text(
+                          TranslationService.translate('restart_session'),
+                        ),
                         onTap: () {
                           Navigator.pop(context);
                           _restartSession(sessionNotifier);
@@ -714,7 +740,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                       ),
                       ListTile(
                         leading: const Icon(Icons.stop),
-                        title: Text(tr(ref, 'abandon_session')),
+                        title: Text(
+                          TranslationService.translate('abandon_session'),
+                        ),
                         onTap: () {
                           Navigator.pop(context);
                           sessionNotifier.abandonSession();
@@ -723,7 +751,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                       ),
                       ListTile(
                         leading: const Icon(Icons.close),
-                        title: Text(tr(ref, 'close')),
+                        title: Text(TranslationService.translate('close')),
                         onTap: () => Navigator.pop(context),
                       ),
                     ],
@@ -737,7 +765,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                     children: [
                       ListTile(
                         leading: const Icon(Icons.refresh),
-                        title: Text(tr(ref, 'restart_session')),
+                        title: Text(
+                          TranslationService.translate('restart_session'),
+                        ),
                         onTap: () {
                           Navigator.pop(context);
                           _restartSession(sessionNotifier);
@@ -745,7 +775,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                       ),
                       ListTile(
                         leading: const Icon(Icons.stop),
-                        title: Text(tr(ref, 'abandon_session')),
+                        title: Text(
+                          TranslationService.translate('abandon_session'),
+                        ),
                         onTap: () {
                           Navigator.pop(context);
                           sessionNotifier.abandonSession();
@@ -754,7 +786,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                       ),
                       ListTile(
                         leading: const Icon(Icons.close),
-                        title: Text(tr(ref, 'close')),
+                        title: Text(TranslationService.translate('close')),
                         onTap: () => Navigator.pop(context),
                       ),
                     ],
@@ -788,13 +820,18 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         print(
           'DEBUG: CompletionScreen - totalDuration = ${session.totalDuration}, formatted = $durationStr',
         );
-        final totalDurationText = tr(ref, 'total_duration', [durationStr]);
+        final totalDurationText = TranslationService.translate(
+          'total_duration',
+          [durationStr],
+        );
         print(
           'DEBUG: CompletionScreen - tr(ref, total_duration, [durationStr]) = $totalDurationText',
         );
         return Scaffold(
           appBar: AppBar(
-            title: Text(widget.checklistTitle ?? tr(ref, 'session')),
+            title: Text(
+              widget.checklistTitle ?? TranslationService.translate('session'),
+            ),
             leading: IconButton(
               onPressed: () => Navigator.of(context).pop(),
               icon: const Icon(Icons.arrow_back),
@@ -824,7 +861,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
                 // Completion message
                 Text(
-                  tr(ref, 'session_completed'),
+                  TranslationService.translate('session_completed'),
                   style: const TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -835,7 +872,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                 const SizedBox(height: 16),
 
                 Text(
-                  tr(ref, 'session_completed_message'),
+                  TranslationService.translate('session_completed_message'),
                   style: const TextStyle(fontSize: 16, color: Colors.grey),
                   textAlign: TextAlign.center,
                 ),
@@ -848,7 +885,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                     child: Column(
                       children: [
                         Text(
-                          tr(ref, 'session_summary'),
+                          TranslationService.translate('session_summary'),
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -859,12 +896,12 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
                             _buildStatChip(
-                              tr(ref, 'completed'),
+                              TranslationService.translate('completed'),
                               session.completedItems,
                               Colors.green,
                             ),
                             _buildStatChip(
-                              tr(ref, 'skipped'),
+                              TranslationService.translate('skipped'),
                               session.skippedItems,
                               Colors.orange,
                             ),
@@ -897,7 +934,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                           _restartSession(sessionNotifier);
                         },
                         icon: const Icon(Icons.refresh),
-                        label: Text(tr(ref, 'restart_session')),
+                        label: Text(
+                          TranslationService.translate('restart_session'),
+                        ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blue,
                           foregroundColor: Colors.white,
@@ -916,7 +955,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                           Navigator.of(context).pop();
                         },
                         icon: const Icon(Icons.home),
-                        label: Text(tr(ref, 'back_to_home')),
+                        label: Text(
+                          TranslationService.translate('back_to_home'),
+                        ),
                       ),
                     ),
                   ],

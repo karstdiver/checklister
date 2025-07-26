@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:checklister/features/checklists/domain/checklist.dart';
 import 'package:checklister/features/checklists/presentation/widgets/checklist_item_row.dart';
+import '../../../../core/services/translation_service.dart';
 
 class ListViewWidget extends ConsumerStatefulWidget {
   final Checklist checklist;
@@ -29,20 +30,20 @@ class _ListViewWidgetState extends ConsumerState<ListViewWidget> {
     final items = widget.checklist.items;
 
     if (items.isEmpty) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.checklist_outlined, size: 64, color: Colors.grey),
-            SizedBox(height: 16),
+            const Icon(Icons.checklist_outlined, size: 64, color: Colors.grey),
+            const SizedBox(height: 16),
             Text(
-              'No items in this checklist',
-              style: TextStyle(fontSize: 18, color: Colors.grey),
+              TranslationService.translate('no_items_in_checklist'),
+              style: const TextStyle(fontSize: 18, color: Colors.grey),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(
-              'Add some items to get started',
-              style: TextStyle(fontSize: 14, color: Colors.grey),
+              TranslationService.translate('add_items_to_get_started'),
+              style: const TextStyle(fontSize: 14, color: Colors.grey),
             ),
           ],
         ),

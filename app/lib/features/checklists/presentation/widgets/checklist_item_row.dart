@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:checklister/features/checklists/domain/checklist.dart';
+import '../../../../core/services/translation_service.dart';
 
 class ChecklistItemRow extends StatelessWidget {
   final ChecklistItem item;
@@ -73,45 +74,48 @@ class ChecklistItemRow extends StatelessWidget {
                   }
                 },
                 itemBuilder: (context) => [
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'edit',
                     child: Row(
                       children: [
-                        Icon(Icons.edit, size: 20),
-                        SizedBox(width: 8),
-                        Text('Edit'),
+                        const Icon(Icons.edit, size: 20),
+                        const SizedBox(width: 8),
+                        Text(TranslationService.translate('edit')),
                       ],
                     ),
                   ),
                   if (onMoveUp != null)
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: 'move_up',
                       child: Row(
                         children: [
-                          Icon(Icons.keyboard_arrow_up, size: 20),
-                          SizedBox(width: 8),
-                          Text('Move Up'),
+                          const Icon(Icons.keyboard_arrow_up, size: 20),
+                          const SizedBox(width: 8),
+                          Text(TranslationService.translate('move_up')),
                         ],
                       ),
                     ),
                   if (onMoveDown != null)
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: 'move_down',
                       child: Row(
                         children: [
-                          Icon(Icons.keyboard_arrow_down, size: 20),
-                          SizedBox(width: 8),
-                          Text('Move Down'),
+                          const Icon(Icons.keyboard_arrow_down, size: 20),
+                          const SizedBox(width: 8),
+                          Text(TranslationService.translate('move_down')),
                         ],
                       ),
                     ),
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'delete',
                     child: Row(
                       children: [
-                        Icon(Icons.delete, size: 20, color: Colors.red),
-                        SizedBox(width: 8),
-                        Text('Delete', style: TextStyle(color: Colors.red)),
+                        const Icon(Icons.delete, size: 20, color: Colors.red),
+                        const SizedBox(width: 8),
+                        Text(
+                          TranslationService.translate('delete'),
+                          style: const TextStyle(color: Colors.red),
+                        ),
                       ],
                     ),
                   ),
@@ -128,12 +132,14 @@ class ChecklistItemRow extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Item'),
-        content: Text('Are you sure you want to delete "${item.text}"?'),
+        title: Text(TranslationService.translate('delete_item')),
+        content: Text(
+          TranslationService.translate('delete_item_confirmation', [item.text]),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+            child: Text(TranslationService.translate('cancel')),
           ),
           TextButton(
             onPressed: () {
@@ -141,7 +147,7 @@ class ChecklistItemRow extends StatelessWidget {
               onDelete();
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
+            child: Text(TranslationService.translate('delete')),
           ),
         ],
       ),
