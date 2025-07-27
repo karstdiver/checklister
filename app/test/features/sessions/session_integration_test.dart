@@ -229,6 +229,8 @@ void main() {
         totalDuration: Duration.zero,
         activeDuration: Duration.zero,
         metadata: {},
+        createdAt: DateTime.now(),
+        lastActiveAt: DateTime.now(),
       );
 
       expect(emptySession.totalItems, 0);
@@ -247,6 +249,8 @@ void main() {
         totalDuration: Duration.zero,
         activeDuration: Duration.zero,
         metadata: {},
+        createdAt: DateTime.now(),
+        lastActiveAt: DateTime.now(),
       );
 
       expect(outOfBoundsSession.currentItem, null);
@@ -283,6 +287,8 @@ void main() {
         totalDuration: Duration.zero,
         activeDuration: Duration.zero,
         metadata: {},
+        createdAt: DateTime.now(),
+        lastActiveAt: DateTime.now(),
       );
 
       // Verify the session has progress
@@ -322,6 +328,8 @@ void main() {
         totalDuration: Duration.zero,
         activeDuration: Duration.zero,
         metadata: {},
+        createdAt: DateTime.now(),
+        lastActiveAt: DateTime.now(),
       );
 
       // Verify the restarted session is reset
