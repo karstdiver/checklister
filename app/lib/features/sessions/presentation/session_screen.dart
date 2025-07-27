@@ -315,6 +315,27 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                     }
                   }
                 },
+                onItemAdd: (newItem) async {
+                  // Convert checklist domain item to session item
+                  final sessionItem = ChecklistItem(
+                    id: newItem.id,
+                    text: newItem.text,
+                    imageUrl: newItem.imageUrl,
+                    status: _convertChecklistItemStatus(newItem.status),
+                    notes: newItem.notes,
+                    completedAt: newItem.completedAt,
+                    skippedAt: newItem.skippedAt,
+                  );
+
+                  // Add the new item to the session
+                  await sessionNotifier.addItemToSession(sessionItem);
+                  logger.i('➕ Added new item to session: ${newItem.text}');
+
+                  // Force a rebuild of the UI to ensure changes are visible
+                  if (mounted) {
+                    setState(() {});
+                  }
+                },
               ),
             ),
           ],

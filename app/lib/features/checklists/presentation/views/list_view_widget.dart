@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:checklister/features/checklists/domain/checklist.dart';
 import 'package:checklister/features/checklists/presentation/widgets/checklist_item_row.dart';
+import 'package:checklister/features/checklists/presentation/widgets/add_item_row.dart';
 import '../../../../core/services/translation_service.dart';
 import '../../../items/presentation/item_edit_screen.dart';
 import '../../domain/checklist_providers.dart';
@@ -12,6 +13,7 @@ class ListViewWidget extends ConsumerStatefulWidget {
   final Function(ChecklistItem) onItemEdit;
   final Function(ChecklistItem) onItemDelete;
   final Function(ChecklistItem, int) onItemMove;
+  final Function(ChecklistItem)? onItemAdd;
 
   const ListViewWidget({
     super.key,
@@ -20,6 +22,7 @@ class ListViewWidget extends ConsumerStatefulWidget {
     required this.onItemEdit,
     required this.onItemDelete,
     required this.onItemMove,
+    this.onItemAdd,
   });
 
   @override
@@ -54,8 +57,18 @@ class _ListViewWidgetState extends ConsumerState<ListViewWidget> {
 
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: items.length,
+      itemCount:
+          items.length +
+          (widget.onItemAdd != null ? 1 : 0), // Add 1 for the "add item" row
       itemBuilder: (context, index) {
+        // Check if this is the "add item" row
+        if (widget.onItemAdd != null && index == items.length) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: AddItemRow(onTap: () => _handleAddItem()),
+          );
+        }
+
         final item = items[index];
         final isFirst = index == 0;
         final isLast = index == items.length - 1;
@@ -97,6 +110,22 @@ class _ListViewWidgetState extends ConsumerState<ListViewWidget> {
               // Call the onItemEdit callback to notify parent (session screen) to refresh
               widget.onItemEdit(updatedItem);
             }
+
+            // The navigation will pop back to the list view automatically
+          },
+        ),
+      ),
+    );
+  }
+
+  void _handleAddItem() {
+    // Navigate to ItemEditScreen for adding new item
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => ItemEditScreen(
+          onSave: (newItem) async {
+            // Call the onItemAdd callback to notify parent (session screen) to add the item
+            widget.onItemAdd?.call(newItem);
 
             // The navigation will pop back to the list view automatically
           },

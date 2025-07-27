@@ -602,6 +602,29 @@ class SessionNotifier extends StateNotifier<SessionState?> {
     await _updateItemStatus(itemIndex, newStatus);
   }
 
+  /// Add a new item to the session
+  Future<void> addItemToSession(ChecklistItem newItem) async {
+    if (state == null) return;
+
+    logger.i('➕ Adding new item to session: ${newItem.text}');
+
+    // Create a new list with the new item added
+    final updatedItems = List<ChecklistItem>.from(state!.items);
+    updatedItems.add(newItem);
+
+    // Update the session state
+    final updatedSession = state!.copyWith(items: updatedItems);
+    state = updatedSession;
+
+    // Save to database
+    try {
+      await _repository.saveSession(updatedSession);
+      logger.i('💾 Added item to session and saved to database');
+    } catch (e) {
+      logger.e('💾 Failed to save session after adding item: $e');
+    }
+  }
+
   // TODO: Tech Debt - Implement automatic session cleanup and analytics
   //
   // Current Issue: Sessions accumulate indefinitely in Firestore without cleanup,
