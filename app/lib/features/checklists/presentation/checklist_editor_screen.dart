@@ -543,8 +543,8 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
     // Check if checklist has zero items and show dialog if needed
     if (_items.isEmpty) {
       final result = await _showZeroItemsDialog();
-      if (result == null) {
-        return; // User cancelled
+      if (result == null || result == 'cancel') {
+        return; // User cancelled or dismissed dialog
       } else if (result == 'add_item') {
         // Navigate to add item screen
         await _navigateToAddItem();
