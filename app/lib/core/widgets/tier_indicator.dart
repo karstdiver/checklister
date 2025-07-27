@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../domain/user_tier.dart';
 import '../services/translation_service.dart';
+import '../providers/privilege_provider.dart';
+import '../../features/settings/presentation/upgrade_screen.dart';
+import '../../features/auth/presentation/login_screen.dart';
 
-class TierIndicator extends StatelessWidget {
+class TierIndicator extends ConsumerWidget {
   final UserTier tier;
   final double fontSize;
   final double iconSize;
@@ -18,30 +21,60 @@ class TierIndicator extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding:
-          padding ?? const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: _getTierColor(tier),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(_getTierIcon(tier), color: Colors.white, size: iconSize),
-          const SizedBox(width: 6),
-          Text(
-            getTierDisplayName(tier),
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: fontSize,
-              fontWeight: FontWeight.bold,
+  Widget build(BuildContext context, WidgetRef ref) {
+    return InkWell(
+      onTap: () => _handleTierTap(context, ref),
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding:
+            padding ?? const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: _getTierColor(tier),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(_getTierIcon(tier), color: Colors.white, size: iconSize),
+            const SizedBox(width: 6),
+            Text(
+              getTierDisplayName(tier),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: fontSize,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
+  }
+
+  void _handleTierTap(BuildContext context, WidgetRef ref) {
+    final privileges = ref.read(privilegeProvider);
+    final isAnonymous = privileges?.isAnonymous ?? true;
+    final isMaxTier = tier == UserTier.pro;
+
+    // Don't navigate if user is already at max tier
+    if (isMaxTier) {
+      return;
+    }
+
+    // Navigate based on user tier
+    if (isAnonymous) {
+      // Anonymous users go to signup
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => const LoginScreen(initialSignUpMode: true),
+        ),
+      );
+    } else {
+      // Authenticated users go to upgrade screen
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (context) => const UpgradeScreen()));
+    }
   }
 
   static Color _getTierColor(UserTier tier) {
