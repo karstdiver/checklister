@@ -6,6 +6,7 @@ import '../../../core/providers/settings_provider.dart';
 import 'dart:io' show Platform;
 import 'package:flutter/cupertino.dart';
 import '../../../core/services/translation_service.dart';
+import 'ttl_management_screen.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -129,6 +130,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       trailing: const Icon(Icons.arrow_forward_ios),
                       onTap: () {
                         Navigator.pushNamed(context, '/language');
+                      },
+                    ),
+                    const Divider(height: 1),
+                    ListTile(
+                      leading: const Icon(Icons.timer),
+                      title: Text(
+                        TranslationService.translate('ttl_management'),
+                      ),
+                      trailing: const Icon(Icons.arrow_forward_ios),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const TTLManagementScreen(),
+                          ),
+                        );
                       },
                     ),
                   ],
