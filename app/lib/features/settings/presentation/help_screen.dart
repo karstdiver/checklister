@@ -81,6 +81,26 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
           question: TranslationService.translate('faq_offline_use_question'),
           answer: TranslationService.translate('faq_offline_use_answer'),
         ),
+        FAQItem(
+          id: 8,
+          question: TranslationService.translate('faq_multiple_views_question'),
+          answer: TranslationService.translate('faq_multiple_views_answer'),
+        ),
+        FAQItem(
+          id: 9,
+          question: TranslationService.translate('faq_switch_views_question'),
+          answer: TranslationService.translate('faq_switch_views_answer'),
+        ),
+        FAQItem(
+          id: 10,
+          question: TranslationService.translate('faq_list_view_question'),
+          answer: TranslationService.translate('faq_list_view_answer'),
+        ),
+        FAQItem(
+          id: 11,
+          question: TranslationService.translate('faq_swipe_view_question'),
+          answer: TranslationService.translate('faq_swipe_view_answer'),
+        ),
       ];
       print('[DEBUG] FAQ list length: \'${_faqItems.length}\'');
       for (var i = 0; i < _faqItems.length; i++) {
@@ -286,6 +306,14 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
                     title: TranslationService.translate('tip_language'),
                     description: TranslationService.translate(
                       'tip_language_desc',
+                    ),
+                  ),
+                  const Divider(height: 1),
+                  _buildTipTile(
+                    icon: Icons.view_list,
+                    title: TranslationService.translate('tip_multiple_views'),
+                    description: TranslationService.translate(
+                      'tip_multiple_views_desc',
                     ),
                   ),
                 ],
