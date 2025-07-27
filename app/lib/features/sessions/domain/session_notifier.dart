@@ -5,6 +5,7 @@ import '../data/session_repository.dart';
 import '../../../core/services/analytics_service.dart';
 import '../../../core/constants/ttl_config.dart';
 import '../../../core/domain/user_tier.dart';
+import '../../../core/services/ttl_cleanup_service.dart';
 import '../../achievements/domain/achievement_notifier.dart';
 
 final logger = Logger();
@@ -671,6 +672,33 @@ class SessionNotifier extends StateNotifier<SessionState?> {
   bool shouldShowExpirationWarning(UserTier userTier) {
     if (state == null) return false;
     return TTLConfig.shouldShowExpirationWarning(state!.expiresAt, userTier);
+  }
+
+  /// Clean up expired sessions for a specific user tier
+  Future<int> cleanupExpiredSessions(UserTier userTier) async {
+    logger.i('🧹 Starting TTL cleanup for sessions (tier: ${userTier.name})');
+    return await TTLCleanupService.cleanupExpiredSessions(userTier);
+  }
+
+  /// Clean up all expired sessions for all user tiers
+  Future<Map<String, int>> cleanupAllExpiredSessions() async {
+    logger.i('🧹 Starting TTL cleanup for all sessions');
+    final results = <String, int>{};
+
+    for (final tier in UserTier.values) {
+      final count = await TTLCleanupService.cleanupExpiredSessions(tier);
+      results['${tier.name}_sessions'] = count;
+    }
+
+    return results;
+  }
+
+  /// Update last active time for the current session
+  Future<void> updateSessionLastActive() async {
+    if (state == null) return;
+
+    await TTLCleanupService.updateSessionLastActive(state!.sessionId);
+    await updateLastActiveTime(); // Also update local state
   }
 
   // TODO: Tech Debt - Implement automatic session cleanup and analytics
