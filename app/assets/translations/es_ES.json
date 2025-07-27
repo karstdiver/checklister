@@ -124,6 +124,7 @@
   "faq_swipe_view_question": "¿Qué es la Vista de Deslizamiento y cuándo debo usarla?",
   "faq_swipe_view_answer": "La Vista de Deslizamiento muestra un elemento a la vez, perfecto para sesiones de trabajo enfocadas. Desliza hacia la izquierda para completar elementos, hacia la derecha para omitirlos. Esta vista es ideal cuando quieres concentrarte en una tarea a la vez.",
   "quick_actions": "Acciones Rápidas",
+  "quick_add": "Agregar Rápido",
   "getting_started": "Comenzar",
   "getting_started_desc": "Aprende los conceptos básicos de usar Listador",
   "video_tutorials": "Tutoriales en Video",

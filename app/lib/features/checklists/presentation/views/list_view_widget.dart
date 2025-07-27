@@ -15,6 +15,7 @@ class ListViewWidget extends ConsumerStatefulWidget {
   final Function(ChecklistItem, int) onItemMove;
   final Function(ChecklistItem)? onItemAdd;
   final Function(ChecklistItem, String)? onTextUpdate;
+  final Function(String)? onQuickAdd;
 
   const ListViewWidget({
     super.key,
@@ -25,6 +26,7 @@ class ListViewWidget extends ConsumerStatefulWidget {
     required this.onItemMove,
     this.onItemAdd,
     this.onTextUpdate,
+    this.onQuickAdd,
   });
 
   @override
@@ -67,7 +69,10 @@ class _ListViewWidgetState extends ConsumerState<ListViewWidget> {
         if (widget.onItemAdd != null && index == items.length) {
           return Padding(
             padding: const EdgeInsets.only(bottom: 8),
-            child: AddItemRow(onTap: () => _handleAddItem()),
+            child: AddItemRow(
+              onTap: () => _handleAddItem(),
+              onQuickAdd: widget.onQuickAdd,
+            ),
           );
         }
 

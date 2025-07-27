@@ -375,6 +375,54 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                     setState(() {});
                   }
                 },
+                onQuickAdd: (quickAddText) async {
+                  // Create a new checklist item with the quick add text
+                  final newItem = checklist_domain.ChecklistItem(
+                    id: 'item_${DateTime.now().millisecondsSinceEpoch}',
+                    text: quickAddText,
+                    imageUrl: null,
+                    status: checklist_domain.ItemStatus.pending,
+                    order: session.items.length,
+                    notes: null,
+                    completedAt: null,
+                    skippedAt: null,
+                  );
+
+                  // Add the item to the checklist using the notifier
+                  final checklistNotifier = ref.read(
+                    checklistNotifierProvider.notifier,
+                  );
+
+                  final success = await checklistNotifier.addItem(
+                    widget.checklistId,
+                    newItem,
+                  );
+
+                  if (success) {
+                    logger.i('⚡ Quick added item to checklist: $quickAddText');
+
+                    // Convert to session item and add to session
+                    final sessionItem = ChecklistItem(
+                      id: newItem.id,
+                      text: newItem.text,
+                      imageUrl: newItem.imageUrl,
+                      status: _convertChecklistItemStatus(newItem.status),
+                      notes: newItem.notes,
+                      completedAt: newItem.completedAt,
+                      skippedAt: newItem.skippedAt,
+                    );
+
+                    await sessionNotifier.addItemToSession(sessionItem);
+                    logger.i('⚡ Quick added item to session: $quickAddText');
+
+                    // Force a rebuild of the UI to ensure changes are visible
+                    if (mounted) {
+                      setState(() {});
+                    }
+                  } else {
+                    logger.e('❌ Failed to quick add item: $quickAddText');
+                  }
+                },
               ),
             ),
           ],
