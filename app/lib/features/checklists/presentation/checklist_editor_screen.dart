@@ -540,6 +540,19 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
       return;
     }
 
+    // Check if checklist has zero items and show dialog if needed
+    if (_items.isEmpty) {
+      final result = await _showZeroItemsDialog();
+      if (result == null) {
+        return; // User cancelled
+      } else if (result == 'add_item') {
+        // Navigate to add item screen
+        await _navigateToAddItem();
+        return;
+      }
+      // If result is 'continue', proceed with saving
+    }
+
     setState(() {
       _isLoading = true;
     });
@@ -610,6 +623,56 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
           _isLoading = false;
         });
       }
+    }
+  }
+
+  /// Shows dialog when checklist has zero items
+  Future<String?> _showZeroItemsDialog() async {
+    return await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(TranslationService.translate('no_items_in_checklist')),
+        content: Text(TranslationService.translate('no_items_dialog_message')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop('cancel'),
+            child: Text(TranslationService.translate('cancel')),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop('add_item'),
+            child: Text(TranslationService.translate('add_item')),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop('continue'),
+            child: Text(TranslationService.translate('continue')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Navigate to add item screen
+  Future<void> _navigateToAddItem() async {
+    final result = await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => ItemEditScreen(
+          onSave: (item) {
+            setState(() {
+              _items.add(
+                item.copyWith(
+                  id: 'item_${DateTime.now().millisecondsSinceEpoch}',
+                  order: _items.length,
+                ),
+              );
+            });
+          },
+        ),
+      ),
+    );
+
+    // Pop back to checklist editor after adding item
+    if (result != null) {
+      Navigator.of(context).pop();
     }
   }
 }
