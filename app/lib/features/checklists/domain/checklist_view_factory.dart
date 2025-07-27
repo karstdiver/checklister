@@ -43,6 +43,7 @@ class ChecklistViewFactory {
     required Function(ChecklistItem) onItemDelete,
     required Function(ChecklistItem, int) onItemMove,
     Function(ChecklistItem)? onItemAdd,
+    Function(ChecklistItem, String)? onTextUpdate,
   }) {
     switch (checklist.viewType) {
       case ChecklistViewType.swipe:
@@ -55,6 +56,7 @@ class ChecklistViewFactory {
           onItemDelete: onItemDelete,
           onItemMove: onItemMove,
           onItemAdd: onItemAdd,
+          onTextUpdate: onTextUpdate,
         );
       case ChecklistViewType.matrix:
         return MatrixViewWidget(checklist: checklist);

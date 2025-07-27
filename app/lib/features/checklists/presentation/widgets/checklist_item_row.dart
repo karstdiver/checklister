@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:checklister/features/checklists/domain/checklist.dart';
 import '../../../../core/services/translation_service.dart';
 
-class ChecklistItemRow extends StatelessWidget {
+class ChecklistItemRow extends StatefulWidget {
   final ChecklistItem item;
   final VoidCallback onTap;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
   final VoidCallback? onMoveUp;
   final VoidCallback? onMoveDown;
+  final Function(String)? onTextUpdate;
 
   const ChecklistItemRow({
     super.key,
@@ -18,18 +19,79 @@ class ChecklistItemRow extends StatelessWidget {
     required this.onDelete,
     this.onMoveUp,
     this.onMoveDown,
+    this.onTextUpdate,
   });
 
   @override
+  State<ChecklistItemRow> createState() => _ChecklistItemRowState();
+}
+
+class _ChecklistItemRowState extends State<ChecklistItemRow> {
+  late TextEditingController _textController;
+  bool _isEditing = false;
+  FocusNode? _focusNode;
+
+  @override
+  void initState() {
+    super.initState();
+    _textController = TextEditingController(text: widget.item.text);
+    _focusNode = FocusNode();
+  }
+
+  @override
+  void dispose() {
+    _textController.dispose();
+    _focusNode?.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(ChecklistItemRow oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.item.text != widget.item.text) {
+      _textController.text = widget.item.text;
+    }
+  }
+
+  void _startEditing() {
+    setState(() {
+      _isEditing = true;
+    });
+    // Focus the text field after a short delay to ensure the widget is built
+    Future.delayed(const Duration(milliseconds: 100), () {
+      _focusNode?.requestFocus();
+    });
+  }
+
+  void _saveEdit() {
+    final newText = _textController.text.trim();
+    if (newText.isNotEmpty && newText != widget.item.text) {
+      widget.onTextUpdate?.call(newText);
+    }
+    setState(() {
+      _isEditing = false;
+    });
+    _focusNode?.unfocus();
+  }
+
+  void _cancelEdit() {
+    _textController.text = widget.item.text;
+    setState(() {
+      _isEditing = false;
+    });
+    _focusNode?.unfocus();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final isCompleted = item.status == ItemStatus.completed;
+    final isCompleted = widget.item.status == ItemStatus.completed;
 
     return Card(
       elevation: 2,
       margin: EdgeInsets.zero,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        onLongPress: _startEditing,
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Row(
@@ -37,7 +99,7 @@ class ChecklistItemRow extends StatelessWidget {
               // Checkbox
               Checkbox(
                 value: isCompleted,
-                onChanged: (value) => onTap(),
+                onChanged: (value) => widget.onTap(),
                 activeColor: Theme.of(context).primaryColor,
               ),
               const SizedBox(width: 12),
@@ -46,22 +108,55 @@ class ChecklistItemRow extends StatelessWidget {
               Expanded(
                 child: Row(
                   children: [
-                    // Item text
+                    // Item text or text field when editing
                     Expanded(
-                      child: Text(
-                        item.text,
-                        style: TextStyle(
-                          fontSize: 16,
-                          decoration: isCompleted
-                              ? TextDecoration.lineThrough
-                              : null,
-                          color: isCompleted ? Colors.grey[600] : null,
-                        ),
-                      ),
+                      child: _isEditing
+                          ? TextField(
+                              controller: _textController,
+                              focusNode: _focusNode,
+                              style: TextStyle(
+                                fontSize: 16,
+                                decoration: isCompleted
+                                    ? TextDecoration.lineThrough
+                                    : null,
+                                color: isCompleted ? Colors.grey[600] : null,
+                              ),
+                              decoration: InputDecoration(
+                                border: InputBorder.none,
+                                contentPadding: EdgeInsets.zero,
+                                suffixIcon: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.check, size: 20),
+                                      onPressed: _saveEdit,
+                                      color: Colors.green,
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.close, size: 20),
+                                      onPressed: _cancelEdit,
+                                      color: Colors.red,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              onSubmitted: (_) => _saveEdit(),
+                            )
+                          : Text(
+                              widget.item.text,
+                              style: TextStyle(
+                                fontSize: 16,
+                                decoration: isCompleted
+                                    ? TextDecoration.lineThrough
+                                    : null,
+                                color: isCompleted ? Colors.grey[600] : null,
+                              ),
+                            ),
                     ),
 
                     // Thumbnail (if item has an image)
-                    if (item.imageUrl != null && item.imageUrl!.isNotEmpty) ...[
+                    if (widget.item.imageUrl != null &&
+                        widget.item.imageUrl!.isNotEmpty) ...[
                       const SizedBox(width: 8),
                       Container(
                         width: 40,
@@ -76,7 +171,7 @@ class ChecklistItemRow extends StatelessWidget {
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(6),
                           child: Image.network(
-                            item.imageUrl!,
+                            widget.item.imageUrl!,
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) =>
                                 Container(
@@ -124,16 +219,16 @@ class ChecklistItemRow extends StatelessWidget {
                 onSelected: (value) {
                   switch (value) {
                     case 'edit':
-                      onEdit();
+                      widget.onEdit();
                       break;
                     case 'delete':
                       _showDeleteDialog(context);
                       break;
                     case 'move_up':
-                      onMoveUp?.call();
+                      widget.onMoveUp?.call();
                       break;
                     case 'move_down':
-                      onMoveDown?.call();
+                      widget.onMoveDown?.call();
                       break;
                   }
                 },
@@ -148,7 +243,7 @@ class ChecklistItemRow extends StatelessWidget {
                       ],
                     ),
                   ),
-                  if (onMoveUp != null)
+                  if (widget.onMoveUp != null)
                     PopupMenuItem(
                       value: 'move_up',
                       child: Row(
@@ -159,7 +254,7 @@ class ChecklistItemRow extends StatelessWidget {
                         ],
                       ),
                     ),
-                  if (onMoveDown != null)
+                  if (widget.onMoveDown != null)
                     PopupMenuItem(
                       value: 'move_down',
                       child: Row(
@@ -198,7 +293,9 @@ class ChecklistItemRow extends StatelessWidget {
       builder: (context) => AlertDialog(
         title: Text(TranslationService.translate('delete_item')),
         content: Text(
-          TranslationService.translate('delete_item_confirmation', [item.text]),
+          TranslationService.translate('delete_item_confirmation', [
+            widget.item.text,
+          ]),
         ),
         actions: [
           TextButton(
@@ -208,7 +305,7 @@ class ChecklistItemRow extends StatelessWidget {
           TextButton(
             onPressed: () {
               Navigator.of(context).pop();
-              onDelete();
+              widget.onDelete();
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: Text(TranslationService.translate('delete')),

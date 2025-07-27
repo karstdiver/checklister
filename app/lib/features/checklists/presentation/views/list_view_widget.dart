@@ -14,6 +14,7 @@ class ListViewWidget extends ConsumerStatefulWidget {
   final Function(ChecklistItem) onItemDelete;
   final Function(ChecklistItem, int) onItemMove;
   final Function(ChecklistItem)? onItemAdd;
+  final Function(ChecklistItem, String)? onTextUpdate;
 
   const ListViewWidget({
     super.key,
@@ -23,6 +24,7 @@ class ListViewWidget extends ConsumerStatefulWidget {
     required this.onItemDelete,
     required this.onItemMove,
     this.onItemAdd,
+    this.onTextUpdate,
   });
 
   @override
@@ -82,6 +84,9 @@ class _ListViewWidgetState extends ConsumerState<ListViewWidget> {
             onDelete: () => widget.onItemDelete(item),
             onMoveUp: isFirst ? null : () => widget.onItemMove(item, -1),
             onMoveDown: isLast ? null : () => widget.onItemMove(item, 1),
+            onTextUpdate: widget.onTextUpdate != null
+                ? (newText) => widget.onTextUpdate!(item, newText)
+                : null,
           ),
         );
       },

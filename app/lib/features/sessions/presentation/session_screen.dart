@@ -297,22 +297,61 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                   logger.d('Delete requested for item: ${item.id}');
                 },
                 onItemMove: (item, direction) {
-                  // Move functionality - reorder items in the session
-                  final currentIndex = session.items.indexWhere(
-                    (i) => i.id == item.id,
+                  // Move functionality - could be implemented if needed
+                  // For now, just log that move was requested
+                  logger.d(
+                    'Move requested for item: ${item.id} in direction: $direction',
                   );
-                  if (currentIndex != -1) {
-                    final newIndex = currentIndex + direction;
-                    if (newIndex >= 0 && newIndex < session.items.length) {
-                      // Create a new list with the item moved
-                      final newItems = List<ChecklistItem>.from(session.items);
-                      final movedItem = newItems.removeAt(currentIndex);
-                      newItems.insert(newIndex, movedItem);
+                },
+                onTextUpdate: (item, newText) async {
+                  // Update the item text in the checklist using the notifier
+                  final checklistNotifier = ref.read(
+                    checklistNotifierProvider.notifier,
+                  );
 
-                      // Update the session with the new item order
-                      final updatedSession = session.copyWith(items: newItems);
-                      sessionNotifier.state = updatedSession;
+                  // Create updated item with new text
+                  final updatedItem = item.copyWith(text: newText);
+
+                  // Update the item in the checklist
+                  final success = await checklistNotifier.updateItem(
+                    widget.checklistId,
+                    updatedItem,
+                  );
+
+                  if (success) {
+                    logger.i('✅ Item text updated successfully: $newText');
+
+                    // Refresh the session with the latest checklist data
+                    final updatedChecklist = checklistNotifier.getChecklistById(
+                      widget.checklistId,
+                    );
+
+                    if (updatedChecklist != null) {
+                      // Convert checklist domain items to session items
+                      final sessionItems = updatedChecklist.items
+                          .map(
+                            (checklistItem) => ChecklistItem(
+                              id: checklistItem.id,
+                              text: checklistItem.text,
+                              imageUrl: checklistItem.imageUrl,
+                              status: _convertChecklistItemStatus(
+                                checklistItem.status,
+                              ),
+                              notes: checklistItem.notes,
+                              completedAt: checklistItem.completedAt,
+                              skippedAt: checklistItem.skippedAt,
+                            ),
+                          )
+                          .toList();
+
+                      // Update the session with the latest checklist items
+                      await sessionNotifier.updateSessionWithLatestItems(
+                        sessionItems,
+                      );
+                      logger.i('🔄 Session refreshed with updated item text');
                     }
+                  } else {
+                    logger.e('❌ Failed to update item text');
                   }
                 },
                 onItemAdd: (newItem) async {
