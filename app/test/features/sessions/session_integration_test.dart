@@ -132,6 +132,8 @@ void main() {
         totalDuration: Duration(minutes: 30),
         activeDuration: Duration(minutes: 25),
         metadata: {},
+        createdAt: DateTime.now(),
+        lastActiveAt: DateTime.now(),
       );
 
       expect(session.isCompleted, true);
@@ -154,6 +156,8 @@ void main() {
         totalDuration: Duration.zero,
         activeDuration: Duration.zero,
         metadata: {},
+        createdAt: DateTime.now(),
+        lastActiveAt: DateTime.now(),
       );
 
       // At first item
@@ -183,6 +187,8 @@ void main() {
         totalDuration: Duration.zero,
         activeDuration: Duration.zero,
         metadata: {},
+        createdAt: DateTime.now(),
+        lastActiveAt: DateTime.now(),
       );
 
       // Pause session

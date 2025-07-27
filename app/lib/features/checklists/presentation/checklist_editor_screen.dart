@@ -332,16 +332,18 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          TranslationService.translate('items'),
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
+                        Expanded(
+                          child: Text(
+                            TranslationService.translate('items'),
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
-                        ElevatedButton.icon(
+                        const SizedBox(width: 8),
+                        ElevatedButton(
                           onPressed: _addItem,
-                          icon: const Icon(Icons.add),
-                          label: Text(TranslationService.translate('add_item')),
+                          child: const Icon(Icons.add),
                         ),
                       ],
                     ),
