@@ -16,6 +16,9 @@ class Checklist {
   final int completedItems;
   final DateTime? lastUsedAt;
   final ChecklistViewType viewType;
+  // TTL fields
+  final DateTime? expiresAt;
+  final DateTime lastActiveAt;
 
   const Checklist({
     required this.id,
@@ -32,6 +35,8 @@ class Checklist {
     required this.completedItems,
     this.lastUsedAt,
     this.viewType = ChecklistViewType.swipe,
+    this.expiresAt,
+    required this.lastActiveAt,
   });
 
   Checklist copyWith({
@@ -49,6 +54,8 @@ class Checklist {
     int? completedItems,
     DateTime? lastUsedAt,
     ChecklistViewType? viewType,
+    DateTime? expiresAt,
+    DateTime? lastActiveAt,
   }) {
     return Checklist(
       id: id ?? this.id,
@@ -65,6 +72,8 @@ class Checklist {
       completedItems: completedItems ?? this.completedItems,
       lastUsedAt: lastUsedAt ?? this.lastUsedAt,
       viewType: viewType ?? this.viewType,
+      expiresAt: expiresAt ?? this.expiresAt,
+      lastActiveAt: lastActiveAt ?? this.lastActiveAt,
     );
   }
 
@@ -99,6 +108,12 @@ class Checklist {
         (e) => e.name == data['viewType'],
         orElse: () => ChecklistViewType.swipe,
       ),
+      expiresAt: data['expiresAt'] != null
+          ? (data['expiresAt'] as Timestamp).toDate()
+          : null,
+      lastActiveAt: data['lastActiveAt'] != null
+          ? (data['lastActiveAt'] as Timestamp).toDate()
+          : DateTime.now(),
     );
   }
 
@@ -118,6 +133,8 @@ class Checklist {
       'completedItems': completedItems,
       'lastUsedAt': lastUsedAt != null ? Timestamp.fromDate(lastUsedAt!) : null,
       'viewType': viewType.name,
+      'expiresAt': expiresAt != null ? Timestamp.fromDate(expiresAt!) : null,
+      'lastActiveAt': Timestamp.fromDate(lastActiveAt),
     };
   }
 
@@ -147,6 +164,7 @@ class Checklist {
       totalItems: items.length,
       completedItems: 0,
       viewType: viewType,
+      lastActiveAt: now,
     );
   }
 
@@ -233,6 +251,12 @@ class Checklist {
         (e) => e.name == json['viewType'],
         orElse: () => ChecklistViewType.swipe,
       ),
+      expiresAt: json['expiresAt'] != null
+          ? DateTime.parse(json['expiresAt'])
+          : null,
+      lastActiveAt: json['lastActiveAt'] != null
+          ? DateTime.parse(json['lastActiveAt'])
+          : DateTime.now(),
     );
   }
 }

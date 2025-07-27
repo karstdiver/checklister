@@ -5,7 +5,9 @@ import '../domain/session_providers.dart';
 import '../domain/session_state.dart';
 import '../domain/session_notifier.dart';
 import '../../../core/providers/providers.dart';
+import '../../../core/providers/privilege_provider.dart';
 import '../../../core/services/translation_service.dart';
+import '../../../core/domain/user_tier.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../checklists/domain/checklist_view_type.dart';
 import '../../checklists/domain/checklist_providers.dart';
@@ -67,10 +69,15 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       if (widget.forceNewSession) {
         // Force start a new session
         sessionNotifier.clearSession();
+        // Get user tier for TTL calculation
+        final userTier =
+            ref.read(privilegeProvider)?.tier ?? UserTier.anonymous;
+
         await sessionNotifier.startSession(
           checklistId: widget.checklistId,
           userId: currentUser.uid,
           items: widget.items,
+          userTier: userTier,
         );
         print(
           'DEBUG: _initializeSession - After startSession, session state: ${ref.read(sessionNotifierProvider)}',
@@ -104,10 +111,16 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         } else {
           // Start a new session (either no active session or startNewIfActive is true)
           sessionNotifier.clearSession(); // Ensure session state is reset
+
+          // Get user tier for TTL calculation
+          final userTier =
+              ref.read(privilegeProvider)?.tier ?? UserTier.anonymous;
+
           await sessionNotifier.startSession(
             checklistId: widget.checklistId,
             userId: currentUser.uid,
             items: widget.items,
+            userTier: userTier,
           );
           print(
             'DEBUG: _initializeSession - After startSession (new session), session state: ${ref.read(sessionNotifierProvider)}',
@@ -170,6 +183,65 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     );
   }
 
+  /// Build expiration warning widget
+  Widget _buildExpirationWarning(
+    SessionState session,
+    SessionNotifier sessionNotifier,
+  ) {
+    final userTier = ref.read(privilegeProvider)?.tier ?? UserTier.anonymous;
+
+    if (!sessionNotifier.shouldShowExpirationWarning(userTier)) {
+      return const SizedBox.shrink();
+    }
+
+    final daysUntilExpiration = sessionNotifier.getDaysUntilExpiration();
+    if (daysUntilExpiration == null) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: daysUntilExpiration == 0 ? Colors.red[50] : Colors.orange[50],
+        border: Border.all(
+          color: daysUntilExpiration == 0
+              ? Colors.red[300]!
+              : Colors.orange[300]!,
+          width: 1,
+        ),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            daysUntilExpiration == 0 ? Icons.warning_amber : Icons.access_time,
+            color: daysUntilExpiration == 0
+                ? Colors.red[700]
+                : Colors.orange[700],
+            size: 20,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              daysUntilExpiration == 0
+                  ? TranslationService.translate('session_expires_today')
+                  : TranslationService.translate(
+                      'session_expires_in_days',
+                    ).replaceAll('{days}', daysUntilExpiration.toString()),
+              style: TextStyle(
+                color: daysUntilExpiration == 0
+                    ? Colors.red[700]
+                    : Colors.orange[700],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildViewContent(
     SessionState session,
     SessionNotifier sessionNotifier,
@@ -185,6 +257,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         onPanUpdate: (details) => _handleSwipe(details, sessionNotifier),
         child: Column(
           children: [
+            _buildExpirationWarning(session, sessionNotifier),
             _buildProgressIndicator(session, ref),
             Expanded(child: _buildCurrentItem(session)),
             _buildNavigationControls(session, sessionNotifier, ref),
@@ -201,6 +274,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           onPanUpdate: (details) => _handleSwipe(details, sessionNotifier),
           child: Column(
             children: [
+              _buildExpirationWarning(session, sessionNotifier),
               _buildProgressIndicator(session, ref),
               Expanded(child: _buildCurrentItem(session)),
               _buildNavigationControls(session, sessionNotifier, ref),
@@ -232,6 +306,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
         return Column(
           children: [
+            _buildExpirationWarning(session, sessionNotifier),
             _buildProgressIndicator(session, ref),
             Expanded(
               child: ChecklistViewFactory.buildViewWithCallbacks(
@@ -801,10 +876,14 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     // Start a new session with fresh checklist items
     final currentUser = ref.read(currentUserProvider);
     if (currentUser != null) {
+      // Get user tier for TTL calculation
+      final userTier = ref.read(privilegeProvider)?.tier ?? UserTier.anonymous;
+
       await sessionNotifier.startSession(
         checklistId: widget.checklistId,
         userId: currentUser.uid,
         items: freshItems,
+        userTier: userTier,
       );
 
       // Get the session state after starting

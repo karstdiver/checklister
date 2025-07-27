@@ -72,6 +72,8 @@ void main() {
         totalDuration: Duration.zero,
         activeDuration: Duration.zero,
         metadata: {},
+        createdAt: DateTime.now(),
+        lastActiveAt: DateTime.now(),
       );
 
       expect(session.currentItemIndex, 0);
@@ -93,6 +95,8 @@ void main() {
         totalDuration: Duration.zero,
         activeDuration: Duration.zero,
         metadata: {},
+        createdAt: DateTime.now(),
+        lastActiveAt: DateTime.now(),
       );
 
       expect(session.currentItemIndex, 1);
@@ -113,6 +117,8 @@ void main() {
         totalDuration: Duration.zero,
         activeDuration: Duration.zero,
         metadata: {},
+        createdAt: DateTime.now(),
+        lastActiveAt: DateTime.now(),
       );
 
       expect(session.currentItemIndex, 2);
@@ -147,6 +153,8 @@ void main() {
         totalDuration: Duration(minutes: 30),
         activeDuration: Duration(minutes: 25),
         metadata: {},
+        createdAt: DateTime.now(),
+        lastActiveAt: DateTime.now(),
       );
 
       expect(session.currentItem, null);
@@ -185,6 +193,8 @@ void main() {
         totalDuration: Duration.zero,
         activeDuration: Duration.zero,
         metadata: {},
+        createdAt: DateTime.now(),
+        lastActiveAt: DateTime.now(),
       );
 
       expect(session.completedItems, 1);

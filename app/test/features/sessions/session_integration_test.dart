@@ -37,6 +37,8 @@ void main() {
         totalDuration: Duration.zero,
         activeDuration: Duration.zero,
         metadata: {},
+        createdAt: DateTime.now(),
+        lastActiveAt: DateTime.now(),
       );
 
       expect(session.totalItems, 3);
@@ -60,6 +62,8 @@ void main() {
         totalDuration: Duration.zero,
         activeDuration: Duration.zero,
         metadata: {},
+        createdAt: DateTime.now(),
+        lastActiveAt: DateTime.now(),
       );
 
       // Complete first item

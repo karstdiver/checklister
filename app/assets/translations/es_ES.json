@@ -98,6 +98,8 @@
   "gallery": "Galería",
   "help": "Ayuda",
   "help_and_support": "Ayuda y Soporte",
+  "session_expires_today": "La sesión expira hoy",
+  "session_expires_in_days": "La sesión expira en {days} días",
   "help_support": "Ayuda y Soporte",
   "help_subtitle": "Obtén ayuda para usar Listador",
   "faq_create_checklist_question": "¿Cómo creo una lista de verificación?",

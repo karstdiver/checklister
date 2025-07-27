@@ -98,6 +98,8 @@
   "gallery": "Gallery",
   "help": "Help",
   "help_and_support": "Help & Support",
+  "session_expires_today": "Session expires today",
+  "session_expires_in_days": "Session expires in {days} days",
   "help_support": "Help & Support",
   "help_subtitle": "Get help with using Checklister",
   "faq_create_checklist_question": "How do I create a checklist?",

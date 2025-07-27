@@ -3,6 +3,8 @@ import 'package:logger/logger.dart';
 import 'session_state.dart';
 import '../data/session_repository.dart';
 import '../../../core/services/analytics_service.dart';
+import '../../../core/constants/ttl_config.dart';
+import '../../../core/domain/user_tier.dart';
 import '../../achievements/domain/achievement_notifier.dart';
 
 final logger = Logger();
@@ -23,6 +25,7 @@ class SessionNotifier extends StateNotifier<SessionState?> {
     required String checklistId,
     required String userId,
     required List<ChecklistItem> items,
+    UserTier userTier = UserTier.anonymous,
   }) async {
     final now = DateTime.now();
     final sessionId =
@@ -31,6 +34,13 @@ class SessionNotifier extends StateNotifier<SessionState?> {
     logger.i('Starting new session: $sessionId at $now');
     logger.i('Items count: ${items.length}');
     logger.i('Items statuses: ${items.map((item) => item.status).toList()}');
+    logger.i('User tier: $userTier');
+
+    // Calculate TTL based on user tier
+    final expiresAt = TTLConfig.calculateExpirationDate(userTier);
+    logger.i(
+      'Session TTL: ${expiresAt != null ? '${TTLConfig.getTTLDaysForTier(userTier)} days' : 'unlimited'}',
+    );
 
     final session = SessionState(
       sessionId: sessionId,
@@ -43,6 +53,9 @@ class SessionNotifier extends StateNotifier<SessionState?> {
       totalDuration: Duration.zero,
       activeDuration: Duration.zero,
       metadata: {},
+      createdAt: now,
+      expiresAt: expiresAt,
+      lastActiveAt: now,
     );
 
     state = session;
@@ -625,6 +638,41 @@ class SessionNotifier extends StateNotifier<SessionState?> {
     }
   }
 
+  /// Update the last active time for the session
+  Future<void> updateLastActiveTime() async {
+    if (state == null) return;
+
+    final now = DateTime.now();
+    final updatedSession = state!.copyWith(lastActiveAt: now);
+    state = updatedSession;
+
+    // Save to database
+    try {
+      await _repository.saveSession(updatedSession);
+      logger.i('🔄 Updated last active time: $now');
+    } catch (e) {
+      logger.e('💾 Failed to save last active time: $e');
+    }
+  }
+
+  /// Check if the session is expired
+  bool isSessionExpired() {
+    if (state == null) return false;
+    return TTLConfig.isExpired(state!.expiresAt);
+  }
+
+  /// Get days until session expiration
+  int? getDaysUntilExpiration() {
+    if (state == null) return null;
+    return TTLConfig.getDaysUntilExpiration(state!.expiresAt);
+  }
+
+  /// Check if expiration warning should be shown
+  bool shouldShowExpirationWarning(UserTier userTier) {
+    if (state == null) return false;
+    return TTLConfig.shouldShowExpirationWarning(state!.expiresAt, userTier);
+  }
+
   // TODO: Tech Debt - Implement automatic session cleanup and analytics
   //
   // Current Issue: Sessions accumulate indefinitely in Firestore without cleanup,
@@ -640,7 +688,6 @@ class SessionNotifier extends StateNotifier<SessionState?> {
   // Implementation Plan:
   // 1. Create SessionAnalyticsService to extract insights before deletion:
   //    - Session completion rates by checklist
-  //    - Average session duration
   //    - Most/least completed items
   //    - User engagement patterns
   // 2. Implement automatic cleanup with configurable retention policy:

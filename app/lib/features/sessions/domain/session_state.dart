@@ -106,6 +106,10 @@ class SessionState {
   final Duration totalDuration;
   final Duration activeDuration;
   final Map<String, dynamic> metadata;
+  // TTL fields
+  final DateTime createdAt;
+  final DateTime? expiresAt;
+  final DateTime lastActiveAt;
 
   const SessionState({
     required this.sessionId,
@@ -120,6 +124,9 @@ class SessionState {
     required this.totalDuration,
     required this.activeDuration,
     required this.metadata,
+    required this.createdAt,
+    this.expiresAt,
+    required this.lastActiveAt,
   });
 
   bool get isActive => status == SessionStatus.inProgress;
@@ -167,6 +174,9 @@ class SessionState {
     Duration? totalDuration,
     Duration? activeDuration,
     Map<String, dynamic>? metadata,
+    DateTime? createdAt,
+    DateTime? expiresAt,
+    DateTime? lastActiveAt,
   }) {
     return SessionState(
       sessionId: sessionId ?? this.sessionId,
@@ -181,6 +191,9 @@ class SessionState {
       totalDuration: totalDuration ?? this.totalDuration,
       activeDuration: activeDuration ?? this.activeDuration,
       metadata: metadata ?? this.metadata,
+      createdAt: createdAt ?? this.createdAt,
+      expiresAt: expiresAt ?? this.expiresAt,
+      lastActiveAt: lastActiveAt ?? this.lastActiveAt,
     );
   }
 
@@ -198,6 +211,10 @@ class SessionState {
       'totalDuration': totalDuration.inMilliseconds,
       'activeDuration': activeDuration.inMilliseconds,
       'metadata': metadata,
+      // TTL fields
+      'createdAt': createdAt.toIso8601String(),
+      'expiresAt': expiresAt?.toIso8601String(),
+      'lastActiveAt': lastActiveAt.toIso8601String(),
     };
   }
 
@@ -224,6 +241,16 @@ class SessionState {
       totalDuration: Duration(milliseconds: map['totalDuration']),
       activeDuration: Duration(milliseconds: map['activeDuration']),
       metadata: Map<String, dynamic>.from(map['metadata']),
+      // TTL fields
+      createdAt: map['createdAt'] != null
+          ? _parseTimestamp(map['createdAt'])
+          : DateTime.now(),
+      expiresAt: map['expiresAt'] != null
+          ? _parseTimestamp(map['expiresAt'])
+          : null,
+      lastActiveAt: map['lastActiveAt'] != null
+          ? _parseTimestamp(map['lastActiveAt'])
+          : DateTime.now(),
     );
   }
 
