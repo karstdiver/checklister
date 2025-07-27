@@ -42,15 +42,79 @@ class ChecklistItemRow extends StatelessWidget {
               ),
               const SizedBox(width: 12),
 
-              // Item text
+              // Item content (text and optional thumbnail)
               Expanded(
-                child: Text(
-                  item.text,
-                  style: TextStyle(
-                    fontSize: 16,
-                    decoration: isCompleted ? TextDecoration.lineThrough : null,
-                    color: isCompleted ? Colors.grey[600] : null,
-                  ),
+                child: Row(
+                  children: [
+                    // Item text
+                    Expanded(
+                      child: Text(
+                        item.text,
+                        style: TextStyle(
+                          fontSize: 16,
+                          decoration: isCompleted
+                              ? TextDecoration.lineThrough
+                              : null,
+                          color: isCompleted ? Colors.grey[600] : null,
+                        ),
+                      ),
+                    ),
+
+                    // Thumbnail (if item has an image)
+                    if (item.imageUrl != null && item.imageUrl!.isNotEmpty) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: Colors.grey[300]!,
+                            width: 1,
+                          ),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(6),
+                          child: Image.network(
+                            item.imageUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                Container(
+                                  color: Colors.grey[200],
+                                  child: Icon(
+                                    Icons.broken_image,
+                                    size: 20,
+                                    color: Colors.grey[400],
+                                  ),
+                                ),
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Container(
+                                color: Colors.grey[200],
+                                child: Center(
+                                  child: SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      value:
+                                          loadingProgress.expectedTotalBytes !=
+                                              null
+                                          ? loadingProgress
+                                                    .cumulativeBytesLoaded /
+                                                loadingProgress
+                                                    .expectedTotalBytes!
+                                          : null,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
 
