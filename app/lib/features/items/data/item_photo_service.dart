@@ -15,6 +15,7 @@ class ItemPhotoService {
   /// Pick an image from gallery
   Future<File?> pickImageFromGallery() async {
     try {
+      _logger.i('Attempting to pick image from gallery');
       final XFile? image = await _picker.pickImage(
         source: ImageSource.gallery,
         maxWidth: 1024,
@@ -22,61 +23,73 @@ class ItemPhotoService {
         imageQuality: 85,
       );
       if (image != null) {
+        _logger.i('Image picked successfully from gallery: ${image.path}');
         return File(image.path);
       }
+      _logger.i('Image picking was cancelled by user');
       return null;
     } catch (e) {
+      _logger.e('Failed to pick image from gallery: $e');
       throw Exception('Failed to pick image from gallery: $e');
     }
   }
 
   /// Show image source selection dialog
   Future<File?> showImageSourceDialog(BuildContext context) async {
-    final result = await showModalBottomSheet<ImageSource>(
-      context: context,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              TranslationService.translate('select_image_source'),
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildImageSourceOption(
-                    context,
-                    icon: Icons.photo_library,
-                    title: TranslationService.translate('gallery'),
-                    onTap: () => Navigator.pop(context, ImageSource.gallery),
+    try {
+      _logger.i('Showing image source selection dialog');
+      final result = await showModalBottomSheet<ImageSource>(
+        context: context,
+        builder: (context) => Container(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                TranslationService.translate('select_image_source'),
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildImageSourceOption(
+                      context,
+                      icon: Icons.photo_library,
+                      title: TranslationService.translate('gallery'),
+                      onTap: () => Navigator.pop(context, ImageSource.gallery),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildImageSourceOption(
-                    context,
-                    icon: Icons.camera_alt,
-                    title: TranslationService.translate('camera'),
-                    onTap: () => Navigator.pop(context, ImageSource.camera),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildImageSourceOption(
+                      context,
+                      icon: Icons.camera_alt,
+                      title: TranslationService.translate('camera'),
+                      onTap: () => Navigator.pop(context, ImageSource.camera),
+                    ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-          ],
+                ],
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
         ),
-      ),
-    );
+      );
 
-    if (result == ImageSource.gallery) {
-      return await pickImageFromGallery();
-    } else if (result == ImageSource.camera) {
-      return await takePhotoWithCamera();
+      if (result == ImageSource.gallery) {
+        _logger.i('User selected gallery');
+        return await pickImageFromGallery();
+      } else if (result == ImageSource.camera) {
+        _logger.i('User selected camera');
+        return await takePhotoWithCamera();
+      }
+      _logger.i('User cancelled image source selection');
+      return null;
+    } catch (e) {
+      _logger.e('Error in showImageSourceDialog: $e');
+      rethrow;
     }
-    return null;
   }
 
   Widget _buildImageSourceOption(
@@ -112,6 +125,7 @@ class ItemPhotoService {
   /// Take a photo with camera
   Future<File?> takePhotoWithCamera() async {
     try {
+      _logger.i('Attempting to take photo with camera');
       final XFile? image = await _picker.pickImage(
         source: ImageSource.camera,
         maxWidth: 1024,
@@ -119,10 +133,13 @@ class ItemPhotoService {
         imageQuality: 85,
       );
       if (image != null) {
+        _logger.i('Photo taken successfully: ${image.path}');
         return File(image.path);
       }
+      _logger.i('Photo taking was cancelled by user');
       return null;
     } catch (e) {
+      _logger.e('Failed to take photo: $e');
       throw Exception('Failed to take photo: $e');
     }
   }

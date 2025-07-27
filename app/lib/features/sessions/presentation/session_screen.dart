@@ -9,6 +9,8 @@ import '../../../core/services/translation_service.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../checklists/domain/checklist_view_type.dart';
 import '../../checklists/domain/checklist_providers.dart';
+import '../../checklists/domain/checklist_view_factory.dart';
+import '../../checklists/domain/checklist.dart' as checklist_domain;
 
 final logger = Logger();
 
@@ -39,83 +41,6 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   DateTime? _lastSwipeTime;
   static const Duration _swipeDebounceTime = Duration(milliseconds: 500);
   bool _isInitializing = true;
-
-  /// Build a custom session list view that works with session items
-  Widget _buildSessionListView(SessionState session, WidgetRef ref) {
-    if (session.items.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.checklist_outlined, size: 64, color: Colors.grey),
-            const SizedBox(height: 16),
-            Text(
-              TranslationService.translate('no_items_in_checklist'),
-              style: const TextStyle(fontSize: 18, color: Colors.grey),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: session.items.length,
-      itemBuilder: (context, index) {
-        final item = session.items[index];
-        final isCompleted = item.status == ItemStatus.completed;
-
-        return Card(
-          elevation: 2,
-          margin: const EdgeInsets.only(bottom: 8),
-          child: InkWell(
-            onTap: () {
-              // Toggle item completion status using session notifier
-              final sessionNotifier = ref.read(
-                sessionNotifierProvider.notifier,
-              );
-              sessionNotifier.toggleItemStatus(item.id);
-            },
-            borderRadius: BorderRadius.circular(8),
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Row(
-                children: [
-                  // Checkbox
-                  Checkbox(
-                    value: isCompleted,
-                    onChanged: (value) {
-                      // Toggle item completion status using session notifier
-                      final sessionNotifier = ref.read(
-                        sessionNotifierProvider.notifier,
-                      );
-                      sessionNotifier.toggleItemStatus(item.id);
-                    },
-                    activeColor: Theme.of(context).primaryColor,
-                  ),
-                  const SizedBox(width: 12),
-
-                  // Item text
-                  Expanded(
-                    child: Text(
-                      item.text,
-                      style: TextStyle(
-                        fontSize: 16,
-                        decoration: isCompleted
-                            ? TextDecoration.lineThrough
-                            : null,
-                        color: isCompleted ? Colors.grey[600] : null,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
 
   @override
   void initState() {
@@ -284,11 +209,114 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         );
       case ChecklistViewType.list:
       case ChecklistViewType.matrix:
-        // List and Matrix views - create a custom session list view
+        // List and Matrix views - use ChecklistViewFactory with session items converted to checklist items
+        // Create a temporary checklist with session items to show correct completion status
+        final sessionChecklist = checklist.copyWith(
+          items: session.items
+              .map(
+                (sessionItem) => checklist_domain.ChecklistItem(
+                  id: sessionItem.id,
+                  text: sessionItem.text,
+                  imageUrl: sessionItem.imageUrl,
+                  status: _convertSessionItemStatus(sessionItem.status),
+                  order: session.items.indexOf(sessionItem),
+                  notes: sessionItem.notes,
+                  completedAt: sessionItem.completedAt,
+                  skippedAt: sessionItem.skippedAt,
+                ),
+              )
+              .toList(),
+          totalItems: session.items.length,
+          completedItems: session.completedItems,
+        );
+
         return Column(
           children: [
             _buildProgressIndicator(session, ref),
-            Expanded(child: _buildSessionListView(session, ref)),
+            Expanded(
+              child: ChecklistViewFactory.buildViewWithCallbacks(
+                sessionChecklist,
+                onItemTap: (item) {
+                  // Toggle item completion status using session notifier
+                  sessionNotifier.toggleItemStatus(item.id);
+                },
+                onItemEdit: (item) async {
+                  // Refresh the session with the latest checklist data after edit is saved
+                  final checklistNotifier = ref.read(
+                    checklistNotifierProvider.notifier,
+                  );
+
+                  // Small delay to ensure state propagation
+                  await Future.delayed(const Duration(milliseconds: 50));
+
+                  final updatedChecklist = checklistNotifier.getChecklistById(
+                    widget.checklistId,
+                  );
+
+                  if (updatedChecklist != null) {
+                    logger.i(
+                      '🔄 Found updated checklist with ${updatedChecklist.items.length} items',
+                    );
+
+                    // Convert checklist domain items to session items
+                    final sessionItems = updatedChecklist.items
+                        .map(
+                          (checklistItem) => ChecklistItem(
+                            id: checklistItem.id,
+                            text: checklistItem.text,
+                            imageUrl: checklistItem.imageUrl,
+                            status: _convertChecklistItemStatus(
+                              checklistItem.status,
+                            ),
+                            notes: checklistItem.notes,
+                            completedAt: checklistItem.completedAt,
+                            skippedAt: checklistItem.skippedAt,
+                          ),
+                        )
+                        .toList();
+
+                    // Update the session with the latest checklist items
+                    await sessionNotifier.updateSessionWithLatestItems(
+                      sessionItems,
+                    );
+                    logger.i(
+                      '🔄 Session refreshed with updated checklist data after edit',
+                    );
+
+                    // Force a rebuild of the UI to ensure changes are visible
+                    if (mounted) {
+                      setState(() {});
+                    }
+                  } else {
+                    logger.w('🔄 Could not find updated checklist after edit');
+                  }
+                },
+                onItemDelete: (item) {
+                  // Delete functionality - could be implemented if needed
+                  // For now, just log that delete was requested
+                  logger.d('Delete requested for item: ${item.id}');
+                },
+                onItemMove: (item, direction) {
+                  // Move functionality - reorder items in the session
+                  final currentIndex = session.items.indexWhere(
+                    (i) => i.id == item.id,
+                  );
+                  if (currentIndex != -1) {
+                    final newIndex = currentIndex + direction;
+                    if (newIndex >= 0 && newIndex < session.items.length) {
+                      // Create a new list with the item moved
+                      final newItems = List<ChecklistItem>.from(session.items);
+                      final movedItem = newItems.removeAt(currentIndex);
+                      newItems.insert(newIndex, movedItem);
+
+                      // Update the session with the new item order
+                      final updatedSession = session.copyWith(items: newItems);
+                      sessionNotifier.state = updatedSession;
+                    }
+                  }
+                },
+              ),
+            ),
           ],
         );
     }
@@ -1001,5 +1029,35 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
   String _formatDuration(Duration duration) {
     return '${duration.inMinutes}m ${duration.inSeconds % 60}s';
+  }
+
+  checklist_domain.ItemStatus _convertSessionItemStatus(
+    ItemStatus sessionStatus,
+  ) {
+    switch (sessionStatus) {
+      case ItemStatus.pending:
+        return checklist_domain.ItemStatus.pending;
+      case ItemStatus.completed:
+        return checklist_domain.ItemStatus.completed;
+      case ItemStatus.skipped:
+        return checklist_domain.ItemStatus.skipped;
+      case ItemStatus.reviewed: // Added to handle exhaustive match
+        return checklist_domain.ItemStatus.reviewed;
+    }
+  }
+
+  ItemStatus _convertChecklistItemStatus(
+    checklist_domain.ItemStatus checklistStatus,
+  ) {
+    switch (checklistStatus) {
+      case checklist_domain.ItemStatus.pending:
+        return ItemStatus.pending;
+      case checklist_domain.ItemStatus.completed:
+        return ItemStatus.completed;
+      case checklist_domain.ItemStatus.skipped:
+        return ItemStatus.skipped;
+      case checklist_domain.ItemStatus.reviewed:
+        return ItemStatus.reviewed;
+    }
   }
 }

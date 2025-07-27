@@ -3,6 +3,9 @@ import 'checklist.dart';
 import 'checklist_view_type.dart';
 import '../presentation/views/list_view_widget.dart';
 import '../../../core/services/translation_service.dart';
+import '../../items/presentation/item_edit_screen.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../domain/checklist_providers.dart';
 
 /// Factory class for creating different checklist view widgets
 class ChecklistViewFactory {

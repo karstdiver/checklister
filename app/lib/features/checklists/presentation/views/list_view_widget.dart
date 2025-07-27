@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:checklister/features/checklists/domain/checklist.dart';
 import 'package:checklister/features/checklists/presentation/widgets/checklist_item_row.dart';
 import '../../../../core/services/translation_service.dart';
+import '../../../items/presentation/item_edit_screen.dart';
+import '../../domain/checklist_providers.dart';
 
 class ListViewWidget extends ConsumerStatefulWidget {
   final Checklist checklist;
@@ -63,13 +65,43 @@ class _ListViewWidgetState extends ConsumerState<ListViewWidget> {
           child: ChecklistItemRow(
             item: item,
             onTap: () => widget.onItemTap(item),
-            onEdit: () => widget.onItemEdit(item),
+            onEdit: () => _handleEditItem(item),
             onDelete: () => widget.onItemDelete(item),
             onMoveUp: isFirst ? null : () => widget.onItemMove(item, -1),
             onMoveDown: isLast ? null : () => widget.onItemMove(item, 1),
           ),
         );
       },
+    );
+  }
+
+  void _handleEditItem(ChecklistItem item) {
+    // Navigate to ItemEditScreen for editing
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => ItemEditScreen(
+          item: item,
+          onSave: (updatedItem) async {
+            // Update the item in the checklist using the notifier
+            final checklistNotifier = ref.read(
+              checklistNotifierProvider.notifier,
+            );
+
+            // Wait for the checklist update to complete
+            final success = await checklistNotifier.updateItem(
+              widget.checklist.id,
+              updatedItem,
+            );
+
+            if (success) {
+              // Call the onItemEdit callback to notify parent (session screen) to refresh
+              widget.onItemEdit(updatedItem);
+            }
+
+            // The navigation will pop back to the list view automatically
+          },
+        ),
+      ),
     );
   }
 }
