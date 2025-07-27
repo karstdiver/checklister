@@ -95,6 +95,14 @@ flutter drive --driver=test_driver/integration_test.dart
 - **Git Branching Structure**: Set up git-flow with main/develop branches, feature/release/hotfix prefixes, and version tag prefix 'v'
 - **Profile Offline Caching**: Create feature branch and plan implementation to avoid checklist-style complexity
 - **Anonymous User Upgrade Flow**: Implemented upgrade flow for anonymous user sign-in to email/password (data continuity, UI, and privilege persistence for upgrade only)
+- **Camera & Photo Permissions**: Added iOS and Android camera/photo library permissions for item photos
+- **Item Thumbnails**: Implemented thumbnail display in session screen list view items
+- **Help Screen Content**: Added multiple views FAQ and tips with proper localization
+- **Zero Items Dialog**: Added dialog for saving checklists with zero items (Continue/Cancel/Add Item options)
+- **Privilege Bar Clickability**: Made privilege level bar clickable with navigation to upgrade encouragement screen
+- **Add Item Row**: Added "Add Item" row at bottom of session screen list view
+- **Inline Text Editing**: Implemented long press on item rows for inline text editing
+- **Quick Add/Template Selector**: Enhanced long press on "Add Item" row with dual-option selector (Quick Add text input vs Quick Template grid)
 
 ### 🔄 In Progress
 - **Upgrade Flow**: Full privilege level upgrade flow (e.g., free → premium/pro) and related UI/UX polish
