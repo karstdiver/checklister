@@ -423,6 +423,10 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                     logger.e('❌ Failed to quick add item: $quickAddText');
                   }
                 },
+                onQuickTemplate: () {
+                  // Quick template uses the same logic as quick add
+                  // The template selector will call onQuickAdd with the selected template
+                },
               ),
             ),
           ],

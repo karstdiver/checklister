@@ -45,6 +45,7 @@ class ChecklistViewFactory {
     Function(ChecklistItem)? onItemAdd,
     Function(ChecklistItem, String)? onTextUpdate,
     Function(String)? onQuickAdd,
+    Function()? onQuickTemplate,
   }) {
     switch (checklist.viewType) {
       case ChecklistViewType.swipe:
@@ -59,6 +60,7 @@ class ChecklistViewFactory {
           onItemAdd: onItemAdd,
           onTextUpdate: onTextUpdate,
           onQuickAdd: onQuickAdd,
+          onQuickTemplate: onQuickTemplate,
         );
       case ChecklistViewType.matrix:
         return MatrixViewWidget(checklist: checklist);

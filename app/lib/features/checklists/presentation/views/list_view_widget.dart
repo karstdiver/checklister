@@ -16,6 +16,7 @@ class ListViewWidget extends ConsumerStatefulWidget {
   final Function(ChecklistItem)? onItemAdd;
   final Function(ChecklistItem, String)? onTextUpdate;
   final Function(String)? onQuickAdd;
+  final Function()? onQuickTemplate;
 
   const ListViewWidget({
     super.key,
@@ -27,6 +28,7 @@ class ListViewWidget extends ConsumerStatefulWidget {
     this.onItemAdd,
     this.onTextUpdate,
     this.onQuickAdd,
+    this.onQuickTemplate,
   });
 
   @override
@@ -72,6 +74,7 @@ class _ListViewWidgetState extends ConsumerState<ListViewWidget> {
             child: AddItemRow(
               onTap: () => _handleAddItem(),
               onQuickAdd: widget.onQuickAdd,
+              onQuickTemplate: widget.onQuickTemplate,
             ),
           );
         }
