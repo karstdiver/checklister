@@ -859,10 +859,14 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         .toList();
 
     logger.i('🔄 Created ${freshItems.length} fresh items with pending status');
-    logger.i('🔄 First item status: ${freshItems.first.status}');
-    logger.i(
-      '🔄 All item statuses: ${freshItems.map((item) => item.status).toList()}',
-    );
+    if (freshItems.isNotEmpty) {
+      logger.i('🔄 First item status: ${freshItems.first.status}');
+      logger.i(
+        '🔄 All item statuses: ${freshItems.map((item) => item.status).toList()}',
+      );
+    } else {
+      logger.w('⚠️ No fresh items created - checklist may be empty');
+    }
     logger.i(
       '🔄 Pending items count: ${freshItems.where((item) => item.status == ItemStatus.pending).length}',
     );
@@ -875,7 +879,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
     // Start a new session with fresh checklist items
     final currentUser = ref.read(currentUserProvider);
-    if (currentUser != null) {
+    if (currentUser != null && freshItems.isNotEmpty) {
       // Get user tier for TTL calculation
       final userTier = ref.read(privilegeProvider)?.tier ?? UserTier.anonymous;
 
