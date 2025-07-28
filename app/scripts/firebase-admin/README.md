@@ -1,231 +1,240 @@
 # Firebase Admin Scripts
 
-This directory contains Firebase Admin SDK scripts for managing the Checklister Firebase database.
+This directory contains Firebase admin scripts for managing users and data in the Checklister application.
 
-## Prerequisites
+## firebaseUserCRUD.js
 
-- Node.js (v14 or higher)
-- npm
-- Firebase project access
+A comprehensive script for managing Firebase users with admin role and user tier management capabilities.
 
-## Setup
+### Features
 
-1. Install dependencies:
+- **User Creation**: Create new users with Firebase Auth and Firestore documents
+- **User Management**: View, delete, and manage all Firebase Auth users
+- **Data Cleanup**: Delete user documents, collections, and storage files
+- **Admin Role Management**: Assign and modify admin roles for users
+- **User Tier Management**: Change user tiers and TTL periods
+- **Comprehensive Reporting**: Detailed summary of all operations
+
+### Prerequisites
+
+1. **Node.js**: Must be installed and accessible
+2. **Firebase Admin SDK**: Install with `npm install firebase-admin`
+3. **Service Account Key**: Place `serviceAccountKey.json` in this directory
+
+### Setup
+
+1. Get your Firebase service account key:
+   - Go to [Firebase Console](https://console.firebase.google.com/)
+   - Select your project
+   - Go to Project Settings > Service Accounts
+   - Click "Generate new private key"
+   - Save as `serviceAccountKey.json` in this directory
+
+2. Install dependencies:
    ```bash
-   npm install
+   npm install firebase-admin
    ```
 
-2. (Optional) Add Firebase service account key:
-   - Download your Firebase service account key from Firebase Console
-   - Save it as `serviceAccountKey.json` in this directory
-   - This file is already in `.gitignore` for security
+### Usage
 
-## Scripts
-
-### User CRUD Script
-
-Manages Firebase users with comprehensive cleanup including Firestore documents and Firebase Storage files.
-
-#### Usage
-
+Run the script:
 ```bash
-# Run the user management script
 node firebaseUserCRUD.js
 ```
 
-#### What it deletes
+The script will first ask you to choose an action:
+1. **Manage existing users** - View, delete, or modify existing users
+2. **Create new user** - Create a new user with Firebase Auth and Firestore document
 
-When deleting a user, the script removes:
+### User Creation
 
-1. **Firebase Auth user account**
-2. **User document** from `users` collection
-3. **User subcollections** (if confirmed)
-4. **Top-level documents** in `sessions` and `checklists` collections
-5. **Profile images** from Firebase Storage (`profile_images/` folder)
-6. **Item photos** from Firebase Storage (`item_photos/` folder)
+When creating a new user, you can specify:
+- **Email address** (required)
+- **Display name** (optional)
+- **Password** (minimum 6 characters)
+- **User tier** (anonymous, free, premium, pro)
+- **Admin role** (none, moderator, admin, superAdmin)
 
-#### Safety features
+The script will create:
+1. **Firebase Auth user** with email/password authentication
+2. **Firestore user document** with all default values and settings
+3. **Complete user profile** with preferences, stats, and usage tracking
 
-- **Interactive confirmation**: Asks for confirmation before each deletion step
-- **Granular control**: Separate confirmations for collections, profile images, and item photos
-- **Comprehensive cleanup**: Ensures no orphaned files remain in storage
-- **Error handling**: Graceful error handling and reporting
-- **Detailed logging**: Shows exactly what's being deleted
+### Interactive Options
 
-#### Storage cleanup process
-
-1. **Profile images**: Finds all files matching `profile_images/profile_{userId}_*`
-2. **Item photos**: 
-   - Finds all checklists belonging to the user
-   - Extracts all item IDs from those checklists
-   - Finds all files matching `item_photos/item_{itemId}_*`
-3. **Confirmation**: Asks user to confirm deletion of each type
-4. **Bulk deletion**: Deletes all files in parallel for efficiency
-
-#### Example output
+For each user, you'll be prompted with:
 
 ```
+🗑️  Delete user [USER_ID]? (y/N/a for admin/t for tier):
+```
+
+- **y** or **yes**: Delete the user and all associated data
+- **N** or **no** (or any other input): Skip the user
+- **a** or **admin**: Manage admin role for the user
+- **t** or **tier**: Manage user tier for the user
+- **p** or **password**: Change user password
+
+### Admin Role Management
+
+When you select 'a' for admin management, you can:
+
+1. **View current admin role** and assignment details
+2. **Select new admin role** from available options:
+   - `none` - No admin privileges
+   - `moderator` - View analytics, basic admin panel access
+   - `admin` - Full system management, TTL management
+   - `superAdmin` - Complete system control, user management
+3. **Add notes** for the role change
+4. **Confirm the change** before applying
+
+### User Tier Management
+
+When you select 't' for tier management, you can:
+
+1. **View current user tier** and TTL information
+2. **Select new user tier** from available options:
+   - `anonymous` - 7 days TTL, basic features
+   - `free` - 30 days TTL, standard features
+   - `premium` - 365 days TTL, enhanced features
+   - `pro` - Unlimited TTL, all features
+3. **Add notes** for the tier change
+4. **Confirm the change** before applying
+
+### Password Management
+
+When you select 'p' for password management, you can:
+
+1. **View current user email** for confirmation
+2. **Enter new password** (minimum 6 characters)
+3. **Confirm new password** to prevent typos
+4. **Add notes** for the password change (optional)
+5. **Confirm the change** before applying
+
+**Security Features:**
+- Password must be at least 6 characters
+- Password confirmation prevents typos
+- Password change is logged in Firestore with timestamp and notes
+- Only works for users with email/password authentication
+
+### Admin Role Hierarchy
+
+- **none**: Regular user with no admin privileges
+- **moderator**: Can view analytics and access basic admin panel
+- **admin**: Can manage system settings, TTL, and perform cleanup operations
+- **superAdmin**: Complete control including user management and role assignment
+
+### User Tier Hierarchy
+
+- **anonymous**: 7 days TTL, basic features only
+- **free**: 30 days TTL, standard features
+- **premium**: 365 days TTL, enhanced features
+- **pro**: Unlimited TTL, all features available
+
+### Data Cleanup
+
+When deleting a user, the script will:
+
+1. **Delete subcollections** (if any exist)
+2. **Delete storage files** (profile images, item photos)
+3. **Delete user document** from 'users' collection
+4. **Delete top-level documents** in user-linked collections
+5. **Delete user** from Firebase Auth
+
+### Safety Features
+
+- **Confirmation prompts** for all destructive operations
+- **Detailed user information** display before any action
+- **Comprehensive error handling** with informative messages
+- **Audit trail** for admin role and user tier changes (who, when, why)
+
+### Output Summary
+
+The script provides a detailed summary including:
+- Total users processed
+- Users deleted
+- Users skipped
+- Admin role changes made
+- User tier changes made
+- Password changes made
+- Storage files deleted
+- Any errors encountered
+
+### Default User Values
+
+When creating a new user, the script sets these default values:
+
+**User Profile:**
+- `isActive`: true
+- `emailVerified`: false (requires email verification)
+- `providerId`: 'email'
+
+**Preferences:**
+- `themeMode`: 'system'
+- `language`: 'en_US'
+- `notifications.email`: true
+- `notifications.push`: true
+
+**Stats:**
+- `totalChecklists`: 0
+- `completedChecklists`: 0
+- `totalItems`: 0
+- `completedItems`: 0
+
+**Usage:**
+- `checklistsCreated`: 0
+- `sessionsCompleted`: 0
+
+**Subscription:**
+- `status`: 'active'
+- `autoRenew`: false
+
+### Example Output
+
+```
+🔍 Firebase User CRUD Script
+============================
+
+============================================================
 👤 User ID: abc123
 📧 Email: user@example.com
-📋 Subcollections: None found
-📋 Top-level collections to be checked for userId: sessions, checklists
-🗑️  Delete user abc123? (y/N): y
+👑 Admin Role: NONE
+💎 User Tier: ANONYMOUS
+⏰ TTL Period: 7 days
+============================================================
+🗑️  Delete user abc123? (y/N/a for admin/t for tier): t
 
-🗂️  Checking Firebase Storage for user: abc123
-📸 Found 2 profile image(s) for user: abc123
-🗑️  Delete 2 profile image(s) for user abc123? (y/N): y
-✅ Deleted 2 profile image(s) for user: abc123
+💎 User Tier Management for user: abc123
+==================================================
+📋 Current user tier: ANONYMOUS
+⏰ Current TTL: 7 days
 
-📋 Found 5 checklist item(s) for user: abc123
-📸 Found 3 item photo(s) for user: abc123
-🗑️  Delete 3 item photo(s) for user abc123? (y/N): y
-✅ Deleted 3 item photo(s) for user: abc123
+🔄 Available user tiers:
+  1. anonymous - 7 days TTL, basic features
+  2. free - 30 days TTL, standard features
+  3. premium - 365 days TTL, enhanced features
+  4. pro - Unlimited TTL, all features
+  5. cancel - Cancel tier change
 
-📊 Storage cleanup summary for user abc123:
-   - Profile images: 2
-   - Item photos: 3
-   - Total files deleted: 5
+Select new user tier (1-5): 4
+Enter notes for this tier change (optional): Upgraded to Pro for unlimited TTL
+🗳️  Change user tier from ANONYMOUS to PRO? (y/N): y
+✅ Successfully changed user tier to: PRO
+⏰ New TTL Period: Unlimited (no expiration)
 
-✅ Deleted user: abc123
+============================================================
+📊 SUMMARY
+============================================================
+👥 Total users processed: 1
+✅ Users deleted: 0
+⏭️  Users skipped: 1
+💎 User tier changes: 1
+🎉 Script completed!
 ```
 
-### Session Cleanup Script
+### Security Notes
 
-Deletes unused sessions from the Firebase database to reduce storage costs and improve performance.
-
-#### Usage
-
-```bash
-# Preview what would be deleted (recommended first step)
-./cleanup-sessions.sh --dry-run
-
-# Delete sessions older than 7 days (default) - REQUIRES --force
-./cleanup-sessions.sh --force
-
-# Delete sessions older than 30 days
-./cleanup-sessions.sh --force --days 30
-
-# Preview sessions older than 1 day
-./cleanup-sessions.sh --dry-run --days 1
-
-# Show help
-./cleanup-sessions.sh --help
-```
-
-**⚠️ Important:** The script has a double confirmation system. You must use `--force` to actually delete sessions.
-
-#### What it deletes
-
-The script identifies and deletes:
-
-1. **Old sessions**: Sessions older than the specified number of days
-2. **Abandoned sessions**: Sessions with status "abandoned"
-3. **Unused sessions**: Sessions with no items or all items completed/skipped
-
-#### Safety features
-
-- **Dry-run mode**: Preview changes without actually deleting
-- **Double confirmation system**: Shell script + Node.js script confirmations
-- **Force mode**: Skip both confirmations (use with caution)
-- **Batch processing**: Deletes in batches to avoid timeouts
-- **Error handling**: Graceful error handling and reporting
-- **Consistent categorization**: Single query prevents counting discrepancies
-
-#### Examples
-
-```bash
-# Safe preview of what would be deleted
-./cleanup-sessions.sh --dry-run
-
-# Delete old sessions with confirmation (requires --force)
-./cleanup-sessions.sh --force --days 14
-
-# Force delete very old sessions (no confirmation)
-./cleanup-sessions.sh --force --days 90
-```
-
-#### Recommended Workflow
-
-```bash
-# 1. Always preview first to see what will be deleted
-./cleanup-sessions.sh --dry-run
-
-# 2. If the preview looks good, run with force to actually delete
-./cleanup-sessions.sh --force
-
-# 3. For different time periods, specify days
-./cleanup-sessions.sh --dry-run --days 30
-./cleanup-sessions.sh --force --days 30
-```
-
-### Direct Node.js Usage
-
-You can also run the Node.js script directly:
-
-```bash
-# Preview changes
-node deleteUnusedSessions.js --dry-run --days=7
-
-# Delete with confirmation (will stop and ask for --force)
-node deleteUnusedSessions.js --days=7
-
-# Force delete (bypasses confirmation)
-node deleteUnusedSessions.js --force --days=30
-```
-
-**Note:** The Node.js script will stop and ask for `--force` flag if not provided.
-
-## Configuration
-
-### Environment Variables
-
-The script will use:
-1. Service account key file if available (`serviceAccountKey.json`)
-2. Default credentials (for local development with `gcloud auth`)
-
-### Batch Size
-
-The script processes deletions in batches of 500 (Firestore limit). This can be modified in the script if needed.
-
-## Monitoring
-
-After running the cleanup script, you can monitor the results:
-
-1. Check Firebase Console for reduced session count
-2. Monitor storage usage in Firebase Console
-3. Check app performance improvements
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Authentication Error**: Ensure you have proper Firebase access
-2. **Permission Denied**: Check Firebase security rules
-3. **Script Not Found**: Ensure you're in the correct directory
-4. **Script stops after preview**: Use `--force` flag to actually delete sessions
-5. **Double confirmation confusion**: The script has two confirmation layers - use `--force` to skip both
-
-### Debug Mode
-
-Add debug logging by modifying the script or using Node.js debug flags:
-
-```bash
-DEBUG=* node deleteUnusedSessions.js --dry-run
-```
-
-## Security Notes
-
-- Never commit `serviceAccountKey.json` to version control
-- Use least-privilege service accounts
-- Regularly rotate service account keys
-- Monitor script usage and access logs
-
-## Contributing
-
-When adding new scripts:
-
-1. Follow the existing pattern
-2. Include proper error handling
-3. Add dry-run capabilities where appropriate
-4. Update this README
-5. Add appropriate tests 
+- This script requires Firebase Admin SDK credentials
+- Admin role changes are logged with timestamps and notes
+- Only use this script in secure environments
+- Review all changes before confirming
+- Consider backing up data before bulk operations 
