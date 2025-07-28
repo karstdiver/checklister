@@ -22,6 +22,19 @@ class SessionNotifier extends StateNotifier<SessionState?> {
     logger.d('SessionNotifier created: ${DateTime.now()}');
   }
 
+  /// Helper method to get current user tier from session state
+  UserTier _getCurrentUserTier() {
+    // Try to extract user tier from session metadata or default to anonymous
+    if (state?.metadata != null && state!.metadata.containsKey('userTier')) {
+      final tierString = state!.metadata['userTier'] as String;
+      return UserTier.values.firstWhere(
+        (tier) => tier.name == tierString,
+        orElse: () => UserTier.anonymous,
+      );
+    }
+    return UserTier.anonymous;
+  }
+
   Future<void> startSession({
     required String checklistId,
     required String userId,
@@ -53,7 +66,7 @@ class SessionNotifier extends StateNotifier<SessionState?> {
       startedAt: now,
       totalDuration: Duration.zero,
       activeDuration: Duration.zero,
-      metadata: {},
+      metadata: {'userTier': userTier.name}, // Store user tier in metadata
       createdAt: now,
       expiresAt: expiresAt,
       lastActiveAt: now,
@@ -81,9 +94,9 @@ class SessionNotifier extends StateNotifier<SessionState?> {
       '  - Pending items count: ${session.items.where((item) => item.status == ItemStatus.pending).length}',
     );
 
-    // Save session to database
+    // Save session to database with user tier for TTL
     try {
-      await _repository.saveSession(session);
+      await _repository.saveSession(session, userTier: userTier);
     } catch (e) {
       logger.e('Failed to save session to database: $e');
       // Don't throw here, session can continue without being saved
@@ -123,8 +136,9 @@ class SessionNotifier extends StateNotifier<SessionState?> {
 
       state = newState;
 
-      // Save to database immediately
-      await _repository.saveSession(newState);
+      // Save to database immediately with user tier
+      final userTier = _getCurrentUserTier();
+      await _repository.saveSession(newState, userTier: userTier);
       logger.i(
         '💾 Saved completed item to database: ${newState.completedItems}/${newState.totalItems}',
       );
@@ -152,8 +166,9 @@ class SessionNotifier extends StateNotifier<SessionState?> {
 
       state = newState;
 
-      // Save to database immediately
-      await _repository.saveSession(newState);
+      // Save to database immediately with user tier
+      final userTier = _getCurrentUserTier();
+      await _repository.saveSession(newState, userTier: userTier);
       logger.i(
         '💾 Saved skipped item to database: ${newState.skippedItems}/${newState.totalItems}',
       );
@@ -208,7 +223,8 @@ class SessionNotifier extends StateNotifier<SessionState?> {
       },
     );
 
-    await _repository.saveSession(newState);
+    final userTier = _getCurrentUserTier();
+    await _repository.saveSession(newState, userTier: userTier);
   }
 
   Future<void> completeSession() async {
@@ -241,7 +257,8 @@ class SessionNotifier extends StateNotifier<SessionState?> {
     );
 
     logger.i('🎯 Saving completed session to database...');
-    await _repository.saveSession(newState);
+    final userTier = _getCurrentUserTier();
+    await _repository.saveSession(newState, userTier: userTier);
     logger.i('🎯 Completed session saved successfully');
 
     // TODO: For paid tier, retain finished sessions for audit/history purposes instead of deleting.
@@ -300,7 +317,8 @@ class SessionNotifier extends StateNotifier<SessionState?> {
       },
     );
 
-    await _repository.saveSession(newState);
+    final userTier = _getCurrentUserTier();
+    await _repository.saveSession(newState, userTier: userTier);
   }
 
   void clearSession() {
@@ -315,7 +333,7 @@ class SessionNotifier extends StateNotifier<SessionState?> {
     await completeCurrentItem();
 
     // Move to next item if available
-    if (state != null && state!.canGoNext) {
+    if (state != null && state!.hasNextItem) {
       nextItem();
       logger.d(
         '➡️ Moved to next item: ${state!.currentItemIndex + 1}/${state!.totalItems}',
@@ -327,7 +345,7 @@ class SessionNotifier extends StateNotifier<SessionState?> {
     if (state == null) return;
 
     logger.i('👉 Swipe RIGHT - Moving to previous item');
-    if (state!.canGoPrevious) {
+    if (state!.hasPreviousItem) {
       previousItem();
       logger.d(
         '⬅️ Moved to previous item: ${state!.currentItemIndex + 1}/${state!.totalItems}',
@@ -344,7 +362,7 @@ class SessionNotifier extends StateNotifier<SessionState?> {
     await skipCurrentItem();
 
     // Move to next item if available
-    if (state != null && state!.canGoNext) {
+    if (state != null && state!.hasNextItem) {
       nextItem();
       logger.d(
         '➡️ Moved to next item after skip: ${state!.currentItemIndex + 1}/${state!.totalItems}',
@@ -437,11 +455,13 @@ class SessionNotifier extends StateNotifier<SessionState?> {
           // Mark old sessions as completed if they're too old
           final sessionAge = DateTime.now().difference(session.startedAt);
           if (sessionAge.inHours > 24) {
+            // For cleanup operations, use anonymous tier since we don't have user tier context
             await _repository.saveSession(
               session.copyWith(
                 status: SessionStatus.completed,
                 completedAt: DateTime.now(),
               ),
+              userTier: UserTier.anonymous,
             );
           }
         }
@@ -477,11 +497,13 @@ class SessionNotifier extends StateNotifier<SessionState?> {
             (session.status == SessionStatus.inProgress ||
                 session.status == SessionStatus.paused)) {
           logger.i('🧹 Abandoning other active session: ${session.sessionId}');
+          // For cleanup operations, use anonymous tier since we don't have user tier context
           await _repository.saveSession(
             session.copyWith(
               status: SessionStatus.abandoned,
               completedAt: DateTime.now(),
             ),
+            userTier: UserTier.anonymous,
           );
           logger.i('🧹 Session ${session.sessionId} marked as abandoned');
         }
@@ -500,11 +522,13 @@ class SessionNotifier extends StateNotifier<SessionState?> {
           final sessionAge = DateTime.now().difference(session.startedAt);
           if (sessionAge.inHours > 24) {
             logger.d('🧹 Abandoning old session: ${session.sessionId}');
+            // For cleanup operations, use anonymous tier since we don't have user tier context
             await _repository.saveSession(
               session.copyWith(
                 status: SessionStatus.abandoned,
                 completedAt: DateTime.now(),
               ),
+              userTier: UserTier.anonymous,
             );
             logger.d('🧹 Session ${session.sessionId} marked as abandoned');
           }
@@ -560,7 +584,8 @@ class SessionNotifier extends StateNotifier<SessionState?> {
 
     // Save to database
     try {
-      await _repository.saveSession(updatedSession);
+      final userTier = _getCurrentUserTier();
+      await _repository.saveSession(updatedSession, userTier: userTier);
       logger.i('🔄 Updated session saved to database');
     } catch (e) {
       logger.e('🔄 Failed to save updated session: $e');

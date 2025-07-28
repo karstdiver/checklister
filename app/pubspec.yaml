@@ -48,6 +48,8 @@ dependencies:
   firebase_analytics: ^11.3.3
   # Firebase App Check
   firebase_app_check: ^0.3.2+7
+  # Firebase Cloud Functions
+  cloud_functions: ^5.0.0
   # TODO: Add Sentry for error monitoring
   # sentry_flutter: ^8.1.0
 

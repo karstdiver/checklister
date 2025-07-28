@@ -13,7 +13,7 @@ import '../../sessions/presentation/session_screen.dart';
 import '../domain/checklist_providers.dart';
 import '../../achievements/domain/achievement_providers.dart';
 import 'widgets/checklist_card.dart';
-import 'widgets/connectivity_test_panel.dart';
+
 import 'checklist_editor_screen.dart';
 import '../../../core/widgets/tier_indicator.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -204,12 +204,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 _buildTierIndicator(ref),
                 const SizedBox(height: 16),
 
-                // Development: Connectivity Test Panel (only in debug mode)
-                if (const bool.fromEnvironment('dart.vm.product') == false) ...[
-                  const ConnectivityTestPanel(),
-                  const SizedBox(height: 16),
-                ],
-
                 // Sign-up encouragement for anonymous users
                 SignupEncouragement(
                   title: 'Unlock More Features',
@@ -217,9 +211,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       'Create a free account to save your checklists, edit them later, and track your progress!',
                   featureName: 'Save • Edit • Track Progress',
                   onSignupPressed: () async {
-                    print(
-                      '[DEBUG] HomeScreen: SignupEncouragement onSignupPressed tapped',
-                    );
                     await Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (context) =>
@@ -287,14 +278,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     final isOffline =
                         connectivity.asData?.value == ConnectivityResult.none;
                     final isUnknown = connectivity.asData == null;
-                    print(
-                      '[DEBUG] HomeScreen: UI connectivity = ${connectivity.asData?.value}',
-                    );
+
                     if (checklists.isEmpty) {
                       if (isOffline || isUnknown) {
-                        print(
-                          '[DEBUG] HomeScreen: Showing offline/empty state widget',
-                        );
                         return Column(
                           children: [
                             const Icon(

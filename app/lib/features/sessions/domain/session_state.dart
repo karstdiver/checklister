@@ -110,6 +110,8 @@ class SessionState {
   final DateTime createdAt;
   final DateTime? expiresAt;
   final DateTime lastActiveAt;
+  // Firestore native TTL field
+  final Timestamp? ttl;
 
   const SessionState({
     required this.sessionId,
@@ -127,6 +129,7 @@ class SessionState {
     required this.createdAt,
     this.expiresAt,
     required this.lastActiveAt,
+    this.ttl,
   });
 
   bool get isActive => status == SessionStatus.inProgress;
@@ -136,30 +139,50 @@ class SessionState {
   int get totalItems => items.length;
   int get completedItems =>
       items.where((item) => item.status == ItemStatus.completed).length;
+
   int get skippedItems =>
       items.where((item) => item.status == ItemStatus.skipped).length;
+
+  int get pendingItems =>
+      items.where((item) => item.status == ItemStatus.pending).length;
+
   double get progressPercentage {
     if (totalItems == 0) return 0.0;
-
-    // If session is completed, show 100%
-    if (isCompleted) return 1.0;
-
-    // If we're at the last item and it's completed, show 100%
-    if (currentItemIndex >= totalItems && completedItems == totalItems) {
-      return 1.0;
-    }
-
-    // Otherwise, show completed items percentage
     return completedItems / totalItems;
   }
 
-  ChecklistItem? get currentItem =>
-      currentItemIndex >= 0 && currentItemIndex < items.length
-      ? items[currentItemIndex]
-      : null;
+  ChecklistItem? get currentItem {
+    if (currentItemIndex >= 0 && currentItemIndex < items.length) {
+      return items[currentItemIndex];
+    }
+    return null;
+  }
 
-  bool get canGoNext => currentItemIndex < items.length - 1;
-  bool get canGoPrevious => currentItemIndex > 0;
+  ChecklistItem? get nextItem {
+    final nextIndex = currentItemIndex + 1;
+    if (nextIndex >= 0 && nextIndex < items.length) {
+      return items[nextIndex];
+    }
+    return null;
+  }
+
+  ChecklistItem? get previousItem {
+    final prevIndex = currentItemIndex - 1;
+    if (prevIndex >= 0 && prevIndex < items.length) {
+      return items[prevIndex];
+    }
+    return null;
+  }
+
+  bool get hasNextItem => currentItemIndex < items.length - 1;
+  bool get hasPreviousItem => currentItemIndex > 0;
+  bool get isFirstItem => currentItemIndex == 0;
+  bool get isLastItem => currentItemIndex == items.length - 1;
+
+  // Navigation getters for UI
+  bool get canGoNext => hasNextItem && status == SessionStatus.inProgress;
+  bool get canGoPrevious =>
+      hasPreviousItem && status == SessionStatus.inProgress;
 
   SessionState copyWith({
     String? sessionId,
@@ -177,6 +200,7 @@ class SessionState {
     DateTime? createdAt,
     DateTime? expiresAt,
     DateTime? lastActiveAt,
+    Timestamp? ttl,
   }) {
     return SessionState(
       sessionId: sessionId ?? this.sessionId,
@@ -194,6 +218,7 @@ class SessionState {
       createdAt: createdAt ?? this.createdAt,
       expiresAt: expiresAt ?? this.expiresAt,
       lastActiveAt: lastActiveAt ?? this.lastActiveAt,
+      ttl: ttl ?? this.ttl,
     );
   }
 
@@ -215,6 +240,8 @@ class SessionState {
       'createdAt': createdAt.toIso8601String(),
       'expiresAt': expiresAt?.toIso8601String(),
       'lastActiveAt': lastActiveAt.toIso8601String(),
+      // Firestore native TTL field
+      'ttl': ttl,
     };
   }
 
@@ -251,6 +278,8 @@ class SessionState {
       lastActiveAt: map['lastActiveAt'] != null
           ? _parseTimestamp(map['lastActiveAt'])
           : DateTime.now(),
+      // Firestore native TTL field
+      ttl: map['ttl'] as Timestamp?,
     );
   }
 

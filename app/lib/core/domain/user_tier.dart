@@ -1,7 +1,11 @@
 enum UserTier { anonymous, free, premium, pro }
 
+/// Admin role enum - separate from business tiers
+enum AdminRole { none, moderator, admin, superAdmin }
+
 class UserPrivileges {
   final UserTier tier;
+  final AdminRole adminRole; // NEW: Separate admin role
   final bool isActive;
   final DateTime? expiresAt;
   final Map<String, dynamic> features;
@@ -9,6 +13,7 @@ class UserPrivileges {
 
   const UserPrivileges({
     required this.tier,
+    this.adminRole = AdminRole.none, // Default to no admin role
     required this.isActive,
     this.expiresAt,
     required this.features,
@@ -57,9 +62,27 @@ class UserPrivileges {
   bool get hasAchievements => features['achievements'] == true;
   bool get hasAchievementNotifications =>
       features['achievementNotifications'] == true;
-  bool get hasAchievementSharing => features['achievementSharing'] == true;
+
   bool get hasAchievementLeaderboards =>
       features['achievementLeaderboards'] == true;
+
+  // NEW: Admin privilege checks
+  bool get isAdmin => adminRole != AdminRole.none;
+  bool get isModerator =>
+      adminRole == AdminRole.moderator ||
+      adminRole == AdminRole.admin ||
+      adminRole == AdminRole.superAdmin;
+  bool get isFullAdmin =>
+      adminRole == AdminRole.admin || adminRole == AdminRole.superAdmin;
+  bool get isSuperAdmin => adminRole == AdminRole.superAdmin;
+
+  // NEW: Admin-specific permissions
+  bool get canManageUsers => isFullAdmin;
+  bool get canManageSystem => isFullAdmin;
+  bool get canViewAnalytics => isModerator;
+  bool get canCleanupAllData => isFullAdmin;
+  bool get canManageTTL => isFullAdmin;
+  bool get canAccessAdminPanel => isModerator;
 
   // Tier status getters
   bool get isAnonymous => tier == UserTier.anonymous;
@@ -93,6 +116,7 @@ class UserPrivileges {
   factory UserPrivileges.anonymous() {
     return const UserPrivileges(
       tier: UserTier.anonymous,
+      adminRole: AdminRole.none, // No admin role for anonymous users
       isActive: true,
       features: {
         'maxChecklists': 1,
@@ -134,6 +158,7 @@ class UserPrivileges {
   factory UserPrivileges.free() {
     return const UserPrivileges(
       tier: UserTier.free,
+      adminRole: AdminRole.none, // No admin role for free users
       isActive: true,
       features: {
         'maxChecklists': 5,
@@ -175,6 +200,7 @@ class UserPrivileges {
   factory UserPrivileges.premium() {
     return const UserPrivileges(
       tier: UserTier.premium,
+      adminRole: AdminRole.none, // No admin role for premium users
       isActive: true,
       features: {
         'maxChecklists': 50,
@@ -216,6 +242,7 @@ class UserPrivileges {
   factory UserPrivileges.pro() {
     return const UserPrivileges(
       tier: UserTier.pro,
+      adminRole: AdminRole.none, // Pro users are NOT admins by default
       isActive: true,
       features: {
         'maxChecklists': -1, // unlimited
@@ -254,9 +281,40 @@ class UserPrivileges {
     );
   }
 
+  // NEW: Admin factory methods
+  factory UserPrivileges.moderator({UserTier tier = UserTier.free}) {
+    final basePrivileges = _getBasePrivileges(tier);
+    return basePrivileges.copyWith(adminRole: AdminRole.moderator);
+  }
+
+  factory UserPrivileges.admin({UserTier tier = UserTier.free}) {
+    final basePrivileges = _getBasePrivileges(tier);
+    return basePrivileges.copyWith(adminRole: AdminRole.admin);
+  }
+
+  factory UserPrivileges.superAdmin({UserTier tier = UserTier.free}) {
+    final basePrivileges = _getBasePrivileges(tier);
+    return basePrivileges.copyWith(adminRole: AdminRole.superAdmin);
+  }
+
+  // Helper method to get base privileges for admin roles
+  static UserPrivileges _getBasePrivileges(UserTier tier) {
+    switch (tier) {
+      case UserTier.anonymous:
+        return UserPrivileges.anonymous();
+      case UserTier.free:
+        return UserPrivileges.free();
+      case UserTier.premium:
+        return UserPrivileges.premium();
+      case UserTier.pro:
+        return UserPrivileges.pro();
+    }
+  }
+
   // Copy with methods for updating usage
   UserPrivileges copyWith({
     UserTier? tier,
+    AdminRole? adminRole,
     bool? isActive,
     DateTime? expiresAt,
     Map<String, dynamic>? features,
@@ -264,6 +322,7 @@ class UserPrivileges {
   }) {
     return UserPrivileges(
       tier: tier ?? this.tier,
+      adminRole: adminRole ?? this.adminRole,
       isActive: isActive ?? this.isActive,
       expiresAt: expiresAt ?? this.expiresAt,
       features: features ?? this.features,

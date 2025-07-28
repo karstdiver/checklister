@@ -83,6 +83,9 @@ class PrivilegeNotifier extends StateNotifier<UserPrivileges?> {
     final usage =
         userDoc.usage ?? {'checklistsCreated': 0, 'sessionsCompleted': 0};
 
+    // NEW: Get admin role from user document
+    final adminRole = _getAdminRoleFromString(userDoc.adminRole);
+
     // Use the factory methods from UserPrivileges to ensure all features are included
     UserPrivileges basePrivileges;
     switch (tier) {
@@ -101,10 +104,29 @@ class PrivilegeNotifier extends StateNotifier<UserPrivileges?> {
     }
 
     return basePrivileges.copyWith(
+      adminRole: adminRole, // NEW: Set admin role from database
       isActive: subscription?.status == 'active',
       expiresAt: subscription?.endDate,
       usage: usage,
     );
+  }
+
+  // NEW: Convert string admin role to enum
+  AdminRole _getAdminRoleFromString(String? adminRoleString) {
+    if (adminRoleString == null) return AdminRole.none;
+
+    switch (adminRoleString.toLowerCase()) {
+      case 'moderator':
+        return AdminRole.moderator;
+      case 'admin':
+        return AdminRole.admin;
+      case 'superadmin':
+      case 'super_admin':
+        return AdminRole.superAdmin;
+      case 'none':
+      default:
+        return AdminRole.none;
+    }
   }
 
   UserTier _getTierFromSubscription(SubscriptionData? subscription) {

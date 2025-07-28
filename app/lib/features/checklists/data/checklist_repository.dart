@@ -1,22 +1,67 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../domain/checklist.dart';
 import '../../../core/services/translation_service.dart';
+import '../../../core/constants/ttl_config.dart';
+import '../../../core/domain/user_tier.dart';
 import 'package:hive/hive.dart';
 
 class ChecklistRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // Create a new checklist
-  Future<Checklist> createChecklist(Checklist checklist) async {
+  Future<Checklist> createChecklist(
+    Checklist checklist, {
+    UserTier? userTier,
+  }) async {
     try {
+      // Prepare checklist data
+      final checklistData = checklist.toFirestore();
+
+      // Add Firestore native TTL if user tier is provided and TTL should be enabled
+      if (userTier != null && TTLConfig.shouldEnableNativeTTL(userTier)) {
+        final ttl = TTLConfig.calculateFirestoreTTL(userTier);
+        if (ttl != null) {
+          checklistData['ttl'] = ttl;
+          print('🕒 Set Firestore native TTL for checklist: ${ttl.toDate()}');
+        }
+      }
+
       final docRef = await _firestore
           .collection('checklists')
-          .add(checklist.toFirestore());
+          .add(checklistData);
 
       // Return the checklist with the generated ID
       return checklist.copyWith(id: docRef.id);
     } catch (e) {
       throw Exception('Failed to create checklist: $e');
+    }
+  }
+
+  // Update checklist TTL based on user tier
+  Future<void> updateChecklistTTL(String checklistId, UserTier userTier) async {
+    try {
+      if (TTLConfig.shouldEnableNativeTTL(userTier)) {
+        final ttl = TTLConfig.calculateFirestoreTTL(userTier);
+        if (ttl != null) {
+          await _firestore.collection('checklists').doc(checklistId).update({
+            'ttl': ttl,
+          });
+          print(
+            '🕒 Updated Firestore native TTL for checklist $checklistId: ${ttl.toDate()}',
+          );
+        }
+      } else {
+        // Remove TTL for unlimited tiers
+        await _firestore.collection('checklists').doc(checklistId).update({
+          'ttl': FieldValue.delete(),
+        });
+        print(
+          '🕒 Removed Firestore native TTL for checklist $checklistId (unlimited tier)',
+        );
+      }
+    } catch (e) {
+      print('❌ Error updating checklist TTL: $e');
+      throw Exception('Failed to update checklist TTL: $e');
     }
   }
 
@@ -101,11 +146,22 @@ class ChecklistRepository {
   }
 
   // Update a checklist
-  Future<void> updateChecklist(Checklist checklist) async {
+  Future<void> updateChecklist(
+    Checklist checklist, {
+    UserTier? userTier,
+  }) async {
     try {
       final updatedData = checklist
           .copyWith(updatedAt: DateTime.now())
           .toFirestore();
+
+      // Update TTL if user tier is provided
+      if (userTier != null && TTLConfig.shouldEnableNativeTTL(userTier)) {
+        final ttl = TTLConfig.calculateFirestoreTTL(userTier);
+        if (ttl != null) {
+          updatedData['ttl'] = ttl;
+        }
+      }
 
       await _firestore
           .collection('checklists')
@@ -268,8 +324,9 @@ class ChecklistRepository {
   // Duplicate a checklist
   Future<Checklist> duplicateChecklist(
     String checklistId,
-    String newUserId,
-  ) async {
+    String newUserId, {
+    UserTier? userTier,
+  }) async {
     try {
       final originalChecklist = await getChecklist(checklistId);
       if (originalChecklist == null) {
@@ -296,7 +353,7 @@ class ChecklistRepository {
         tags: originalChecklist.tags,
       );
 
-      return await createChecklist(duplicatedChecklist);
+      return await createChecklist(duplicatedChecklist, userTier: userTier);
     } catch (e) {
       throw Exception('Failed to duplicate checklist: $e');
     }

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/services.dart'; // For SystemNavigator.pop
-import 'package:flutter/foundation.dart'; // For kDebugMode
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -214,21 +213,7 @@ class _AcceptanceScreenState extends State<AcceptanceScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(TranslationService.translate('accept_privacy_and_terms')),
-        actions: [
-          // Debug button to reset acceptance (only in debug mode)
-          if (kDebugMode)
-            IconButton(
-              onPressed: () async {
-                await AcceptanceService.clearAcceptance();
-                setState(() {
-                  _privacyAccepted = false;
-                  _tosAccepted = false;
-                });
-              },
-              icon: const Icon(Icons.refresh),
-              tooltip: 'Reset acceptance (debug)',
-            ),
-        ],
+        actions: [],
       ),
       body: Padding(
         padding: const EdgeInsets.all(24.0),

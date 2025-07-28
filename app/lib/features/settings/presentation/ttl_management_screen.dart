@@ -6,6 +6,7 @@ import 'package:checklister/core/providers/privilege_provider.dart';
 import 'package:checklister/features/sessions/domain/session_notifier.dart';
 import 'package:checklister/features/sessions/domain/session_providers.dart';
 import 'package:checklister/core/services/translation_service.dart';
+import 'package:checklister/core/services/ttl_cleanup_service.dart';
 import 'package:checklister/shared/widgets/app_card.dart';
 import 'package:logger/logger.dart';
 
@@ -174,6 +175,8 @@ class _TTLManagementScreenState extends ConsumerState<TTLManagementScreen> {
   }
 
   Widget _buildCleanupSection(ThemeData theme) {
+    final userPrivileges = ref.watch(privilegeProvider);
+
     return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -204,21 +207,43 @@ class _TTLManagementScreenState extends ConsumerState<TTLManagementScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: _isLoading ? null : _cleanupAllTiers,
-                  icon: const Icon(Icons.cleaning_services_outlined),
-                  label: Text(
-                    TranslationService.translate('cleanup_all_tiers'),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: theme.colorScheme.secondary,
-                    foregroundColor: theme.colorScheme.onSecondary,
+              // SECURITY: Only show admin buttons to actual admins
+              if (userPrivileges?.canManageTTL == true ||
+                  const bool.fromEnvironment('dart.vm.product') == false)
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: _isLoading ? null : _cleanupAllTiers,
+                    icon: const Icon(Icons.cleaning_services_outlined),
+                    label: Text(
+                      TranslationService.translate('cleanup_all_tiers'),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: theme.colorScheme.secondary,
+                      foregroundColor: theme.colorScheme.onSecondary,
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
+          // SECURITY: Only show admin buttons to actual admins
+          if (userPrivileges?.canManageTTL == true ||
+              const bool.fromEnvironment('dart.vm.product') == false) ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _isLoading ? null : _cleanupOrphanedDocuments,
+                icon: const Icon(Icons.delete_sweep),
+                label: Text(
+                  TranslationService.translate('cleanup_orphaned_documents'),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.colorScheme.errorContainer,
+                  foregroundColor: theme.colorScheme.onErrorContainer,
+                ),
+              ),
+            ),
+          ],
           if (_isLoading) ...[
             const SizedBox(height: 16),
             const Center(child: CircularProgressIndicator()),
@@ -328,6 +353,52 @@ class _TTLManagementScreenState extends ConsumerState<TTLManagementScreen> {
   }
 
   Future<void> _cleanupAllTiers() async {
+    // SECURITY: Only allow admin users or in debug mode
+    final userPrivileges = ref.read(privilegeProvider);
+
+    // Check if user has admin privileges
+    final hasAdminAccess =
+        userPrivileges?.canManageTTL == true ||
+        const bool.fromEnvironment('dart.vm.product') == false;
+
+    if (!hasAdminAccess) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              TranslationService.translate('insufficient_privileges'),
+            ),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+      return;
+    }
+
+    // Show confirmation dialog for admin operations
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(TranslationService.translate('admin_cleanup_confirmation')),
+        content: Text(TranslationService.translate('admin_cleanup_warning')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(TranslationService.translate('cancel')),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: Text(TranslationService.translate('confirm')),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
     final sessionNotifier = ref.read(sessionNotifierProvider.notifier);
 
     setState(() {
@@ -347,13 +418,101 @@ class _TTLManagementScreenState extends ConsumerState<TTLManagementScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              '${TranslationService.translate('cleanup_completed')}: $totalDeleted ${TranslationService.translate('sessions_deleted')}',
+              '${TranslationService.translate('admin_cleanup_completed')}: $totalDeleted ${TranslationService.translate('sessions_deleted')}',
             ),
           ),
         );
       }
     } catch (e) {
-      _logger.e('Error during cleanup: $e');
+      _logger.e('Error during admin cleanup: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(TranslationService.translate('cleanup_error')),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _cleanupOrphanedDocuments() async {
+    // SECURITY: Only allow admin users or in debug mode
+    final userPrivileges = ref.read(privilegeProvider);
+
+    // Check if user has admin privileges
+    final hasAdminAccess =
+        userPrivileges?.canManageTTL == true ||
+        const bool.fromEnvironment('dart.vm.product') == false;
+
+    if (!hasAdminAccess) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              TranslationService.translate('insufficient_privileges'),
+            ),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+      return;
+    }
+
+    // Show confirmation dialog for admin operations
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          TranslationService.translate('orphaned_cleanup_confirmation'),
+        ),
+        content: Text(TranslationService.translate('orphaned_cleanup_warning')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(TranslationService.translate('cancel')),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: Text(TranslationService.translate('confirm')),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    setState(() {
+      _isLoading = true;
+      _cleanupResults = null;
+    });
+
+    try {
+      final results = await TTLCleanupService.cleanupOrphanedDocuments();
+      setState(() {
+        _cleanupResults = results;
+      });
+
+      final totalDeleted = results.values.fold(0, (sum, count) => sum + count);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${TranslationService.translate('orphaned_cleanup_completed')}: $totalDeleted ${TranslationService.translate('orphaned_documents_deleted')}',
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      _logger.e('Error during orphaned document cleanup: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

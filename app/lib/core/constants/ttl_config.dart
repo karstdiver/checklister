@@ -1,4 +1,5 @@
 import 'package:checklister/core/domain/user_tier.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// TTL (Time To Live) configuration for different user tiers and document types
 class TTLConfig {
@@ -28,6 +29,30 @@ class TTLConfig {
 
     final ttlDays = getTTLDaysForTier(tier);
     return DateTime.now().add(Duration(days: ttlDays));
+  }
+
+  /// Calculate Firestore native TTL timestamp for a given user tier
+  /// This is the special 'ttl' field that Firestore uses for automatic deletion
+  static Timestamp? calculateFirestoreTTL(UserTier tier) {
+    if (hasUnlimitedTTL(tier)) {
+      return null; // No TTL for unlimited tiers
+    }
+
+    final expirationDate = calculateExpirationDate(tier);
+    if (expirationDate == null) {
+      return null;
+    }
+
+    return Timestamp.fromDate(expirationDate);
+  }
+
+  /// Calculate Firestore native TTL timestamp for a specific expiration date
+  static Timestamp? calculateFirestoreTTLFromDate(DateTime? expirationDate) {
+    if (expirationDate == null) {
+      return null;
+    }
+
+    return Timestamp.fromDate(expirationDate);
   }
 
   /// Check if a document is expired
@@ -79,5 +104,29 @@ class TTLConfig {
 
     final warningThreshold = getWarningThreshold(tier);
     return daysUntilExpiration <= warningThreshold;
+  }
+
+  /// Check if Firestore native TTL should be enabled for a user tier
+  static bool shouldEnableNativeTTL(UserTier tier) {
+    return !hasUnlimitedTTL(tier);
+  }
+
+  /// Get TTL configuration summary for debugging
+  static Map<String, dynamic> getTTLSummary(UserTier tier) {
+    final ttlDays = getTTLDaysForTier(tier);
+    final hasUnlimited = hasUnlimitedTTL(tier);
+    final expirationDate = calculateExpirationDate(tier);
+    final firestoreTTL = calculateFirestoreTTL(tier);
+    final warningThreshold = getWarningThreshold(tier);
+
+    return {
+      'tier': tier.name,
+      'ttlDays': ttlDays,
+      'hasUnlimited': hasUnlimited,
+      'expirationDate': expirationDate?.toIso8601String(),
+      'firestoreTTL': firestoreTTL?.toDate().toIso8601String(),
+      'warningThreshold': warningThreshold,
+      'shouldEnableNativeTTL': shouldEnableNativeTTL(tier),
+    };
   }
 }

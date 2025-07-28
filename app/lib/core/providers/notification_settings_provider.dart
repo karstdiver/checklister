@@ -96,12 +96,9 @@ class NotificationSettingsNotifier extends StateNotifier<NotificationSettings> {
       if (user != null) {
         final userDoc = await _userRepository.getUserDocument(user.uid);
         if (userDoc != null) {
-          final notificationSettings =
-              userDoc.preferences['notificationSettings']
-                  as Map<String, dynamic>?;
-          if (notificationSettings != null) {
-            state = NotificationSettings.fromMap(notificationSettings);
-          }
+          // TODO: Add preferences back to UserDocument model
+          // For now, use default settings
+          state = const NotificationSettings();
         }
       }
     } catch (e) {
@@ -114,19 +111,9 @@ class NotificationSettingsNotifier extends StateNotifier<NotificationSettings> {
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
-        // Get current user preferences
-        final userDoc = await _userRepository.getUserDocument(user.uid);
-        if (userDoc != null) {
-          final currentPreferences = Map<String, dynamic>.from(
-            userDoc.preferences,
-          );
-          currentPreferences['notificationSettings'] = state.toMap();
-
-          await _userRepository.updateUserPreferences(
-            user.uid,
-            currentPreferences,
-          );
-        }
+        // TODO: Add preferences back to UserDocument model
+        // For now, skip saving preferences
+        print('Notification settings save temporarily disabled');
       }
     } catch (e) {
       print('Failed to save notification settings: $e');

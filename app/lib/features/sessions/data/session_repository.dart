@@ -1,21 +1,64 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:logger/logger.dart';
 import '../domain/session_state.dart';
+import '../../../core/constants/ttl_config.dart';
+import '../../../core/domain/user_tier.dart';
 
 final logger = Logger();
 
 class SessionRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  Future<void> saveSession(SessionState session) async {
+  Future<void> saveSession(SessionState session, {UserTier? userTier}) async {
     try {
+      // Prepare session data
+      final sessionData = session.toMap();
+
+      // Add Firestore native TTL if user tier is provided and TTL should be enabled
+      if (userTier != null && TTLConfig.shouldEnableNativeTTL(userTier)) {
+        final ttl = TTLConfig.calculateFirestoreTTL(userTier);
+        if (ttl != null) {
+          sessionData['ttl'] = ttl;
+          logger.d(
+            '🕒 Set Firestore native TTL for session ${session.sessionId}: ${ttl.toDate()}',
+          );
+        }
+      }
+
       await _firestore
           .collection('sessions')
           .doc(session.sessionId)
-          .set(session.toMap());
+          .set(sessionData);
       logger.i('💾 Session saved successfully to Firestore');
     } catch (e) {
       logger.e('💾 Error saving session to Firestore: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> updateSessionTTL(String sessionId, UserTier userTier) async {
+    try {
+      if (TTLConfig.shouldEnableNativeTTL(userTier)) {
+        final ttl = TTLConfig.calculateFirestoreTTL(userTier);
+        if (ttl != null) {
+          await _firestore.collection('sessions').doc(sessionId).update({
+            'ttl': ttl,
+          });
+          logger.d(
+            '🕒 Updated Firestore native TTL for session $sessionId: ${ttl.toDate()}',
+          );
+        }
+      } else {
+        // Remove TTL for unlimited tiers
+        await _firestore.collection('sessions').doc(sessionId).update({
+          'ttl': FieldValue.delete(),
+        });
+        logger.d(
+          '🕒 Removed Firestore native TTL for session $sessionId (unlimited tier)',
+        );
+      }
+    } catch (e) {
+      logger.e('❌ Error updating session TTL: $e');
       rethrow;
     }
   }

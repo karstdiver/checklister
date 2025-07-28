@@ -9,11 +9,11 @@ import '../../../core/providers/providers.dart';
 import '../../../core/widgets/tier_indicator.dart';
 import '../../../core/providers/privilege_provider.dart';
 import '../../../core/domain/user_tier.dart';
-import '../../../core/widgets/privilege_test_panel.dart';
+
 import 'upgrade_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/services/acceptance_service.dart';
-import 'dev_only_panel.dart';
+
 import '../../auth/domain/profile_provider.dart';
 
 class AccountSettingsScreen extends ConsumerStatefulWidget {
@@ -113,8 +113,6 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
                 const SizedBox(height: 16),
                 _buildAccountInfo(currentUser),
                 const SizedBox(height: 16),
-                // DEV ONLY Panel (consolidated)
-                const DevOnlyPanel(),
               ],
             ),
     );

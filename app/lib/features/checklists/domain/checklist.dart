@@ -19,6 +19,8 @@ class Checklist {
   // TTL fields
   final DateTime? expiresAt;
   final DateTime lastActiveAt;
+  // Firestore native TTL field
+  final Timestamp? ttl;
 
   const Checklist({
     required this.id,
@@ -37,6 +39,7 @@ class Checklist {
     this.viewType = ChecklistViewType.swipe,
     this.expiresAt,
     required this.lastActiveAt,
+    this.ttl,
   });
 
   Checklist copyWith({
@@ -56,6 +59,7 @@ class Checklist {
     ChecklistViewType? viewType,
     DateTime? expiresAt,
     DateTime? lastActiveAt,
+    Timestamp? ttl,
   }) {
     return Checklist(
       id: id ?? this.id,
@@ -74,10 +78,10 @@ class Checklist {
       viewType: viewType ?? this.viewType,
       expiresAt: expiresAt ?? this.expiresAt,
       lastActiveAt: lastActiveAt ?? this.lastActiveAt,
+      ttl: ttl ?? this.ttl,
     );
   }
 
-  // Factory constructor to create from Firestore document
   factory Checklist.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     return Checklist(
@@ -114,6 +118,8 @@ class Checklist {
       lastActiveAt: data['lastActiveAt'] != null
           ? (data['lastActiveAt'] as Timestamp).toDate()
           : DateTime.now(),
+      // Firestore native TTL field
+      ttl: data['ttl'] as Timestamp?,
     );
   }
 
@@ -135,6 +141,8 @@ class Checklist {
       'viewType': viewType.name,
       'expiresAt': expiresAt != null ? Timestamp.fromDate(expiresAt!) : null,
       'lastActiveAt': Timestamp.fromDate(lastActiveAt),
+      // Firestore native TTL field
+      'ttl': ttl,
     };
   }
 
@@ -220,6 +228,9 @@ class Checklist {
       'completedItems': completedItems,
       'lastUsedAt': lastUsedAt?.toIso8601String(),
       'viewType': viewType.name,
+      'expiresAt': expiresAt?.toIso8601String(),
+      'lastActiveAt': lastActiveAt.toIso8601String(),
+      'ttl': ttl?.toDate().toIso8601String(),
     };
   }
 
@@ -257,9 +268,14 @@ class Checklist {
       lastActiveAt: json['lastActiveAt'] != null
           ? DateTime.parse(json['lastActiveAt'])
           : DateTime.now(),
+      ttl: json['ttl'] != null
+          ? Timestamp.fromDate(DateTime.parse(json['ttl']))
+          : null,
     );
   }
 }
+
+enum ItemStatus { pending, completed, skipped, reviewed }
 
 class ChecklistItem {
   final String id;
@@ -405,5 +421,3 @@ class ChecklistItem {
     );
   }
 }
-
-enum ItemStatus { pending, completed, skipped, reviewed }
