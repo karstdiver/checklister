@@ -335,142 +335,161 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           ),
         ],
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Form(
           key: _formKey,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // App Logo
-              const Icon(Icons.checklist, size: 64, color: Colors.blue),
-              const SizedBox(height: 32),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight:
+                  MediaQuery.of(context).size.height -
+                  MediaQuery.of(context).padding.top -
+                  kToolbarHeight -
+                  48, // 48 for padding
+            ),
+            child: IntrinsicHeight(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // App Logo
+                  const Icon(Icons.checklist, size: 64, color: Colors.blue),
+                  const SizedBox(height: 32),
 
-              // Title
-              Text(
-                _isSignUp
-                    ? TranslationService.translate('create_account')
-                    : TranslationService.translate('welcome_back'),
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 32),
-
-              // Email Field
-              TextFormField(
-                controller: _emailController,
-                keyboardType: TextInputType.emailAddress,
-                decoration: InputDecoration(
-                  labelText: TranslationService.translate('email'),
-                  border: const OutlineInputBorder(),
-                  prefixIcon: const Icon(Icons.email),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return TranslationService.translate('email_required');
-                  }
-                  if (!value.contains('@')) {
-                    return TranslationService.translate('email_invalid');
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-
-              // Password Field
-              TextFormField(
-                controller: _passwordController,
-                obscureText: true,
-                decoration: InputDecoration(
-                  labelText: TranslationService.translate('password'),
-                  border: const OutlineInputBorder(),
-                  prefixIcon: const Icon(Icons.lock),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return TranslationService.translate('password_required');
-                  }
-                  if (value.length < 6) {
-                    return TranslationService.translate('password_too_short');
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 24),
-
-              // Submit Button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: authState.isLoading ? null : _submitForm,
-                  child: authState.isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Text(
-                          _isSignUp
-                              ? TranslationService.translate('signup')
-                              : TranslationService.translate('login'),
-                        ),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Toggle Sign Up/Login
-              TextButton(
-                onPressed: () => setState(() => _isSignUp = !_isSignUp),
-                child: Text(
-                  _isSignUp
-                      ? TranslationService.translate('already_have_account')
-                      : TranslationService.translate('create_account'),
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // Forgot Password (only show for login mode)
-              if (!_isSignUp) ...[
-                TextButton(
-                  onPressed: _showForgotPasswordDialog,
-                  child: Text(TranslationService.translate('forgot_password')),
-                ),
-                const SizedBox(height: 16),
-              ],
-
-              // Anonymous Login
-              if (currentUser == null || !currentUser.isAnonymous) ...[
-                TextButton(
-                  onPressed: authState.isLoading ? null : _signInAnonymously,
-                  child: Text(
-                    TranslationService.translate('continue_anonymously'),
+                  // Title
+                  Text(
+                    _isSignUp
+                        ? TranslationService.translate('create_account')
+                        : TranslationService.translate('welcome_back'),
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
-                ),
-              ],
+                  const SizedBox(height: 32),
 
-              // Error Message
-              if (authState.hasError) ...[
-                const SizedBox(height: 16),
-                Text(
-                  authState.errorMessage == 'sign_in_failed'
-                      ? TranslationService.translate('sign_in_failed')
-                      : authState.errorMessage ??
-                            TranslationService.translate('error_unknown'),
-                  style: const TextStyle(color: Colors.red),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                TextButton(
-                  onPressed: () =>
-                      ref.read(authNotifierProvider.notifier).clearError(),
-                  child: Text(TranslationService.translate('dismiss')),
-                ),
-              ],
-            ],
+                  // Email Field
+                  TextFormField(
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: InputDecoration(
+                      labelText: TranslationService.translate('email'),
+                      border: const OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.email),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return TranslationService.translate('email_required');
+                      }
+                      if (!value.contains('@')) {
+                        return TranslationService.translate('email_invalid');
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Password Field
+                  TextFormField(
+                    controller: _passwordController,
+                    obscureText: true,
+                    decoration: InputDecoration(
+                      labelText: TranslationService.translate('password'),
+                      border: const OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.lock),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return TranslationService.translate(
+                          'password_required',
+                        );
+                      }
+                      if (value.length < 6) {
+                        return TranslationService.translate(
+                          'password_too_short',
+                        );
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Submit Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: authState.isLoading ? null : _submitForm,
+                      child: authState.isLoading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : Text(
+                              _isSignUp
+                                  ? TranslationService.translate('signup')
+                                  : TranslationService.translate('login'),
+                            ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Toggle Sign Up/Login
+                  TextButton(
+                    onPressed: () => setState(() => _isSignUp = !_isSignUp),
+                    child: Text(
+                      _isSignUp
+                          ? TranslationService.translate('already_have_account')
+                          : TranslationService.translate('create_account'),
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Forgot Password (only show for login mode)
+                  if (!_isSignUp) ...[
+                    TextButton(
+                      onPressed: _showForgotPasswordDialog,
+                      child: Text(
+                        TranslationService.translate('forgot_password'),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+
+                  // Anonymous Login
+                  if (currentUser == null || !currentUser.isAnonymous) ...[
+                    TextButton(
+                      onPressed: authState.isLoading
+                          ? null
+                          : _signInAnonymously,
+                      child: Text(
+                        TranslationService.translate('continue_anonymously'),
+                      ),
+                    ),
+                  ],
+
+                  // Error Message
+                  if (authState.hasError) ...[
+                    const SizedBox(height: 16),
+                    Text(
+                      authState.errorMessage == 'sign_in_failed'
+                          ? TranslationService.translate('sign_in_failed')
+                          : authState.errorMessage ??
+                                TranslationService.translate('error_unknown'),
+                      style: const TextStyle(color: Colors.red),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    TextButton(
+                      onPressed: () =>
+                          ref.read(authNotifierProvider.notifier).clearError(),
+                      child: Text(TranslationService.translate('dismiss')),
+                    ),
+                  ],
+                ],
+              ),
+            ),
           ),
         ),
       ),

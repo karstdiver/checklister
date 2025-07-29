@@ -21,6 +21,11 @@ class UserRepository {
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
         'isActive': true,
+        // NEW: Admin role fields with default values
+        'adminRole': 'none',
+        'adminRoleAssignedBy': 'system',
+        'adminRoleAssignedAt': FieldValue.serverTimestamp(),
+        'adminRoleNotes': 'Default admin role assigned during user creation',
         'preferences': {
           'themeMode': 'system',
           'language': 'en_US',
@@ -72,6 +77,11 @@ class UserRepository {
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
         'isActive': true,
+        // NEW: Admin role fields with default values
+        'adminRole': 'none',
+        'adminRoleAssignedBy': 'system',
+        'adminRoleAssignedAt': FieldValue.serverTimestamp(),
+        'adminRoleNotes': 'Default admin role assigned during user creation',
         'preferences': {
           'themeMode': 'system',
           'language': 'en_US',

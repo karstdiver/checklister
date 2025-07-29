@@ -42,8 +42,11 @@ class _TTLManagementScreenState extends ConsumerState<TTLManagementScreen> {
             _buildUserTierInfo(userTier, theme),
             const SizedBox(height: 24),
             _buildTTLConfiguration(theme),
-            const SizedBox(height: 24),
-            _buildCleanupSection(theme),
+            // SECURITY: Only show cleanup section to admin users
+            if (userPrivileges?.canManageTTL == true) ...[
+              const SizedBox(height: 24),
+              _buildCleanupSection(theme),
+            ],
             if (_cleanupResults != null) ...[
               const SizedBox(height: 24),
               _buildCleanupResults(theme),
@@ -175,8 +178,6 @@ class _TTLManagementScreenState extends ConsumerState<TTLManagementScreen> {
   }
 
   Widget _buildCleanupSection(ThemeData theme) {
-    final userPrivileges = ref.watch(privilegeProvider);
-
     return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -207,43 +208,36 @@ class _TTLManagementScreenState extends ConsumerState<TTLManagementScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-              // SECURITY: Only show admin buttons to actual admins
-              if (userPrivileges?.canManageTTL == true ||
-                  const bool.fromEnvironment('dart.vm.product') == false)
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: _isLoading ? null : _cleanupAllTiers,
-                    icon: const Icon(Icons.cleaning_services_outlined),
-                    label: Text(
-                      TranslationService.translate('cleanup_all_tiers'),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.colorScheme.secondary,
-                      foregroundColor: theme.colorScheme.onSecondary,
-                    ),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: _isLoading ? null : _cleanupAllTiers,
+                  icon: const Icon(Icons.cleaning_services_outlined),
+                  label: Text(
+                    TranslationService.translate('cleanup_all_tiers'),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: theme.colorScheme.secondary,
+                    foregroundColor: theme.colorScheme.onSecondary,
                   ),
                 ),
+              ),
             ],
           ),
-          // SECURITY: Only show admin buttons to actual admins
-          if (userPrivileges?.canManageTTL == true ||
-              const bool.fromEnvironment('dart.vm.product') == false) ...[
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _isLoading ? null : _cleanupOrphanedDocuments,
-                icon: const Icon(Icons.delete_sweep),
-                label: Text(
-                  TranslationService.translate('cleanup_orphaned_documents'),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: theme.colorScheme.errorContainer,
-                  foregroundColor: theme.colorScheme.onErrorContainer,
-                ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: _isLoading ? null : _cleanupOrphanedDocuments,
+              icon: const Icon(Icons.delete_sweep),
+              label: Text(
+                TranslationService.translate('cleanup_orphaned_documents'),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: theme.colorScheme.errorContainer,
+                foregroundColor: theme.colorScheme.onErrorContainer,
               ),
             ),
-          ],
+          ),
           if (_isLoading) ...[
             const SizedBox(height: 16),
             const Center(child: CircularProgressIndicator()),
@@ -353,27 +347,8 @@ class _TTLManagementScreenState extends ConsumerState<TTLManagementScreen> {
   }
 
   Future<void> _cleanupAllTiers() async {
-    // SECURITY: Only allow admin users or in debug mode
-    final userPrivileges = ref.read(privilegeProvider);
-
-    // Check if user has admin privileges
-    final hasAdminAccess =
-        userPrivileges?.canManageTTL == true ||
-        const bool.fromEnvironment('dart.vm.product') == false;
-
-    if (!hasAdminAccess) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              TranslationService.translate('insufficient_privileges'),
-            ),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
-      }
-      return;
-    }
+    // Note: This method is only accessible to admin users since the cleanup section
+    // is conditionally displayed based on canManageTTL privilege
 
     // Show confirmation dialog for admin operations
     final confirmed = await showDialog<bool>(
@@ -441,27 +416,8 @@ class _TTLManagementScreenState extends ConsumerState<TTLManagementScreen> {
   }
 
   Future<void> _cleanupOrphanedDocuments() async {
-    // SECURITY: Only allow admin users or in debug mode
-    final userPrivileges = ref.read(privilegeProvider);
-
-    // Check if user has admin privileges
-    final hasAdminAccess =
-        userPrivileges?.canManageTTL == true ||
-        const bool.fromEnvironment('dart.vm.product') == false;
-
-    if (!hasAdminAccess) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              TranslationService.translate('insufficient_privileges'),
-            ),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
-      }
-      return;
-    }
+    // Note: This method is only accessible to admin users since the cleanup section
+    // is conditionally displayed based on canManageTTL privilege
 
     // Show confirmation dialog for admin operations
     final confirmed = await showDialog<bool>(

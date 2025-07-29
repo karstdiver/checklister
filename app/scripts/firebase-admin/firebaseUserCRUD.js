@@ -217,10 +217,10 @@ async function displayUserTierInfo(userId) {
     
     if (userDoc.exists) {
       const userData = userDoc.data();
-      const userTier = userData.tier || 'anonymous';
-      const subscriptionStatus = userData.subscriptionStatus || 'N/A';
-      const subscriptionExpiry = userData.subscriptionExpiry ? 
-        new Date(userData.subscriptionExpiry.toDate()).toLocaleString() : 'N/A';
+      const userTier = userData.subscription?.tier || userData.tier || 'anonymous';
+      const subscriptionStatus = userData.subscription?.status || 'N/A';
+      const subscriptionExpiry = userData.subscription?.endDate ? 
+        new Date(userData.subscription.endDate.toDate()).toLocaleString() : 'N/A';
       
       console.log(`💎 User Tier: ${userTier.toUpperCase()}`);
       console.log(`📊 Subscription Status: ${subscriptionStatus}`);
@@ -273,7 +273,7 @@ async function manageUserTier(userId) {
     }
     
     const userData = userDoc.data();
-    const currentTier = userData.tier || 'anonymous';
+    const currentTier = userData.subscription?.tier || userData.tier || 'anonymous';
     
     console.log(`📋 Current user tier: ${currentTier.toUpperCase()}`);
     console.log(`⏰ Current TTL: ${getTTLInfoForTier(currentTier)}`);
@@ -321,7 +321,8 @@ async function manageUserTier(userId) {
     
     if (confirmChange === 'yes') {
       const updateData = {
-        tier: newTier,
+        'subscription.tier': newTier,
+        'subscription.status': 'active',
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
       };
       
@@ -519,7 +520,6 @@ async function createNewUser() {
         'createdAt': now,
         'updatedAt': now,
         'isActive': true,
-        'tier': userTier,
         'adminRole': adminRole,
         'adminRoleAssignedBy': 'firebase-admin-script',
         'adminRoleAssignedAt': now,

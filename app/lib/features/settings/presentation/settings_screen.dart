@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/providers/providers.dart';
 import '../../../shared/widgets/logout_dialog.dart';
 import '../../../core/providers/settings_provider.dart';
+import '../../../core/providers/privilege_provider.dart';
 import 'dart:io' show Platform;
 import 'package:flutter/cupertino.dart';
 import '../../../core/services/translation_service.dart';
@@ -148,6 +149,26 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         );
                       },
                     ),
+                    // Admin Panel Option
+                    if (ref.watch(privilegeProvider)?.canAccessAdminPanel ==
+                        true) ...[
+                      const Divider(height: 1),
+                      ListTile(
+                        leading: const Icon(
+                          Icons.admin_panel_settings,
+                          color: Colors.orange,
+                        ),
+                        title: const Text('Admin Panel'),
+                        subtitle: Text(
+                          'Role: ${ref.watch(privilegeProvider)?.adminRole.name.toUpperCase()}',
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                        trailing: const Icon(Icons.arrow_forward_ios),
+                        onTap: () {
+                          Navigator.pushNamed(context, '/account/settings');
+                        },
+                      ),
+                    ],
                   ],
                 ),
               ),

@@ -19,6 +19,7 @@ import 'features/settings/presentation/notification_screen.dart';
 import 'features/achievements/presentation/achievement_screen.dart';
 import 'features/settings/presentation/about_screen.dart';
 import 'features/settings/presentation/help_screen.dart';
+import 'features/settings/presentation/account_settings_screen.dart';
 import 'shared/themes/app_theme.dart';
 import 'core/services/acceptance_service.dart';
 import 'core/services/translation_service.dart';
@@ -70,6 +71,7 @@ class ChecklisterApp extends ConsumerWidget {
             '/achievements': (context) => const AchievementScreen(),
             '/about': (context) => const AboutScreen(),
             '/help': (context) => const HelpScreen(),
+            '/account/settings': (context) => const AccountSettingsScreen(),
           },
         );
       },

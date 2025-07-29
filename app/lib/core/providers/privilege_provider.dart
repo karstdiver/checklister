@@ -86,6 +86,11 @@ class PrivilegeNotifier extends StateNotifier<UserPrivileges?> {
     // NEW: Get admin role from user document
     final adminRole = _getAdminRoleFromString(userDoc.adminRole);
 
+    print(
+      '[DEBUG] PrivilegeNotifier: userDoc.adminRole = ${userDoc.adminRole}',
+    );
+    print('[DEBUG] PrivilegeNotifier: parsed adminRole = $adminRole');
+
     // Use the factory methods from UserPrivileges to ensure all features are included
     UserPrivileges basePrivileges;
     switch (tier) {
@@ -103,12 +108,24 @@ class PrivilegeNotifier extends StateNotifier<UserPrivileges?> {
         break;
     }
 
-    return basePrivileges.copyWith(
+    final privileges = basePrivileges.copyWith(
       adminRole: adminRole, // NEW: Set admin role from database
       isActive: subscription?.status == 'active',
       expiresAt: subscription?.endDate,
       usage: usage,
     );
+
+    print(
+      '[DEBUG] PrivilegeNotifier: final privileges adminRole = ${privileges.adminRole}',
+    );
+    print(
+      '[DEBUG] PrivilegeNotifier: final privileges isAdmin = ${privileges.isAdmin}',
+    );
+    print(
+      '[DEBUG] PrivilegeNotifier: final privileges isSuperAdmin = ${privileges.isSuperAdmin}',
+    );
+
+    return privileges;
   }
 
   // NEW: Convert string admin role to enum
@@ -157,7 +174,22 @@ class PrivilegeNotifier extends StateNotifier<UserPrivileges?> {
 
   // Public methods
   Future<void> refresh() async {
+    print('[DEBUG] PrivilegeNotifier: refresh() called');
     await _initializePrivileges();
+  }
+
+  // Debug method to check current admin role
+  void debugPrintCurrentState() {
+    print('[DEBUG] PrivilegeNotifier: Current state:');
+    print('[DEBUG] PrivilegeNotifier:   - state: $state');
+    print('[DEBUG] PrivilegeNotifier:   - adminRole: ${state?.adminRole}');
+    print('[DEBUG] PrivilegeNotifier:   - isAdmin: ${state?.isAdmin}');
+    print(
+      '[DEBUG] PrivilegeNotifier:   - isSuperAdmin: ${state?.isSuperAdmin}',
+    );
+    print(
+      '[DEBUG] PrivilegeNotifier:   - canManageTTL: ${state?.canManageTTL}',
+    );
   }
 
   Future<void> updateUsage(String key, int amount) async {

@@ -9,12 +9,14 @@ import '../../../core/providers/providers.dart';
 import '../../../core/widgets/tier_indicator.dart';
 import '../../../core/providers/privilege_provider.dart';
 import '../../../core/domain/user_tier.dart';
+import '../../../core/services/admin_management_service.dart';
 
 import 'upgrade_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/services/acceptance_service.dart';
 
 import '../../auth/domain/profile_provider.dart';
+import 'ttl_management_screen.dart';
 
 class AccountSettingsScreen extends ConsumerStatefulWidget {
   const AccountSettingsScreen({super.key});
@@ -113,6 +115,11 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
                 const SizedBox(height: 16),
                 _buildAccountInfo(currentUser),
                 const SizedBox(height: 16),
+                // Admin Panel Section
+                if (privileges?.canAccessAdminPanel == true) ...[
+                  _buildAdminPanel(privileges!),
+                  const SizedBox(height: 16),
+                ],
               ],
             ),
     );
@@ -232,6 +239,229 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
     } catch (e) {
       return TranslationService.translate('not_available');
     }
+  }
+
+  Widget _buildAdminPanel(UserPrivileges privileges) {
+    final theme = Theme.of(context);
+    final textColor = theme.colorScheme.onSurface;
+
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Admin Panel Header
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.admin_panel_settings,
+                  color: theme.colorScheme.primary,
+                  size: 24,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Admin Panel',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                      Text(
+                        'Role: ${privileges.adminRole.name.toUpperCase()}',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: textColor.withValues(alpha: 0.7),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1),
+
+          // Admin Features
+          _buildAdminFeatureTile(
+            icon: Icons.analytics,
+            title: 'System Analytics',
+            subtitle: 'View system-wide statistics and usage data',
+            color: Colors.blue,
+            onTap: () => _showAnalyticsDialog(),
+            enabled: privileges.canViewAnalytics,
+          ),
+
+          if (privileges.canManageTTL) ...[
+            const Divider(height: 1),
+            _buildAdminFeatureTile(
+              icon: Icons.timer,
+              title: 'TTL Management',
+              subtitle: 'Manage data retention and cleanup policies',
+              color: Colors.orange,
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const TTLManagementScreen(),
+                ),
+              ),
+              enabled: true,
+            ),
+          ],
+
+          if (privileges.canManageUsers) ...[
+            const Divider(height: 1),
+            _buildAdminFeatureTile(
+              icon: Icons.people,
+              title: 'User Management',
+              subtitle: 'Manage user accounts and admin roles',
+              color: Colors.green,
+              onTap: () => _showUserManagementDialog(),
+              enabled: true,
+            ),
+          ],
+
+          if (privileges.canManageSystem) ...[
+            const Divider(height: 1),
+            _buildAdminFeatureTile(
+              icon: Icons.settings_system_daydream,
+              title: 'System Settings',
+              subtitle: 'Configure system-wide settings and policies',
+              color: Colors.purple,
+              onTap: () => _showSystemSettingsDialog(),
+              enabled: true,
+            ),
+          ],
+
+          if (privileges.canCleanupAllData) ...[
+            const Divider(height: 1),
+            _buildAdminFeatureTile(
+              icon: Icons.cleaning_services,
+              title: 'Data Cleanup',
+              subtitle: 'Clean up expired data across all tiers',
+              color: Colors.red,
+              onTap: () => _showDataCleanupDialog(),
+              enabled: true,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAdminFeatureTile({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required VoidCallback onTap,
+    required bool enabled,
+  }) {
+    final theme = Theme.of(context);
+    final textColor = theme.colorScheme.onSurface;
+
+    return ListTile(
+      leading: Icon(
+        icon,
+        color: enabled ? color : textColor.withValues(alpha: 0.3),
+        size: 24,
+      ),
+      title: Text(
+        title,
+        style: TextStyle(
+          fontWeight: FontWeight.w500,
+          color: enabled ? textColor : textColor.withValues(alpha: 0.5),
+        ),
+      ),
+      subtitle: Text(
+        subtitle,
+        style: TextStyle(
+          fontSize: 12,
+          color: enabled
+              ? textColor.withValues(alpha: 0.7)
+              : textColor.withValues(alpha: 0.3),
+        ),
+      ),
+      trailing: enabled
+          ? const Icon(Icons.arrow_forward_ios, size: 16)
+          : Icon(Icons.lock, size: 16, color: textColor.withValues(alpha: 0.3)),
+      onTap: enabled ? onTap : null,
+    );
+  }
+
+  void _showAnalyticsDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('System Analytics'),
+        content: const Text(
+          'System analytics feature coming soon. This will provide detailed insights into system usage, user behavior, and performance metrics.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showUserManagementDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('User Management'),
+        content: const Text(
+          'User management feature coming soon. This will allow you to view all users, manage admin roles, and perform user administration tasks.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSystemSettingsDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('System Settings'),
+        content: const Text(
+          'System settings feature coming soon. This will allow you to configure system-wide policies, feature flags, and administrative settings.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDataCleanupDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Data Cleanup'),
+        content: const Text(
+          'Data cleanup feature coming soon. This will allow you to perform system-wide data cleanup operations across all user tiers.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 }
 

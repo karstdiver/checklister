@@ -141,6 +141,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     case 'settings':
                       Navigator.pushNamed(context, '/settings');
                       break;
+                    case 'admin_panel':
+                      Navigator.pushNamed(context, '/account/settings');
+                      break;
                     case 'logout':
                       await LogoutDialog.show(context, authNotifier, ref);
                       break;
@@ -167,6 +170,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ],
                     ),
                   ),
+                  // Admin Panel Option
+                  if (ref.watch(privilegeProvider)?.canAccessAdminPanel == true)
+                    PopupMenuItem(
+                      value: 'admin_panel',
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.admin_panel_settings,
+                            color: Colors.orange,
+                          ),
+                          const SizedBox(width: 8),
+                          const Text('Admin Panel'),
+                        ],
+                      ),
+                    ),
                   const PopupMenuDivider(),
                   PopupMenuItem(
                     value: 'logout',
