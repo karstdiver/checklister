@@ -84,7 +84,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                   ),
                                 ),
                                 Text(
-                                  'User ID: ${currentUser?.uid ?? 'N/A'}',
+                                  '${TranslationService.translate('user_id')}: ${currentUser?.uid ?? TranslationService.translate('not_available')}',
                                   style: const TextStyle(
                                     fontSize: 12,
                                     color: Colors.grey,

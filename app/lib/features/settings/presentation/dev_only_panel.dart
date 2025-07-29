@@ -73,8 +73,8 @@ class _DevOnlyPanelState extends ConsumerState<DevOnlyPanel> {
         SnackBar(
           content: Text(
             value
-                ? 'Acceptance set (DEV ONLY)'
-                : 'Acceptance cleared (DEV ONLY)',
+                ? TranslationService.translate('acceptance_set')
+                : TranslationService.translate('acceptance_cleared'),
           ),
         ),
       );
@@ -92,7 +92,10 @@ class _DevOnlyPanelState extends ConsumerState<DevOnlyPanel> {
         children: [
           const Icon(Icons.science, color: Colors.orange),
           const SizedBox(width: 8),
-          Text('Development Only', style: TextStyle(color: Colors.red)),
+          Text(
+            TranslationService.translate('development_only'),
+            style: TextStyle(color: Colors.red),
+          ),
         ],
       ),
       children: [
@@ -158,7 +161,7 @@ class _DevOnlyPanelState extends ConsumerState<DevOnlyPanel> {
               const SizedBox(height: 24),
               // Acceptance status reset
               Text(
-                'Acceptance Status (DEV ONLY)',
+                TranslationService.translate('acceptance_status'),
                 style: TextStyle(color: Colors.red),
               ),
               const SizedBox(height: 8),
@@ -172,7 +175,9 @@ class _DevOnlyPanelState extends ConsumerState<DevOnlyPanel> {
                         ),
                         const SizedBox(width: 12),
                         Text(
-                          _accepted ? 'Acceptance: ON' : 'Acceptance: OFF',
+                          _accepted
+                              ? TranslationService.translate('acceptance_on')
+                              : TranslationService.translate('acceptance_off'),
                           style: TextStyle(
                             color: _accepted ? Colors.green : Colors.red,
                             fontWeight: FontWeight.bold,

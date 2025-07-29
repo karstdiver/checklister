@@ -289,7 +289,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
           _buildAdminFeatureTile(
             icon: Icons.analytics,
             title: TranslationService.translate('system_analytics'),
-            subtitle: 'View system-wide statistics and usage data',
+            subtitle: TranslationService.translate('view_system_statistics'),
             color: Colors.blue,
             onTap: () => _showAnalyticsDialog(),
             enabled: privileges.canViewAnalytics,
@@ -299,8 +299,8 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
             const Divider(height: 1),
             _buildAdminFeatureTile(
               icon: Icons.timer,
-              title: 'TTL Management',
-              subtitle: 'Manage data retention and cleanup policies',
+              title: TranslationService.translate('ttl_management'),
+              subtitle: TranslationService.translate('manage_data_retention'),
               color: Colors.orange,
               onTap: () => Navigator.push(
                 context,
@@ -317,7 +317,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
             _buildAdminFeatureTile(
               icon: Icons.people,
               title: TranslationService.translate('user_management'),
-              subtitle: 'Manage user accounts and admin roles',
+              subtitle: TranslationService.translate('manage_user_accounts'),
               color: Colors.green,
               onTap: () => _showUserManagementDialog(),
               enabled: true,
@@ -329,7 +329,9 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
             _buildAdminFeatureTile(
               icon: Icons.settings_system_daydream,
               title: TranslationService.translate('system_settings'),
-              subtitle: 'Configure system-wide settings and policies',
+              subtitle: TranslationService.translate(
+                'configure_system_settings',
+              ),
               color: Colors.purple,
               onTap: () => _showSystemSettingsDialog(),
               enabled: true,
@@ -341,7 +343,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
             _buildAdminFeatureTile(
               icon: Icons.cleaning_services,
               title: TranslationService.translate('data_cleanup'),
-              subtitle: 'Clean up expired data across all tiers',
+              subtitle: TranslationService.translate('cleanup_expired_data'),
               color: Colors.red,
               onTap: () => _showDataCleanupDialog(),
               enabled: true,
@@ -397,13 +399,13 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(TranslationService.translate('system_analytics')),
-        content: const Text(
-          'System analytics feature coming soon. This will provide detailed insights into system usage, user behavior, and performance metrics.',
+        content: Text(
+          TranslationService.translate('system_analytics_coming_soon'),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
+            child: Text(TranslationService.translate('ok')),
           ),
         ],
       ),
@@ -415,13 +417,13 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(TranslationService.translate('user_management')),
-        content: const Text(
-          'User management feature coming soon. This will allow you to view all users, manage admin roles, and perform user administration tasks.',
+        content: Text(
+          TranslationService.translate('user_management_coming_soon'),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
+            child: Text(TranslationService.translate('ok')),
           ),
         ],
       ),
@@ -433,13 +435,13 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(TranslationService.translate('system_settings')),
-        content: const Text(
-          'System settings feature coming soon. This will allow you to configure system-wide policies, feature flags, and administrative settings.',
+        content: Text(
+          TranslationService.translate('system_settings_coming_soon'),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
+            child: Text(TranslationService.translate('ok')),
           ),
         ],
       ),
@@ -451,13 +453,11 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(TranslationService.translate('data_cleanup')),
-        content: const Text(
-          'Data cleanup feature coming soon. This will allow you to perform system-wide data cleanup operations across all user tiers.',
-        ),
+        content: Text(TranslationService.translate('data_cleanup_coming_soon')),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
+            child: Text(TranslationService.translate('ok')),
           ),
         ],
       ),
