@@ -36,7 +36,7 @@ class Checklist {
     required this.totalItems,
     required this.completedItems,
     this.lastUsedAt,
-    this.viewType = ChecklistViewType.swipe,
+    this.viewType = ChecklistViewType.list,
     this.expiresAt,
     required this.lastActiveAt,
     this.ttl,
@@ -110,7 +110,7 @@ class Checklist {
           : null,
       viewType: ChecklistViewType.values.firstWhere(
         (e) => e.name == data['viewType'],
-        orElse: () => ChecklistViewType.swipe,
+        orElse: () => ChecklistViewType.list,
       ),
       expiresAt: data['expiresAt'] != null
           ? (data['expiresAt'] as Timestamp).toDate()
@@ -155,7 +155,7 @@ class Checklist {
     String? coverImageUrl,
     bool isPublic = false,
     List<String> tags = const [],
-    ChecklistViewType viewType = ChecklistViewType.swipe,
+    ChecklistViewType viewType = ChecklistViewType.list,
   }) {
     final now = DateTime.now();
     return Checklist(
@@ -260,7 +260,7 @@ class Checklist {
           : null,
       viewType: ChecklistViewType.values.firstWhere(
         (e) => e.name == json['viewType'],
-        orElse: () => ChecklistViewType.swipe,
+        orElse: () => ChecklistViewType.list,
       ),
       expiresAt: json['expiresAt'] != null
           ? DateTime.parse(json['expiresAt'])

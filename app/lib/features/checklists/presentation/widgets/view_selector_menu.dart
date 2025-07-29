@@ -12,8 +12,8 @@ class ViewSelectorMenu extends StatelessWidget {
     required this.currentViewType,
     required this.onViewTypeChanged,
     this.availableViewTypes = const [
-      ChecklistViewType.swipe,
       ChecklistViewType.list,
+      ChecklistViewType.swipe,
       ChecklistViewType.matrix,
     ],
   });
