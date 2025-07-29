@@ -12,6 +12,7 @@ import '../../../core/widgets/signup_encouragement.dart';
 import '../../../core/services/analytics_service.dart';
 import '../../../core/services/translation_service.dart';
 import '../../../shared/widgets/app_card.dart';
+import '../../../shared/widgets/usage_indicator.dart';
 import '../../settings/presentation/upgrade_screen.dart';
 
 class ChecklistEditorScreen extends ConsumerStatefulWidget {
@@ -263,6 +264,21 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
               ),
 
               const SizedBox(height: 16),
+
+              // Usage Indicator (only show for new checklists)
+              if (widget.checklist == null) ...[
+                UsageIndicator(
+                  currentChecklistCount: ref
+                      .watch(checklistNotifierProvider)
+                      .maybeWhen(
+                        data: (checklists) => checklists.length,
+                        orElse: () => 0,
+                      ),
+                  currentItemCount: _items.length,
+                  showItemLimit: true,
+                ),
+                const SizedBox(height: 16),
+              ],
 
               // Tags
               AppCard(
@@ -593,6 +609,9 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
         }
       } else {
         // Create new checklist
+        final privileges = ref.read(privilegeProvider);
+        final userTier = privileges?.tier;
+
         final newChecklist = await notifier.createChecklist(
           title: _titleController.text.trim(),
           description: _descriptionController.text.trim().isEmpty
@@ -602,6 +621,7 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
           items: _items,
           tags: _tags,
           isPublic: _isPublic,
+          userTier: userTier, // Pass user tier for limit checking
         );
 
         if (newChecklist != null && mounted) {
@@ -610,14 +630,22 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              TranslationService.translate('error_saving_checklist'),
+        final errorMessage = e.toString();
+
+        // Check if this is a limit exceeded error
+        if (errorMessage.contains('limit reached') ||
+            errorMessage.contains('limit_reached')) {
+          _showUpgradeDialog();
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                TranslationService.translate('error_saving_checklist'),
+              ),
+              backgroundColor: Colors.red,
             ),
-            backgroundColor: Colors.red,
-          ),
-        );
+          );
+        }
       }
     } finally {
       if (mounted) {
@@ -676,5 +704,36 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
     if (result != null) {
       Navigator.of(context).pop();
     }
+  }
+
+  /// Show upgrade dialog when limits are reached
+  void _showUpgradeDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(TranslationService.translate('limit_reached')),
+        content: Text(TranslationService.translate('upgrade_to_create_more')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(TranslationService.translate('cancel')),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _navigateToUpgrade();
+            },
+            child: Text(TranslationService.translate('upgrade_now')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Navigate to upgrade screen
+  void _navigateToUpgrade() {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => const UpgradeScreen()));
   }
 }

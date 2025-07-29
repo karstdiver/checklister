@@ -17,6 +17,7 @@ import '../../../core/services/acceptance_service.dart';
 
 import '../../auth/domain/profile_provider.dart';
 import 'ttl_management_screen.dart';
+import 'limit_management_screen.dart';
 
 class AccountSettingsScreen extends ConsumerStatefulWidget {
   const AccountSettingsScreen({super.key});
@@ -306,6 +307,23 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
                 context,
                 MaterialPageRoute(
                   builder: (context) => const TTLManagementScreen(),
+                ),
+              ),
+              enabled: true,
+            ),
+          ],
+
+          if (privileges.canManageSystem) ...[
+            const Divider(height: 1),
+            _buildAdminFeatureTile(
+              icon: Icons.settings_applications,
+              title: TranslationService.translate('limit_management'),
+              subtitle: TranslationService.translate('configure_limits'),
+              color: Colors.indigo,
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const LimitManagementScreen(),
                 ),
               ),
               enabled: true,

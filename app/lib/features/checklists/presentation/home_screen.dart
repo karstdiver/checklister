@@ -5,6 +5,7 @@ import '../../../core/domain/user_tier.dart';
 import '../../../core/providers/privilege_provider.dart';
 import '../../../core/widgets/signup_encouragement.dart';
 import '../../../shared/widgets/logout_dialog.dart';
+import '../../../shared/widgets/usage_indicator.dart';
 import '../../../core/services/translation_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../sessions/domain/session_state.dart' as sessions;
@@ -262,6 +263,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       child: const Icon(Icons.add),
                     ),
                   ],
+                ),
+                const SizedBox(height: 16),
+
+                // Usage Indicator
+                CompactUsageIndicator(
+                  currentChecklistCount: checklistsAsync.maybeWhen(
+                    data: (checklists) => checklists.length,
+                    orElse: () => 0,
+                  ),
+                  currentItemCount:
+                      0, // We don't track total items on home screen
+                  showItemLimit: false,
                 ),
                 const SizedBox(height: 16),
 

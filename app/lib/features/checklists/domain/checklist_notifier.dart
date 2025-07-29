@@ -3,6 +3,9 @@ import '../data/checklist_repository.dart';
 import 'checklist.dart';
 import 'checklist_view_type.dart';
 import '../../../core/services/analytics_service.dart';
+import '../../../core/services/limit_management_service.dart';
+import '../../../core/services/translation_service.dart';
+import '../../../core/domain/user_tier.dart';
 import '../../achievements/domain/achievement_notifier.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
@@ -134,8 +137,61 @@ class ChecklistNotifier extends StateNotifier<AsyncValue<List<Checklist>>> {
     String? coverImageUrl,
     bool isPublic = false,
     List<String> tags = const [],
+    UserTier? userTier, // Add user tier parameter for limit checking
   }) async {
     try {
+      // Check creation limits if user tier is provided
+      if (userTier != null) {
+        final currentChecklistCount = state.maybeWhen(
+          data: (checklists) => checklists.length,
+          orElse: () => 0,
+        );
+
+        final canCreate = await LimitManagementService.canCreateChecklist(
+          userId,
+          userTier,
+          currentChecklistCount,
+        );
+
+        if (!canCreate) {
+          final limit = await LimitManagementService.getEffectiveLimit(
+            userId,
+            userTier,
+            'maxChecklists',
+          );
+
+          final errorMessage = limit == -1
+              ? TranslationService.translate('checklist_limit_reached')
+              : '${TranslationService.translate('checklist_limit_reached')}: $currentChecklistCount/${limit}';
+
+          throw Exception(errorMessage);
+        }
+
+        // Check item limits for the new checklist
+        if (items.isNotEmpty) {
+          final canAddItems =
+              await LimitManagementService.canAddItemsToChecklist(
+                userId,
+                userTier,
+                items.length,
+              );
+
+          if (!canAddItems) {
+            final itemLimit = await LimitManagementService.getEffectiveLimit(
+              userId,
+              userTier,
+              'maxItemsPerChecklist',
+            );
+
+            final errorMessage = itemLimit == -1
+                ? TranslationService.translate('item_limit_reached')
+                : '${TranslationService.translate('item_limit_reached')}: ${items.length}/${itemLimit}';
+
+            throw Exception(errorMessage);
+          }
+        }
+      }
+
       final checklist = Checklist.create(
         title: title,
         description: description,
@@ -237,8 +293,40 @@ class ChecklistNotifier extends StateNotifier<AsyncValue<List<Checklist>>> {
   }
 
   // Add an item to a checklist
-  Future<bool> addItem(String checklistId, ChecklistItem item) async {
+  Future<bool> addItem(
+    String checklistId,
+    ChecklistItem item, {
+    UserTier? userTier, // Add user tier parameter for limit checking
+  }) async {
     try {
+      // Check item limits if user tier is provided
+      if (userTier != null) {
+        final checklist = getChecklistById(checklistId);
+        if (checklist != null) {
+          final currentItemCount = checklist.items.length;
+          final canAddItems =
+              await LimitManagementService.canAddItemsToChecklist(
+                checklist.userId,
+                userTier,
+                currentItemCount + 1, // +1 for the new item
+              );
+
+          if (!canAddItems) {
+            final itemLimit = await LimitManagementService.getEffectiveLimit(
+              checklist.userId,
+              userTier,
+              'maxItemsPerChecklist',
+            );
+
+            final errorMessage = itemLimit == -1
+                ? TranslationService.translate('item_limit_reached')
+                : '${TranslationService.translate('item_limit_reached')}: ${currentItemCount + 1}/${itemLimit}';
+
+            throw Exception(errorMessage);
+          }
+        }
+      }
+
       await _repository.addItem(checklistId, item);
 
       // Refresh the specific checklist

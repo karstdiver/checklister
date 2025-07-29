@@ -7,6 +7,7 @@ import 'package:checklister/features/sessions/domain/session_notifier.dart';
 import 'package:checklister/features/sessions/domain/session_providers.dart';
 import 'package:checklister/core/services/translation_service.dart';
 import 'package:checklister/core/services/ttl_cleanup_service.dart';
+import 'package:checklister/core/services/limit_management_service.dart';
 import 'package:checklister/shared/widgets/app_card.dart';
 import 'package:logger/logger.dart';
 
@@ -42,6 +43,8 @@ class _TTLManagementScreenState extends ConsumerState<TTLManagementScreen> {
             _buildUserTierInfo(userTier, theme),
             const SizedBox(height: 24),
             _buildTTLConfiguration(theme),
+            const SizedBox(height: 24),
+            _buildCreationLimitsSection(userTier, theme),
             // SECURITY: Only show cleanup section to admin users
             if (userPrivileges?.canManageTTL == true) ...[
               const SizedBox(height: 24),
@@ -482,5 +485,132 @@ class _TTLManagementScreenState extends ConsumerState<TTLManagementScreen> {
         _isLoading = false;
       });
     }
+  }
+
+  Widget _buildCreationLimitsSection(UserTier userTier, ThemeData theme) {
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            TranslationService.translate('usage_limits'),
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            TranslationService.translate('current_usage'),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+            ),
+          ),
+          const SizedBox(height: 16),
+          FutureBuilder<Map<String, int>>(
+            future: LimitManagementService.getTierLimits(userTier),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (snapshot.hasError) {
+                return Text(
+                  TranslationService.translate('error_loading_limits'),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.error,
+                  ),
+                );
+              }
+
+              final limits = snapshot.data;
+              if (limits == null) {
+                return Text(
+                  TranslationService.translate('no_limits_available'),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                  ),
+                );
+              }
+
+              return Column(
+                children: [
+                  _buildLimitRow(
+                    theme,
+                    TranslationService.translate('checklists_used'),
+                    limits['maxChecklists'] ?? -1,
+                    Icons.checklist,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildLimitRow(
+                    theme,
+                    TranslationService.translate('items_per_list'),
+                    limits['maxItemsPerChecklist'] ?? -1,
+                    Icons.list,
+                  ),
+                ],
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLimitRow(
+    ThemeData theme,
+    String label,
+    int limit,
+    IconData icon,
+  ) {
+    final isUnlimited = limit == -1;
+    final limitText = isUnlimited
+        ? TranslationService.translate('unlimited')
+        : limit.toString();
+
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: theme.colorScheme.primary),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              Text(
+                '${TranslationService.translate('limit')}: $limitText',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: isUnlimited
+                ? theme.colorScheme.primaryContainer
+                : theme.colorScheme.secondaryContainer,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            isUnlimited
+                ? TranslationService.translate('unlimited')
+                : limit.toString(),
+            style: theme.textTheme.labelSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: isUnlimited
+                  ? theme.colorScheme.onPrimaryContainer
+                  : theme.colorScheme.onSecondaryContainer,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
