@@ -265,7 +265,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Admin Panel',
+                        TranslationService.translate('admin_panel'),
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: theme.colorScheme.primary,
@@ -288,7 +288,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
           // Admin Features
           _buildAdminFeatureTile(
             icon: Icons.analytics,
-            title: 'System Analytics',
+            title: TranslationService.translate('system_analytics'),
             subtitle: 'View system-wide statistics and usage data',
             color: Colors.blue,
             onTap: () => _showAnalyticsDialog(),
@@ -316,7 +316,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
             const Divider(height: 1),
             _buildAdminFeatureTile(
               icon: Icons.people,
-              title: 'User Management',
+              title: TranslationService.translate('user_management'),
               subtitle: 'Manage user accounts and admin roles',
               color: Colors.green,
               onTap: () => _showUserManagementDialog(),
@@ -328,7 +328,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
             const Divider(height: 1),
             _buildAdminFeatureTile(
               icon: Icons.settings_system_daydream,
-              title: 'System Settings',
+              title: TranslationService.translate('system_settings'),
               subtitle: 'Configure system-wide settings and policies',
               color: Colors.purple,
               onTap: () => _showSystemSettingsDialog(),
@@ -340,7 +340,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
             const Divider(height: 1),
             _buildAdminFeatureTile(
               icon: Icons.cleaning_services,
-              title: 'Data Cleanup',
+              title: TranslationService.translate('data_cleanup'),
               subtitle: 'Clean up expired data across all tiers',
               color: Colors.red,
               onTap: () => _showDataCleanupDialog(),
@@ -396,7 +396,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('System Analytics'),
+        title: Text(TranslationService.translate('system_analytics')),
         content: const Text(
           'System analytics feature coming soon. This will provide detailed insights into system usage, user behavior, and performance metrics.',
         ),
@@ -414,7 +414,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('User Management'),
+        title: Text(TranslationService.translate('user_management')),
         content: const Text(
           'User management feature coming soon. This will allow you to view all users, manage admin roles, and perform user administration tasks.',
         ),
@@ -432,7 +432,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('System Settings'),
+        title: Text(TranslationService.translate('system_settings')),
         content: const Text(
           'System settings feature coming soon. This will allow you to configure system-wide policies, feature flags, and administrative settings.',
         ),
@@ -450,7 +450,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Data Cleanup'),
+        title: Text(TranslationService.translate('data_cleanup')),
         content: const Text(
           'Data cleanup feature coming soon. This will allow you to perform system-wide data cleanup operations across all user tiers.',
         ),

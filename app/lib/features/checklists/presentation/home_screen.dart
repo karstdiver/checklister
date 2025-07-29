@@ -181,7 +181,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             color: Colors.orange,
                           ),
                           const SizedBox(width: 8),
-                          const Text('Admin Panel'),
+                          Text(TranslationService.translate('admin_panel')),
                         ],
                       ),
                     ),

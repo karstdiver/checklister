@@ -158,7 +158,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           Icons.admin_panel_settings,
                           color: Colors.orange,
                         ),
-                        title: const Text('Admin Panel'),
+                        title: Text(
+                          TranslationService.translate('admin_panel'),
+                        ),
                         subtitle: Text(
                           'Role: ${ref.watch(privilegeProvider)?.adminRole.name.toUpperCase()}',
                           style: const TextStyle(fontSize: 12),
