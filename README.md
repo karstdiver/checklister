@@ -103,12 +103,13 @@ flutter drive --driver=test_driver/integration_test.dart
 - **Add Item Row**: Added "Add Item" row at bottom of session screen list view
 - **Inline Text Editing**: Implemented long press on item rows for inline text editing
 - **Quick Add/Template Selector**: Enhanced long press on "Add Item" row with dual-option selector (Quick Add text input vs Quick Template grid)
+- **Checklist Import**: Implemented paste import and file picker import functionality with full-screen modal UI, user tier limit enforcement, and proper navigation flow
 
 ### 🔄 In Progress
 - **Upgrade Flow**: Full privilege level upgrade flow (e.g., free → premium/pro) and related UI/UX polish
 
 ### 📋 Pending
-- **Checklist JSON Import/Export**: Design and implement checklist JSON import/export, including defining the file format and UI
+- **Checklist Export**: Design and implement checklist JSON export functionality
 - **Public Checklist Sharing**: Implement public checklist sharing, including backend and UI for sharing and browsing
 - **Documentation**: Write and update help, developer, and user documentation
 - **Release Candidate**: Produce a deployable release candidate after all features are tested and documented
