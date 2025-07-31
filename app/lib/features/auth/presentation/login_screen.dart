@@ -219,6 +219,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final authState = ref.watch(authStateProvider);
 
     // If already authenticated, go to HomeScreen
+    // BUT allow anonymous users to stay if they want to sign up
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser != null && !currentUser.isAnonymous) {
       Future.microtask(() {
@@ -228,6 +229,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       });
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
+
+    // For anonymous users, allow them to stay on login screen
+    // They can choose to sign up or continue anonymously
 
     Future<void> handleDeclineAndLogout(
       BuildContext context,

@@ -6,7 +6,7 @@ import '../../../core/providers/privilege_provider.dart';
 import '../../../core/widgets/signup_encouragement.dart';
 import '../../../shared/widgets/logout_dialog.dart';
 import '../../../shared/widgets/usage_indicator.dart';
-import '../../../shared/widgets/import_dialog.dart';
+import 'import_screen.dart';
 import '../../../core/services/translation_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../sessions/domain/session_state.dart' as sessions;
@@ -831,23 +831,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return TierIndicator(tier: currentTier);
   }
 
-  /// Show import dialog
+  /// Show import screen
   Future<void> _showImportDialog() async {
-    await showDialog(
-      context: context,
-      builder: (context) => ImportDialog(
-        onImport: (items, {title, description, tags}) async {
-          // Navigate to checklist editor with imported data
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => ChecklistEditorScreen()),
-          );
-
-          // The checklist editor will handle the import data
-          // We could pass it through a provider or other mechanism
-          // For now, we'll just navigate to the editor
-        },
-      ),
+    print('[DEBUG] HomeScreen: About to show import screen');
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const ImportScreen()),
     );
+
+    print('[DEBUG] HomeScreen: Import screen returned result: $result');
+
+    // If import was successful, refresh the checklists
+    if (result == true) {
+      print('[DEBUG] HomeScreen: Import successful, refreshing checklists');
+      final currentUser = FirebaseAuth.instance.currentUser;
+      final userId = currentUser?.uid ?? 'anonymous';
+      final connectivity = ref.read(connectivityProvider).asData?.value;
+      ref
+          .read(checklistNotifierProvider.notifier)
+          .loadUserChecklists(userId, connectivity: connectivity);
+    } else {
+      print('[DEBUG] HomeScreen: Import not successful, not refreshing');
+    }
   }
 }

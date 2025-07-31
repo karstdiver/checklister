@@ -35,6 +35,14 @@ class ImportService {
   factory ImportService() => _instance;
   const ImportService._internal();
 
+  static int _itemIdCounter = 0;
+
+  /// Generate a unique item ID
+  String _generateItemId() {
+    _itemIdCounter++;
+    return 'item_${DateTime.now().millisecondsSinceEpoch}_$_itemIdCounter';
+  }
+
   /// Import from text content (paste functionality)
   Future<ImportResult> importFromText(String content, {String? title}) async {
     try {
@@ -138,7 +146,8 @@ class ImportService {
               text: itemText,
               order: items.length,
             );
-            items.add(item);
+            final itemWithId = item.copyWith(id: _generateItemId());
+            items.add(itemWithId);
             successfulItems++;
           } else {
             failedItems++;
@@ -282,10 +291,11 @@ class ImportService {
 
     if (cleanedLine.isEmpty) return null;
 
-    return ChecklistItem.create(
+    final item = ChecklistItem.create(
       text: cleanedLine,
       order: 0, // Will be set by caller
     );
+    return item.copyWith(id: _generateItemId());
   }
 
   /// Extract title from filename

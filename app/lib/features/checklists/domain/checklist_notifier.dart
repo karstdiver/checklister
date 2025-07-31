@@ -206,8 +206,15 @@ class ChecklistNotifier extends StateNotifier<AsyncValue<List<Checklist>>> {
 
       // Update state
       state.whenData((checklists) {
-        state = AsyncValue.data([createdChecklist, ...checklists]);
+        final updatedChecklists = [createdChecklist, ...checklists];
+        state = AsyncValue.data(updatedChecklists);
       });
+
+      // Save to local storage
+      await _repository.saveChecklistsToLocal([
+        createdChecklist,
+        ...state.value ?? [],
+      ], userId: createdChecklist.userId);
 
       // Log analytics
       await _analytics.logChecklistCreated(checklistId: createdChecklist.id);

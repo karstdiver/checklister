@@ -6,14 +6,17 @@ import '../domain/checklist_providers.dart';
 import '../../items/data/item_photo_service.dart';
 import '../../items/presentation/item_edit_screen.dart';
 import '../../../core/providers/privilege_provider.dart';
+import '../../../core/domain/user_tier.dart';
+import '../../../core/providers/providers.dart';
 import '../../../core/widgets/feature_guard.dart';
 import '../../../core/widgets/signup_encouragement.dart';
+import '../../auth/presentation/login_screen.dart';
 
 import '../../../core/services/analytics_service.dart';
 import '../../../core/services/translation_service.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/usage_indicator.dart';
-import '../../../shared/widgets/import_dialog.dart';
+import 'import_screen.dart';
 import '../../settings/presentation/upgrade_screen.dart';
 
 class ChecklistEditorScreen extends ConsumerStatefulWidget {
@@ -181,7 +184,19 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
               // Import button (only show when creating new checklist)
               if (!isEditing)
                 IconButton(
-                  onPressed: _showImportDialog,
+                  onPressed: () async {
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ImportScreen(),
+                      ),
+                    );
+
+                    // If import was successful, navigate back to home
+                    if (result == true) {
+                      Navigator.of(context).pop();
+                    }
+                  },
                   icon: const Icon(Icons.file_upload),
                   tooltip: TranslationService.translate('import'),
                 ),
@@ -690,29 +705,6 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
     );
   }
 
-  /// Show import dialog
-  Future<void> _showImportDialog() async {
-    await showDialog(
-      context: context,
-      builder: (context) => ImportDialog(
-        onImport: (items, {title, description, tags}) {
-          setState(() {
-            if (title != null && _titleController.text.isEmpty) {
-              _titleController.text = title;
-            }
-            if (description != null && _descriptionController.text.isEmpty) {
-              _descriptionController.text = description;
-            }
-            if (tags != null && tags.isNotEmpty) {
-              _tags.addAll(tags.where((tag) => !_tags.contains(tag)));
-            }
-            _items.addAll(items);
-          });
-        },
-      ),
-    );
-  }
-
   /// Navigate to add item screen
   Future<void> _navigateToAddItem() async {
     final result = await Navigator.of(context).push(
@@ -740,6 +732,9 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
 
   /// Show upgrade dialog when limits are reached
   void _showUpgradeDialog() {
+    final privileges = ref.read(privilegeProvider);
+    final userTier = privileges?.tier ?? UserTier.anonymous;
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -753,9 +748,23 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
           ElevatedButton(
             onPressed: () {
               Navigator.of(context).pop();
-              _navigateToUpgrade();
+              if (userTier == UserTier.anonymous) {
+                // For anonymous users, navigate directly to signup
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const LoginScreen(initialSignUpMode: true),
+                  ),
+                );
+              } else {
+                // Navigate to upgrade screen for other users
+                _navigateToUpgrade();
+              }
             },
-            child: Text(TranslationService.translate('upgrade_now')),
+            child: Text(
+              userTier == UserTier.anonymous
+                  ? TranslationService.translate('signup')
+                  : TranslationService.translate('upgrade_now'),
+            ),
           ),
         ],
       ),
