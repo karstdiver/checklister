@@ -604,8 +604,17 @@ class ChecklistNotifier extends StateNotifier<AsyncValue<List<Checklist>>> {
   void clear() {
     print('[DEBUG] ChecklistNotifier: clear() called');
     print('[DEBUG] ChecklistNotifier: Previous state: ${state.toString()}');
-    state = const AsyncValue.loading();
+    state = const AsyncValue.data([]);
     print('[DEBUG] ChecklistNotifier: New state: ${state.toString()}');
+  }
+
+  // Refresh checklists for current user
+  Future<void> refresh(
+    String userId, {
+    ConnectivityResult? connectivity,
+  }) async {
+    print('[DEBUG] ChecklistNotifier: refresh() called for userId=$userId');
+    await loadUserChecklists(userId, connectivity: connectivity);
   }
 
   // Refresh checklists from Firestore (clears local cache first)

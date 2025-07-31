@@ -13,6 +13,7 @@ import '../../../core/services/analytics_service.dart';
 import '../../../core/services/translation_service.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/usage_indicator.dart';
+import '../../../shared/widgets/import_dialog.dart';
 import '../../settings/presentation/upgrade_screen.dart';
 
 class ChecklistEditorScreen extends ConsumerStatefulWidget {
@@ -176,11 +177,19 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 ),
               )
-            else
+            else ...[
+              // Import button (only show when creating new checklist)
+              if (!isEditing)
+                IconButton(
+                  onPressed: _showImportDialog,
+                  icon: const Icon(Icons.file_upload),
+                  tooltip: TranslationService.translate('import'),
+                ),
               TextButton(
                 onPressed: _saveChecklist,
                 child: Text(TranslationService.translate('save')),
               ),
+            ],
           ],
         ),
         body: Form(
@@ -677,6 +686,29 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
             child: Text(TranslationService.translate('continue')),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Show import dialog
+  Future<void> _showImportDialog() async {
+    await showDialog(
+      context: context,
+      builder: (context) => ImportDialog(
+        onImport: (items, {title, description, tags}) {
+          setState(() {
+            if (title != null && _titleController.text.isEmpty) {
+              _titleController.text = title;
+            }
+            if (description != null && _descriptionController.text.isEmpty) {
+              _descriptionController.text = description;
+            }
+            if (tags != null && tags.isNotEmpty) {
+              _tags.addAll(tags.where((tag) => !_tags.contains(tag)));
+            }
+            _items.addAll(items);
+          });
+        },
       ),
     );
   }
