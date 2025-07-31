@@ -104,6 +104,7 @@ flutter drive --driver=test_driver/integration_test.dart
 - **Inline Text Editing**: Implemented long press on item rows for inline text editing
 - **Quick Add/Template Selector**: Enhanced long press on "Add Item" row with dual-option selector (Quick Add text input vs Quick Template grid)
 - **Checklist Import**: Implemented paste import and file picker import functionality with full-screen modal UI, user tier limit enforcement, and proper navigation flow
+- **TTL & Cleanup System**: Implemented hybrid TTL cleanup system with app-based cleanup service and Firebase admin scripts for anonymous user cleanup and session management
 
 ### 🔄 In Progress
 - **Upgrade Flow**: Full privilege level upgrade flow (e.g., free → premium/pro) and related UI/UX polish
@@ -114,8 +115,8 @@ flutter drive --driver=test_driver/integration_test.dart
 - **Documentation**: Write and update help, developer, and user documentation
 - **Release Candidate**: Produce a deployable release candidate after all features are tested and documented
 - **Multi-Session Guarded**: Plan and implement multiple concurrent checklist sessions as a privilege-guarded feature
-- **Firebase Costs & Cleanup**: Estimate and monitor Firebase costs for new features (multi-session, audit logs, etc.), and implement cleanup strategies (TTL, Cloud Functions)
-- **Anonymous TTL Cascade**: Add TTL to anonymous user documents and related data, and set up cascading deletion (Cloud Function or TTL on related collections)
+- **Firebase Costs & Cleanup**: Monitor Firebase costs for new features (multi-session, audit logs, etc.)
+- **Anonymous TTL Cascade**: Monitor and optimize TTL cascade performance for anonymous user cleanup
 
 ---
 
