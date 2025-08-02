@@ -281,13 +281,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                     ),
                     FloatingActionButton(
-                      onPressed: () {
-                        Navigator.push(
+                      onPressed: () async {
+                        final result = await Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) => const ChecklistEditorScreen(),
                           ),
                         );
+
+                        // Refresh checklists if a new checklist was created
+                        if (result != null) {
+                          final currentUser = FirebaseAuth.instance.currentUser;
+                          final userId = currentUser?.uid ?? 'anonymous';
+                          final connectivity = ref
+                              .read(connectivityProvider)
+                              .asData
+                              ?.value;
+                          ref
+                              .read(checklistNotifierProvider.notifier)
+                              .loadUserChecklists(
+                                userId,
+                                connectivity: connectivity,
+                              );
+                        }
                       },
                       child: const Icon(Icons.add),
                     ),
@@ -318,13 +334,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     subtitle: Text(
                       TranslationService.translate('create_checklist'),
                     ),
-                    onTap: () {
-                      Navigator.push(
+                    onTap: () async {
+                      final result = await Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => const ChecklistEditorScreen(),
                         ),
                       );
+
+                      // Refresh checklists if a new checklist was created
+                      if (result != null) {
+                        final currentUser = FirebaseAuth.instance.currentUser;
+                        final userId = currentUser?.uid ?? 'anonymous';
+                        final connectivity = ref
+                            .read(connectivityProvider)
+                            .asData
+                            ?.value;
+                        ref
+                            .read(checklistNotifierProvider.notifier)
+                            .loadUserChecklists(
+                              userId,
+                              connectivity: connectivity,
+                            );
+                      }
                     },
                   ),
                 ),
@@ -841,17 +873,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     print('[DEBUG] HomeScreen: Import screen returned result: $result');
 
-    // If import was successful, refresh the checklists
-    if (result == true) {
-      print('[DEBUG] HomeScreen: Import successful, refreshing checklists');
-      final currentUser = FirebaseAuth.instance.currentUser;
-      final userId = currentUser?.uid ?? 'anonymous';
-      final connectivity = ref.read(connectivityProvider).asData?.value;
-      ref
-          .read(checklistNotifierProvider.notifier)
-          .loadUserChecklists(userId, connectivity: connectivity);
-    } else {
-      print('[DEBUG] HomeScreen: Import not successful, not refreshing');
-    }
+    // Always refresh checklists when returning from import screen
+    // This ensures any error states are cleared and the UI is consistent
+    print('[DEBUG] HomeScreen: Refreshing checklists after import screen');
+    final currentUser = FirebaseAuth.instance.currentUser;
+    final userId = currentUser?.uid ?? 'anonymous';
+    final connectivity = ref.read(connectivityProvider).asData?.value;
+    ref
+        .read(checklistNotifierProvider.notifier)
+        .loadUserChecklists(userId, connectivity: connectivity);
   }
 }
