@@ -173,7 +173,7 @@ class ChecklistNotifier extends StateNotifier<AsyncValue<List<Checklist>>> {
               await LimitManagementService.canAddItemsToChecklist(
                 userId,
                 userTier,
-                items.length,
+                items.length, // This is correct for new checklist creation
               );
 
           if (!canAddItems) {

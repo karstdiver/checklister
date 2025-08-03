@@ -86,7 +86,7 @@ class LimitManagementService {
       // -1 means unlimited
       if (maxChecklists == -1) return true;
 
-      return currentCount < maxChecklists;
+      return currentCount <= maxChecklists;
     } catch (e) {
       print('Error checking checklist creation limit: $e');
       return false;
@@ -110,7 +110,7 @@ class LimitManagementService {
       // -1 means unlimited
       if (maxItems == -1) return true;
 
-      return currentItemCount < maxItems;
+      return currentItemCount <= maxItems;
     } catch (e) {
       print('Error checking item limit: $e');
       return false;
