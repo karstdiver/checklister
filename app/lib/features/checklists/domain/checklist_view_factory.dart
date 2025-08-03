@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'checklist.dart';
 import 'checklist_view_type.dart';
 import '../presentation/views/list_view_widget.dart';
+import '../presentation/views/matrix_view_widget.dart';
 import '../../../core/services/translation_service.dart';
 import '../../items/presentation/item_edit_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -31,7 +32,13 @@ class ChecklistViewFactory {
           },
         );
       case ChecklistViewType.matrix:
-        return MatrixViewWidget(checklist: checklist);
+        return MatrixViewWidget(
+          checklist: checklist,
+          onItemTap: (item) {},
+          onItemEdit: (item) {},
+          onItemDelete: (item) {},
+          onItemMove: (item, direction) {},
+        );
     }
   }
 
@@ -63,7 +70,17 @@ class ChecklistViewFactory {
           onQuickTemplate: onQuickTemplate,
         );
       case ChecklistViewType.matrix:
-        return MatrixViewWidget(checklist: checklist);
+        return MatrixViewWidget(
+          checklist: checklist,
+          onItemTap: onItemTap,
+          onItemEdit: onItemEdit,
+          onItemDelete: onItemDelete,
+          onItemMove: onItemMove,
+          onItemAdd: onItemAdd,
+          onTextUpdate: onTextUpdate,
+          onQuickAdd: onQuickAdd,
+          onQuickTemplate: onQuickTemplate,
+        );
     }
   }
 
@@ -117,47 +134,4 @@ class SwipeViewWidget extends StatelessWidget {
   }
 }
 
-/// Placeholder widget for matrix view (to be implemented in Phase 3)
-class MatrixViewWidget extends StatelessWidget {
-  final Checklist checklist;
 
-  const MatrixViewWidget({super.key, required this.checklist});
-
-  @override
-  Widget build(BuildContext context) {
-    // TODO: Implement matrix view in Phase 3
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.grid_on, size: 64, color: Colors.grey[400]),
-          const SizedBox(height: 16),
-          Text(
-            TranslationService.translate('matrix_view_title'),
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            TranslationService.translate('checklist_label', [checklist.title]),
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            TranslationService.translate('items_label', [
-              checklist.items.length.toString(),
-            ]),
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            TranslationService.translate('coming_in_phase_3'),
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              fontStyle: FontStyle.italic,
-              color: Colors.grey[600],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
