@@ -36,13 +36,21 @@ class _ChecklistItemRowState extends State<ChecklistItemRow> {
     super.initState();
     _textController = TextEditingController(text: widget.item.text);
     _focusNode = FocusNode();
+    _focusNode?.addListener(_onFocusChange);
   }
 
   @override
   void dispose() {
     _textController.dispose();
+    _focusNode?.removeListener(_onFocusChange);
     _focusNode?.dispose();
     super.dispose();
+  }
+
+  void _onFocusChange() {
+    if (!_focusNode!.hasFocus && _isEditing) {
+      _cancelEdit();
+    }
   }
 
   @override
@@ -90,7 +98,7 @@ class _ChecklistItemRowState extends State<ChecklistItemRow> {
       elevation: 2,
       margin: EdgeInsets.zero,
       child: GestureDetector(
-        onTap: widget.onTap,
+        onTap: _isEditing ? _cancelEdit : widget.onTap,
         onLongPress: _startEditing,
         child: Padding(
           padding: const EdgeInsets.all(12),
@@ -99,7 +107,12 @@ class _ChecklistItemRowState extends State<ChecklistItemRow> {
               // Checkbox
               Checkbox(
                 value: isCompleted,
-                onChanged: (value) => widget.onTap(),
+                onChanged: (value) {
+                  if (_isEditing) {
+                    _cancelEdit();
+                  }
+                  widget.onTap();
+                },
                 activeColor: Theme.of(context).primaryColor,
               ),
               const SizedBox(width: 12),
@@ -111,36 +124,41 @@ class _ChecklistItemRowState extends State<ChecklistItemRow> {
                     // Item text or text field when editing
                     Expanded(
                       child: _isEditing
-                          ? TextField(
-                              controller: _textController,
-                              focusNode: _focusNode,
-                              style: TextStyle(
-                                fontSize: 16,
-                                decoration: isCompleted
-                                    ? TextDecoration.lineThrough
-                                    : null,
-                                color: isCompleted ? Colors.grey[600] : null,
-                              ),
-                              decoration: InputDecoration(
-                                border: InputBorder.none,
-                                contentPadding: EdgeInsets.zero,
-                                suffixIcon: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    IconButton(
-                                      icon: const Icon(Icons.check, size: 20),
-                                      onPressed: _saveEdit,
-                                      color: Colors.green,
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(Icons.close, size: 20),
-                                      onPressed: _cancelEdit,
-                                      color: Colors.red,
-                                    ),
-                                  ],
+                          ? GestureDetector(
+                              onTap: () {
+                                // Prevent tap from bubbling up when editing
+                              },
+                              child: TextField(
+                                controller: _textController,
+                                focusNode: _focusNode,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  decoration: isCompleted
+                                      ? TextDecoration.lineThrough
+                                      : null,
+                                  color: isCompleted ? Colors.grey[600] : null,
                                 ),
+                                decoration: InputDecoration(
+                                  border: InputBorder.none,
+                                  contentPadding: EdgeInsets.zero,
+                                  suffixIcon: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(Icons.check, size: 20),
+                                        onPressed: _saveEdit,
+                                        color: Colors.green,
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.close, size: 20),
+                                        onPressed: _cancelEdit,
+                                        color: Colors.red,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                onSubmitted: (_) => _saveEdit(),
                               ),
-                              onSubmitted: (_) => _saveEdit(),
                             )
                           : Text(
                               widget.item.text,
