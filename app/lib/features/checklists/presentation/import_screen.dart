@@ -317,6 +317,13 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
         return;
       }
 
+      // Check if this is an AI template result (already created)
+      if (_currentMode == ImportMode.ai && _importResult?.title?.isNotEmpty == true) {
+        print('[DEBUG] ImportScreen: AI template already created, navigating back');
+        Navigator.of(context).pop();
+        return;
+      }
+
       // Get user tier for limit checking
       final privileges = ref.read(privilegeProvider);
       final userTier = privileges?.tier;
