@@ -257,12 +257,38 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
   }
 
   Future<Map<String, dynamic>?> _showAITemplateScreen() async {
-    return await showModalBottomSheet<Map<String, dynamic>>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => const AITemplateScreen(),
+    final templateResult = await Navigator.of(context).push<Map<String, dynamic>>(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (context) => const AITemplateScreen(),
+      ),
     );
+    
+    // Handle the result if a template was selected
+    if (templateResult != null && templateResult['success'] == true) {
+      final checklist = templateResult['checklist'] as Checklist;
+      final result = ImportResult(
+        items: checklist.items,
+        totalItems: checklist.items.length,
+        successfulItems: checklist.items.length,
+        failedItems: 0,
+        errors: [],
+        title: checklist.title,
+      );
+      
+      setState(() {
+        _importResult = result;
+      });
+      
+      // Auto-fill title and description
+      _titleController.text = checklist.title;
+      _descriptionController.text = checklist.description ?? '';
+      if (checklist.tags.isNotEmpty) {
+        _tags = List.from(checklist.tags);
+      }
+    }
+    
+    return templateResult;
   }
 
   Future<void> _createChecklist() async {
@@ -532,10 +558,12 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: ElevatedButton.icon(
-                            onPressed: () {
+                            onPressed: () async {
                               setState(() {
                                 _currentMode = ImportMode.ai;
                               });
+                              // Directly show AI template screen without content validation
+                              await _showAITemplateScreen();
                             },
                             icon: const Icon(Icons.auto_awesome),
                             label: Text(TranslationService.translate('ai')),

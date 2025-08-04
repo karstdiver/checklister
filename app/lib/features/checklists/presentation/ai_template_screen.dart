@@ -56,6 +56,7 @@ class _AITemplateScreenState extends ConsumerState<AITemplateScreen> {
   TemplateCategory? _selectedCategory;
   ChecklistTemplate? _selectedTemplate;
   bool _isLoading = false;
+  bool _hasCheckedPrivileges = false;
 
   // Template data
   static const Map<TemplateCategory, Map<String, dynamic>> _templateCategories = {
@@ -171,7 +172,16 @@ class _AITemplateScreenState extends ConsumerState<AITemplateScreen> {
   @override
   void initState() {
     super.initState();
-    _checkPrivileges();
+    // Don't check privileges here - will do it in didChangeDependencies
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Always check privileges when dependencies change (e.g., when returning from upgrade screen)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkPrivileges();
+    });
   }
 
   void _checkPrivileges() {
@@ -224,12 +234,16 @@ class _AITemplateScreenState extends ConsumerState<AITemplateScreen> {
         content: Text(TranslationService.translate('ai_feature_requires_upgrade')),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () {
+              Navigator.of(context).pop(); // Close dialog
+              Navigator.of(context).pop(); // Pop AI Template screen, return to Import screen
+            },
             child: Text(TranslationService.translate('cancel')),
           ),
           ElevatedButton(
             onPressed: () {
-              Navigator.of(context).pop();
+              Navigator.of(context).pop(); // Close dialog
+              Navigator.of(context).pop(); // Pop AI Template screen, return to Import screen
               if (userTier == UserTier.anonymous) {
                 Navigator.of(context).push(
                   MaterialPageRoute(
@@ -263,12 +277,16 @@ class _AITemplateScreenState extends ConsumerState<AITemplateScreen> {
         content: Text(TranslationService.translate('upgrade_to_create_more')),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () {
+              Navigator.of(context).pop(); // Close dialog
+              Navigator.of(context).pop(); // Pop AI Template screen, return to Import screen
+            },
             child: Text(TranslationService.translate('cancel')),
           ),
           ElevatedButton(
             onPressed: () {
-              Navigator.of(context).pop();
+              Navigator.of(context).pop(); // Close dialog
+              Navigator.of(context).pop(); // Pop AI Template screen, return to Import screen
               Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (context) => const UpgradeScreen(),
@@ -382,76 +400,55 @@ class _AITemplateScreenState extends ConsumerState<AITemplateScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.9,
-      decoration: BoxDecoration(
-        color: theme.scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: Column(
-        children: [
-          // Header
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+    return Scaffold(
+      appBar: AppBar(
+        title: Row(
+          children: [
+            Icon(
+              Icons.auto_awesome,
+              color: theme.primaryColor,
+              size: 24,
             ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.auto_awesome,
-                  color: theme.primaryColor,
-                  size: 24,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    TranslationService.translate('ai_template_selection'),
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.close),
-                ),
-              ],
-            ),
-          ),
-
-          // Content
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Category Selection
-                  _buildCategorySelection(theme),
-
-                  const SizedBox(height: 24),
-
-                  // Popular Templates
-                  _buildPopularTemplates(theme),
-
-                  const SizedBox(height: 24),
-
-                  // Selected Category Templates
-                  if (_selectedCategory != null)
-                    _buildCategoryTemplates(theme),
-
-                  const SizedBox(height: 24),
-
-                  // Create Button
-                  if (_selectedTemplate != null)
-                    _buildCreateButton(theme),
-                ],
+            const SizedBox(width: 12),
+            Text(
+              TranslationService.translate('ai_template_selection'),
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
               ),
             ),
-          ),
-        ],
+          ],
+        ),
+        leading: IconButton(
+          onPressed: () => Navigator.of(context).pop(),
+          icon: const Icon(Icons.arrow_back),
+        ),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Category Selection
+            _buildCategorySelection(theme),
+
+            const SizedBox(height: 24),
+
+            // Popular Templates
+            _buildPopularTemplates(theme),
+
+            const SizedBox(height: 24),
+
+            // Selected Category Templates
+            if (_selectedCategory != null)
+              _buildCategoryTemplates(theme),
+
+            const SizedBox(height: 24),
+
+            // Create Button
+            if (_selectedTemplate != null)
+              _buildCreateButton(theme),
+          ],
+        ),
       ),
     );
   }
