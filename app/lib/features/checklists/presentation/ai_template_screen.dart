@@ -21,6 +21,7 @@ enum TemplateCategory {
   education,
   technology,
   events,
+  sports,
 }
 
 class ChecklistTemplate {
@@ -100,6 +101,11 @@ class _AITemplateScreenState extends ConsumerState<AITemplateScreen> {
       'icon': Icons.event,
       'color': Colors.pink,
     },
+    TemplateCategory.sports: {
+      'name': 'Sports',
+      'icon': Icons.sports_soccer,
+      'color': Colors.teal,
+    },
   };
 
   static const List<ChecklistTemplate> _templates = [
@@ -166,6 +172,99 @@ class _AITemplateScreenState extends ConsumerState<AITemplateScreen> {
         'customization': 'for {room_type} renovation',
       },
       usageCount: 950,
+    ),
+    ChecklistTemplate(
+      id: 'marathon_training',
+      name: 'Marathon Training',
+      description: 'Prepare for a marathon with comprehensive training plan',
+      category: TemplateCategory.sports,
+      baseItems: [
+        'Set training schedule',
+        'Get proper running shoes',
+        'Plan nutrition strategy',
+        'Schedule rest days',
+        'Track progress',
+        'Practice race day routine',
+        'Prepare gear and clothing',
+        'Plan hydration strategy',
+        'Mental preparation',
+        'Taper before race',
+      ],
+      aiPrompts: {
+        'base': 'Create a marathon training checklist',
+        'customization': 'for {experience_level} runner',
+      },
+      isPopular: true,
+      usageCount: 1200,
+    ),
+    ChecklistTemplate(
+      id: 'gym_workout',
+      name: 'Gym Workout',
+      description: 'Complete gym workout routine',
+      category: TemplateCategory.sports,
+      baseItems: [
+        'Warm up exercises',
+        'Cardio session',
+        'Strength training',
+        'Stretching routine',
+        'Hydration breaks',
+        'Cool down exercises',
+        'Track progress',
+        'Plan next session',
+      ],
+      aiPrompts: {
+        'base': 'Create a gym workout checklist',
+        'customization': 'for {fitness_goal}',
+      },
+      usageCount: 850,
+    ),
+    ChecklistTemplate(
+      id: 'team_sports_tournament',
+      name: 'Team Sports Tournament',
+      description: 'Organize and participate in team sports tournament',
+      category: TemplateCategory.sports,
+      baseItems: [
+        'Register team',
+        'Schedule practices',
+        'Prepare equipment',
+        'Plan transportation',
+        'Coordinate team uniforms',
+        'Review tournament rules',
+        'Plan nutrition and hydration',
+        'Mental preparation',
+        'Team strategy meeting',
+        'Post-game analysis',
+      ],
+      aiPrompts: {
+        'base': 'Create a team sports tournament checklist',
+        'customization': 'for {sport_type} tournament',
+      },
+      usageCount: 650,
+    ),
+    ChecklistTemplate(
+      id: 'bike_ride',
+      name: 'Bike Ride',
+      description: 'Prepare for a safe and enjoyable bike ride',
+      category: TemplateCategory.sports,
+      baseItems: [
+        'Check bike condition',
+        'Inflate tires',
+        'Test brakes',
+        'Pack water and snacks',
+        'Wear helmet',
+        'Check weather forecast',
+        'Plan route',
+        'Bring repair kit',
+        'Wear appropriate clothing',
+        'Tell someone your route',
+        'Charge phone',
+        'Bring ID and emergency contact',
+      ],
+      aiPrompts: {
+        'base': 'Create a bike ride checklist',
+        'customization': 'for {ride_type} ride',
+      },
+      usageCount: 750,
     ),
   ];
 
