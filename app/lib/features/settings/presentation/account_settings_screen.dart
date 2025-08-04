@@ -10,6 +10,7 @@ import '../../../core/widgets/tier_indicator.dart';
 import '../../../core/providers/privilege_provider.dart';
 import '../../../core/domain/user_tier.dart';
 import '../../../core/services/admin_management_service.dart';
+import '../../../core/services/pricing_tiers_management_service.dart';
 
 import 'upgrade_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -328,6 +329,15 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
               ),
               enabled: true,
             ),
+            const Divider(height: 1),
+            _buildAdminFeatureTile(
+              icon: Icons.attach_money,
+              title: 'Pricing Management',
+              subtitle: 'Manage pricing tiers and promotions',
+              color: Colors.green,
+              onTap: () => _showPricingManagementDialog(),
+              enabled: true,
+            ),
           ],
 
           if (privileges.canManageUsers) ...[
@@ -480,6 +490,93 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
         ],
       ),
     );
+  }
+
+  void _showPricingManagementDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Pricing Management'),
+        content: const Text(
+          'Pricing management features are now available!\n\n'
+          '• View current pricing tiers\n'
+          '• Create default configuration\n'
+          '• Test CRUD operations\n\n'
+          'This is Phase 1 implementation.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Close'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _testPricingManagement();
+            },
+            child: const Text('Test Features'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _testPricingManagement() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('User not authenticated')));
+      return;
+    }
+
+    try {
+      // Test getting current pricing tiers
+      final currentConfig =
+          await PricingTiersManagementService.getPricingTiers();
+
+      if (currentConfig == null) {
+        // Create default configuration
+        final defaultConfig = PricingTiersManagementService.createDefaultConfig(
+          currentUser.uid,
+        );
+        final success = await PricingTiersManagementService.createPricingTiers(
+          defaultConfig,
+          currentUser.uid,
+        );
+
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                '✅ Default pricing tiers configuration created successfully!',
+              ),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('❌ Failed to create pricing tiers configuration'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '✅ Pricing tiers configuration found: ${currentConfig.version}',
+            ),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('❌ Error: $e'), backgroundColor: Colors.red),
+      );
+    }
   }
 }
 
