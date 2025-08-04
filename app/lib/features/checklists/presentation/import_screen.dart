@@ -16,6 +16,7 @@ import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/import_preview.dart';
 import '../../settings/presentation/upgrade_screen.dart';
 import '../../auth/presentation/login_screen.dart';
+import 'ai_template_screen.dart';
 
 enum ImportMode { file, paste, ai }
 
@@ -191,14 +192,34 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
           );
           break;
         case ImportMode.ai:
-          // TODO: Implement AI import
-          result = const ImportResult(
-            items: [],
-            totalItems: 0,
-            successfulItems: 0,
-            failedItems: 1,
-            errors: ['AI import not yet implemented'],
-          );
+          // Show AI template selection modal
+          final templateResult = await _showAITemplateScreen();
+          if (templateResult != null && templateResult['success'] == true) {
+            final checklist = templateResult['checklist'] as Checklist;
+            result = ImportResult(
+              items: checklist.items,
+              totalItems: checklist.items.length,
+              successfulItems: checklist.items.length,
+              failedItems: 0,
+              errors: [],
+              title: checklist.title,
+            );
+            
+            // Auto-fill title and description
+            _titleController.text = checklist.title;
+            _descriptionController.text = checklist.description ?? '';
+            if (checklist.tags.isNotEmpty) {
+              _tags = List.from(checklist.tags);
+            }
+          } else {
+            result = const ImportResult(
+              items: [],
+              totalItems: 0,
+              successfulItems: 0,
+              failedItems: 0,
+              errors: [],
+            );
+          }
           break;
       }
 
@@ -233,6 +254,15 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
     setState(() {
       _tags.remove(tag);
     });
+  }
+
+  Future<Map<String, dynamic>?> _showAITemplateScreen() async {
+    return await showModalBottomSheet<Map<String, dynamic>>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const AITemplateScreen(),
+    );
   }
 
   Future<void> _createChecklist() async {
