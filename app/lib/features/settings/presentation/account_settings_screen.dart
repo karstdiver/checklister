@@ -11,6 +11,7 @@ import '../../../core/providers/privilege_provider.dart';
 import '../../../core/domain/user_tier.dart';
 import '../../../core/services/admin_management_service.dart';
 import '../../../core/services/pricing_tiers_management_service.dart';
+import 'pricing_management_screen.dart';
 
 import 'upgrade_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -501,8 +502,9 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
           'Pricing management features are now available!\n\n'
           '• View current pricing tiers\n'
           '• Create default configuration\n'
-          '• Test CRUD operations\n\n'
-          'This is Phase 1 implementation.',
+          '• Test CRUD operations\n'
+          '• Full management interface (Phase 2)\n\n'
+          'Choose an option below:',
         ),
         actions: [
           TextButton(
@@ -515,6 +517,17 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
               _testPricingManagement();
             },
             child: const Text('Test Features'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const PricingManagementScreen(),
+                ),
+              );
+            },
+            child: const Text('Open Management'),
           ),
         ],
       ),
