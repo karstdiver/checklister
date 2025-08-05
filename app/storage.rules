@@ -1,0 +1,53 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Profile images - users can upload/read their own profile images
+    match /profile-images/{userId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Checklist images - users can upload/read images for their own checklists
+    // Note: We rely on the userId in the path for security
+    match /checklist-images/{userId}/{checklistId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Session images - users can upload/read images for their own sessions
+    // Note: We rely on the userId in the path for security
+    match /session-images/{userId}/{sessionId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Item photos - users can upload/read photos for their own checklist items
+    // Note: We rely on the userId in the path for security
+    match /item-photos/{userId}/{itemId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // App assets - public read access for app assets
+    match /app-assets/{fileName} {
+      allow read: if true;
+      allow write: if isAuthenticated(); // Simplified for development
+    }
+    
+    // Admin uploads - simplified for development
+    match /admin/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+    
+    // Default deny all
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+} 

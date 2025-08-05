@@ -48,9 +48,7 @@ class PricingTiersConfig {
         (key, value) => MapEntry(key, TierConfig.fromFirestore(value)),
       ),
       promotions: PromotionsConfig.fromFirestore(data['promotions'] ?? {}),
-      regionalPricing: Map<String, Map<String, double>>.from(
-        data['regionalPricing'] ?? {},
-      ),
+      regionalPricing: _parseRegionalPricing(data['regionalPricing']),
     );
   }
 
@@ -75,6 +73,30 @@ class PricingTiersConfig {
       promotions: promotions ?? this.promotions,
       regionalPricing: regionalPricing ?? this.regionalPricing,
     );
+  }
+
+  /// Helper method to parse regional pricing from Firestore data
+  static Map<String, Map<String, double>> _parseRegionalPricing(dynamic data) {
+    if (data == null) return {};
+
+    if (data is Map<String, dynamic>) {
+      return data.map((currency, prices) {
+        if (prices is Map<String, dynamic>) {
+          return MapEntry(
+            currency,
+            prices.map((tier, price) {
+              if (price is num) {
+                return MapEntry(tier, price.toDouble());
+              }
+              return MapEntry(tier, 0.0);
+            }),
+          );
+        }
+        return MapEntry(currency, <String, double>{});
+      });
+    }
+
+    return {};
   }
 }
 
