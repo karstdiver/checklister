@@ -150,19 +150,9 @@ class _PricingManagementScreenState
       padding: const EdgeInsets.all(16.0),
       child: Column(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                TranslationService.translate('pricing_tiers'),
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-              ElevatedButton.icon(
-                onPressed: _addNewTier,
-                icon: const Icon(Icons.add),
-                label: Text(TranslationService.translate('add_tier')),
-              ),
-            ],
+          Text(
+            TranslationService.translate('pricing_tiers'),
+            style: Theme.of(context).textTheme.headlineSmall,
           ),
           const SizedBox(height: 16),
           Expanded(
@@ -642,14 +632,24 @@ class _PricingManagementScreenState
     }
   }
 
+  // TODO: Tier creation is disabled until dynamic tier system is implemented
+  // New tiers require integration with privilege system, feature guards, and billing
   void _addNewTier() {
     showDialog(
       context: context,
-      builder: (context) => _TierEditDialog(
-        tier: null,
-        onSave: (tierConfig) async {
-          await _saveNewTier(tierConfig);
-        },
+      builder: (context) => AlertDialog(
+        title: Text('Tier Creation Not Available'),
+        content: Text(
+          'Creating new tiers requires additional system changes. '
+          'Only existing tiers (Free, Premium, Pro) can be modified at this time.\n\n'
+          'This feature will be available in a future update.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text('OK'),
+          ),
+        ],
       ),
     );
   }
