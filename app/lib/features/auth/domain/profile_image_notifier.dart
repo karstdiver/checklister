@@ -88,10 +88,16 @@ class ProfileImageNotifier extends StateNotifier<ProfileImageState> {
     if (currentImageUrl.isNotEmpty) {
       await _imageService.deleteProfileImage(currentImageUrl);
     }
+
+    // Add a small delay to ensure Firestore update is propagated
+    await Future.delayed(const Duration(milliseconds: 500));
   }
 
   /// Reset state to idle
   void resetState() {
     state = ProfileImageState.idle;
   }
+
+  /// Get the current user ID
+  String? get currentUserId => _auth.currentUser?.uid;
 }

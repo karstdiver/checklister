@@ -159,7 +159,10 @@ class ProfileImagePicker extends ConsumerWidget {
                     onTap: () {
                       Navigator.pop(context);
                       notifier.pickAndUploadFromGallery().then((_) {
-                        if (onImageChanged != null) onImageChanged!();
+                        // Add a small delay to ensure the profile refresh happens after upload is complete
+                        Future.delayed(const Duration(milliseconds: 1000), () {
+                          if (onImageChanged != null) onImageChanged!();
+                        });
                       });
                     },
                   ),
@@ -173,7 +176,10 @@ class ProfileImagePicker extends ConsumerWidget {
                     onTap: () {
                       Navigator.pop(context);
                       notifier.takePhotoAndUpload().then((_) {
-                        if (onImageChanged != null) onImageChanged!();
+                        // Add a small delay to ensure the profile refresh happens after upload is complete
+                        Future.delayed(const Duration(milliseconds: 1000), () {
+                          if (onImageChanged != null) onImageChanged!();
+                        });
                       });
                     },
                   ),

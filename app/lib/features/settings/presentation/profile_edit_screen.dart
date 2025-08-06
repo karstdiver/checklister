@@ -75,6 +75,16 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     }
   }
 
+  Future<void> _loadProfileForceRemote() async {
+    final currentUser = ref.read(currentUserProvider);
+    if (currentUser != null) {
+      // Force refresh from Firestore to get the latest profile image
+      await ref
+          .read(profileNotifierProvider.notifier)
+          .loadProfile(currentUser.uid, forceRemote: true);
+    }
+  }
+
   Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -348,8 +358,8 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                     profile?.profileImageUrlOrPhotoURL ?? currentUser?.photoURL,
                 size: 100,
                 onImageChanged: () {
-                  // Reload profile to get the updated profile image
-                  _loadProfile();
+                  // Force reload profile from Firestore to get the updated profile image
+                  _loadProfileForceRemote();
                 },
               ),
               const SizedBox(height: 12),
