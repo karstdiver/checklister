@@ -107,7 +107,10 @@ class FeatureGuard extends ConsumerWidget {
               } else {
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (context) => const UpgradeScreen(),
+                    builder: (context) => UpgradeScreen(
+                      sourceFeature: feature,
+                      targetTier: minimumTier ?? UserTier.premium,
+                    ),
                   ),
                 );
               }

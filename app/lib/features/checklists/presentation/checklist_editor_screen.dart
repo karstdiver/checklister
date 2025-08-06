@@ -567,7 +567,12 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
             onPressed: () {
               Navigator.of(context).pop();
               Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => const UpgradeScreen()),
+                MaterialPageRoute(
+                  builder: (context) => const UpgradeScreen(
+                    sourceFeature: 'Advanced Editor',
+                    targetTier: UserTier.premium,
+                  ),
+                ),
               );
             },
             child: Text(TranslationService.translate('upgrade')),
@@ -773,8 +778,13 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
 
   /// Navigate to upgrade screen
   void _navigateToUpgrade() {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (context) => const UpgradeScreen()));
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const UpgradeScreen(
+          sourceFeature: 'Export Features',
+          targetTier: UserTier.premium,
+        ),
+      ),
+    );
   }
 }

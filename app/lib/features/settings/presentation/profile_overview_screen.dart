@@ -297,7 +297,10 @@ class _ProfileOverviewScreenState extends ConsumerState<ProfileOverviewScreen> {
                 onUpgrade: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (context) => const UpgradeScreen(),
+                      builder: (context) => const UpgradeScreen(
+                        sourceFeature: 'Profile Features',
+                        targetTier: UserTier.premium,
+                      ),
                     ),
                   );
                 },

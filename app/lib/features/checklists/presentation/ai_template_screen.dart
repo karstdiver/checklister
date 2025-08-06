@@ -60,53 +60,54 @@ class _AITemplateScreenState extends ConsumerState<AITemplateScreen> {
   bool _hasCheckedPrivileges = false;
 
   // Template data
-  static const Map<TemplateCategory, Map<String, dynamic>> _templateCategories = {
-    TemplateCategory.business: {
-      'name': 'Business',
-      'icon': Icons.business,
-      'color': Colors.blue,
-    },
-    TemplateCategory.personal: {
-      'name': 'Personal',
-      'icon': Icons.person,
-      'color': Colors.green,
-    },
-    TemplateCategory.health: {
-      'name': 'Health',
-      'icon': Icons.favorite,
-      'color': Colors.red,
-    },
-    TemplateCategory.travel: {
-      'name': 'Travel',
-      'icon': Icons.flight,
-      'color': Colors.orange,
-    },
-    TemplateCategory.home: {
-      'name': 'Home',
-      'icon': Icons.home,
-      'color': Colors.brown,
-    },
-    TemplateCategory.education: {
-      'name': 'Education',
-      'icon': Icons.school,
-      'color': Colors.purple,
-    },
-    TemplateCategory.technology: {
-      'name': 'Technology',
-      'icon': Icons.computer,
-      'color': Colors.indigo,
-    },
-    TemplateCategory.events: {
-      'name': 'Events',
-      'icon': Icons.event,
-      'color': Colors.pink,
-    },
-    TemplateCategory.sports: {
-      'name': 'Sports',
-      'icon': Icons.sports_soccer,
-      'color': Colors.teal,
-    },
-  };
+  static const Map<TemplateCategory, Map<String, dynamic>> _templateCategories =
+      {
+        TemplateCategory.business: {
+          'name': 'Business',
+          'icon': Icons.business,
+          'color': Colors.blue,
+        },
+        TemplateCategory.personal: {
+          'name': 'Personal',
+          'icon': Icons.person,
+          'color': Colors.green,
+        },
+        TemplateCategory.health: {
+          'name': 'Health',
+          'icon': Icons.favorite,
+          'color': Colors.red,
+        },
+        TemplateCategory.travel: {
+          'name': 'Travel',
+          'icon': Icons.flight,
+          'color': Colors.orange,
+        },
+        TemplateCategory.home: {
+          'name': 'Home',
+          'icon': Icons.home,
+          'color': Colors.brown,
+        },
+        TemplateCategory.education: {
+          'name': 'Education',
+          'icon': Icons.school,
+          'color': Colors.purple,
+        },
+        TemplateCategory.technology: {
+          'name': 'Technology',
+          'icon': Icons.computer,
+          'color': Colors.indigo,
+        },
+        TemplateCategory.events: {
+          'name': 'Events',
+          'icon': Icons.event,
+          'color': Colors.pink,
+        },
+        TemplateCategory.sports: {
+          'name': 'Sports',
+          'icon': Icons.sports_soccer,
+          'color': Colors.teal,
+        },
+      };
 
   static const List<ChecklistTemplate> _templates = [
     ChecklistTemplate(
@@ -285,20 +286,21 @@ class _AITemplateScreenState extends ConsumerState<AITemplateScreen> {
 
   void _checkPrivileges() {
     final privileges = ref.read(privilegeProvider);
-    
+
     // Check if user can access AI features
     if (privileges == null || !_canUseAIFeatures(privileges)) {
       _showUpgradeDialog();
       return;
     }
-    
+
     // Check creation limits
     _checkCreationLimits();
   }
 
   bool _canUseAIFeatures(UserPrivileges privileges) {
     // AI features available for premium and pro users
-    return privileges.tier == UserTier.premium || privileges.tier == UserTier.pro;
+    return privileges.tier == UserTier.premium ||
+        privileges.tier == UserTier.pro;
   }
 
   Future<void> _checkCreationLimits() async {
@@ -308,7 +310,8 @@ class _AITemplateScreenState extends ConsumerState<AITemplateScreen> {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) return;
 
-    final currentCount = ref.read(checklistNotifierProvider)
+    final currentCount = ref
+        .read(checklistNotifierProvider)
         .maybeWhen(data: (checklists) => checklists.length, orElse: () => 0);
 
     final canCreate = await LimitManagementService.canCreateChecklist(
@@ -330,19 +333,25 @@ class _AITemplateScreenState extends ConsumerState<AITemplateScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(TranslationService.translate('upgrade_required')),
-        content: Text(TranslationService.translate('ai_feature_requires_upgrade')),
+        content: Text(
+          TranslationService.translate('ai_feature_requires_upgrade'),
+        ),
         actions: [
           TextButton(
             onPressed: () {
               Navigator.of(context).pop(); // Close dialog
-              Navigator.of(context).pop(); // Pop AI Template screen, return to Import screen
+              Navigator.of(
+                context,
+              ).pop(); // Pop AI Template screen, return to Import screen
             },
             child: Text(TranslationService.translate('cancel')),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.of(context).pop(); // Close dialog
-              Navigator.of(context).pop(); // Pop AI Template screen, return to Import screen
+              Navigator.of(
+                context,
+              ).pop(); // Pop AI Template screen, return to Import screen
               if (userTier == UserTier.anonymous) {
                 Navigator.of(context).push(
                   MaterialPageRoute(
@@ -352,7 +361,10 @@ class _AITemplateScreenState extends ConsumerState<AITemplateScreen> {
               } else {
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (context) => const UpgradeScreen(),
+                    builder: (context) => const UpgradeScreen(
+                      sourceFeature: 'AI Templates',
+                      targetTier: UserTier.premium,
+                    ),
                   ),
                 );
               }
@@ -378,18 +390,20 @@ class _AITemplateScreenState extends ConsumerState<AITemplateScreen> {
           TextButton(
             onPressed: () {
               Navigator.of(context).pop(); // Close dialog
-              Navigator.of(context).pop(); // Pop AI Template screen, return to Import screen
+              Navigator.of(
+                context,
+              ).pop(); // Pop AI Template screen, return to Import screen
             },
             child: Text(TranslationService.translate('cancel')),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.of(context).pop(); // Close dialog
-              Navigator.of(context).pop(); // Pop AI Template screen, return to Import screen
+              Navigator.of(
+                context,
+              ).pop(); // Pop AI Template screen, return to Import screen
               Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => const UpgradeScreen(),
-                ),
+                MaterialPageRoute(builder: (context) => const UpgradeScreen()),
               );
             },
             child: Text(TranslationService.translate('upgrade_now')),
@@ -440,12 +454,14 @@ class _AITemplateScreenState extends ConsumerState<AITemplateScreen> {
       final userTier = privileges?.tier;
 
       final checklistItems = _selectedTemplate!.baseItems
-          .map((item) => ChecklistItem(
-                id: 'temp_${DateTime.now().millisecondsSinceEpoch}_${item.hashCode}',
-                text: item,
-                status: ItemStatus.pending,
-                order: _selectedTemplate!.baseItems.indexOf(item),
-              ))
+          .map(
+            (item) => ChecklistItem(
+              id: 'temp_${DateTime.now().millisecondsSinceEpoch}_${item.hashCode}',
+              text: item,
+              status: ItemStatus.pending,
+              order: _selectedTemplate!.baseItems.indexOf(item),
+            ),
+          )
           .toList();
 
       final createdChecklist = await ref
@@ -462,10 +478,9 @@ class _AITemplateScreenState extends ConsumerState<AITemplateScreen> {
 
       if (createdChecklist != null) {
         // Return success result to import screen
-        Navigator.of(context).pop({
-          'success': true,
-          'checklist': createdChecklist,
-        });
+        Navigator.of(
+          context,
+        ).pop({'success': true, 'checklist': createdChecklist});
       } else {
         _showError('Failed to create checklist');
       }
@@ -480,15 +495,14 @@ class _AITemplateScreenState extends ConsumerState<AITemplateScreen> {
 
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-      ),
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
     );
   }
 
   List<ChecklistTemplate> _getTemplatesForCategory(TemplateCategory category) {
-    return _templates.where((template) => template.category == category).toList();
+    return _templates
+        .where((template) => template.category == category)
+        .toList();
   }
 
   List<ChecklistTemplate> _getPopularTemplates() {
@@ -503,11 +517,7 @@ class _AITemplateScreenState extends ConsumerState<AITemplateScreen> {
       appBar: AppBar(
         title: Row(
           children: [
-            Icon(
-              Icons.auto_awesome,
-              color: theme.primaryColor,
-              size: 24,
-            ),
+            Icon(Icons.auto_awesome, color: theme.primaryColor, size: 24),
             const SizedBox(width: 12),
             Text(
               TranslationService.translate('ai_template_selection'),
@@ -538,14 +548,12 @@ class _AITemplateScreenState extends ConsumerState<AITemplateScreen> {
             const SizedBox(height: 24),
 
             // Selected Category Templates
-            if (_selectedCategory != null)
-              _buildCategoryTemplates(theme),
+            if (_selectedCategory != null) _buildCategoryTemplates(theme),
 
             const SizedBox(height: 24),
 
             // Create Button
-            if (_selectedTemplate != null)
-              _buildCreateButton(theme),
+            if (_selectedTemplate != null) _buildCreateButton(theme),
           ],
         ),
       ),
@@ -718,4 +726,4 @@ class _AITemplateScreenState extends ConsumerState<AITemplateScreen> {
       ),
     );
   }
-} 
+}

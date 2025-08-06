@@ -131,9 +131,14 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
 
   /// Navigate to upgrade screen
   void _navigateToUpgrade() {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (context) => const UpgradeScreen()));
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const UpgradeScreen(
+          sourceFeature: 'Import Features',
+          targetTier: UserTier.premium,
+        ),
+      ),
+    );
   }
 
   Future<void> _pickFile() async {
@@ -204,7 +209,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
               errors: [],
               title: checklist.title,
             );
-            
+
             // Auto-fill title and description
             _titleController.text = checklist.title;
             _descriptionController.text = checklist.description ?? '';
@@ -257,13 +262,14 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
   }
 
   Future<Map<String, dynamic>?> _showAITemplateScreen() async {
-    final templateResult = await Navigator.of(context).push<Map<String, dynamic>>(
-      MaterialPageRoute(
-        fullscreenDialog: true,
-        builder: (context) => const AITemplateScreen(),
-      ),
-    );
-    
+    final templateResult = await Navigator.of(context)
+        .push<Map<String, dynamic>>(
+          MaterialPageRoute(
+            fullscreenDialog: true,
+            builder: (context) => const AITemplateScreen(),
+          ),
+        );
+
     // Handle the result if a template was selected
     if (templateResult != null && templateResult['success'] == true) {
       final checklist = templateResult['checklist'] as Checklist;
@@ -275,11 +281,11 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
         errors: [],
         title: checklist.title,
       );
-      
+
       setState(() {
         _importResult = result;
       });
-      
+
       // Auto-fill title and description
       _titleController.text = checklist.title;
       _descriptionController.text = checklist.description ?? '';
@@ -287,7 +293,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
         _tags = List.from(checklist.tags);
       }
     }
-    
+
     return templateResult;
   }
 
@@ -318,8 +324,11 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
       }
 
       // Check if this is an AI template result (already created)
-      if (_currentMode == ImportMode.ai && _importResult?.title?.isNotEmpty == true) {
-        print('[DEBUG] ImportScreen: AI template already created, navigating back');
+      if (_currentMode == ImportMode.ai &&
+          _importResult?.title?.isNotEmpty == true) {
+        print(
+          '[DEBUG] ImportScreen: AI template already created, navigating back',
+        );
         Navigator.of(context).pop();
         return;
       }

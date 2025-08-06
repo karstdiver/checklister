@@ -8,6 +8,7 @@ import '../../../features/auth/presentation/login_screen.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../core/providers/privilege_provider.dart';
 import '../../../core/providers/providers.dart';
+import '../../../core/domain/user_tier.dart';
 import '../../settings/presentation/upgrade_screen.dart';
 
 class AchievementScreen extends ConsumerStatefulWidget {
@@ -368,7 +369,10 @@ class _AchievementScreenState extends ConsumerState<AchievementScreen>
                 onPressed: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (context) => const UpgradeScreen(),
+                      builder: (context) => const UpgradeScreen(
+                        sourceFeature: 'Achievements',
+                        targetTier: UserTier.premium,
+                      ),
                     ),
                   );
                 },

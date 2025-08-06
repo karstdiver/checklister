@@ -612,5 +612,18 @@
   "export_config": "Export Config",
   "user_not_authenticated": "User not authenticated",
   "default_config_created": "Default configuration created successfully",
-  "failed_to_create_config": "Failed to create configuration"
+  "failed_to_create_config": "Failed to create configuration",
+  "signup_for_free_account": "Sign Up for Free Account",
+  "upgrade_to_premium": "Upgrade to Premium",
+  "upgrade_to_pro": "Upgrade to Pro",
+  "you_have_max_tier": "You Have Maximum Tier",
+  "signup_description": "Create a free account to unlock unlimited checklists, sessions, and advanced features.",
+  "upgrade_premium_description": "Unlock AI features, export capabilities, analytics, and priority support.",
+  "upgrade_pro_description": "Get team collaboration features, advanced analytics, and enterprise support.",
+  "max_tier_description": "You already have access to all premium features. Enjoy using Checklister Pro!",
+  "feature_comparison": "Feature Comparison",
+  "pricing_plans": "Pricing Plans",
+  "signup_free": "Sign Up Free",
+  "upgrade_now": "Upgrade Now",
+  "already_max_tier": "Already Max Tier"
 }

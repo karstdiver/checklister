@@ -71,9 +71,14 @@ class TierIndicator extends ConsumerWidget {
       );
     } else {
       // Authenticated users go to upgrade screen
-      Navigator.of(
-        context,
-      ).push(MaterialPageRoute(builder: (context) => const UpgradeScreen()));
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => UpgradeScreen(
+            sourceFeature: 'tier_upgrade',
+            targetTier: _getNextTier(tier),
+          ),
+        ),
+      );
     }
   }
 
@@ -113,6 +118,19 @@ class TierIndicator extends ConsumerWidget {
         return TranslationService.translate('premium');
       case UserTier.pro:
         return TranslationService.translate('pro');
+    }
+  }
+
+  static UserTier _getNextTier(UserTier currentTier) {
+    switch (currentTier) {
+      case UserTier.anonymous:
+        return UserTier.free;
+      case UserTier.free:
+        return UserTier.premium;
+      case UserTier.premium:
+        return UserTier.pro;
+      case UserTier.pro:
+        return UserTier.pro; // Already at max tier
     }
   }
 }

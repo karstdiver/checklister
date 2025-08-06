@@ -606,5 +606,18 @@
   "export_config": "Exportar Configuración",
   "user_not_authenticated": "Usuario no autenticado",
   "default_config_created": "Configuración predeterminada creada exitosamente",
-  "failed_to_create_config": "Error al crear la configuración"
+  "failed_to_create_config": "Error al crear la configuración",
+  "signup_for_free_account": "Registrarse para Cuenta Gratuita",
+  "upgrade_to_premium": "Actualizar a Premium",
+  "upgrade_to_pro": "Actualizar a Pro",
+  "you_have_max_tier": "Tienes el Nivel Máximo",
+  "signup_description": "Crea una cuenta gratuita para desbloquear listas de verificación ilimitadas, sesiones y funciones avanzadas.",
+  "upgrade_premium_description": "Desbloquea funciones de IA, capacidades de exportación, análisis y soporte prioritario.",
+  "upgrade_pro_description": "Obtén funciones de colaboración en equipo, análisis avanzado y soporte empresarial.",
+  "max_tier_description": "Ya tienes acceso a todas las funciones premium. ¡Disfruta usando Checklister Pro!",
+  "feature_comparison": "Comparación de Funciones",
+  "pricing_plans": "Planes de Precios",
+  "signup_free": "Registrarse Gratis",
+  "upgrade_now": "Actualizar Ahora",
+  "already_max_tier": "Ya Nivel Máximo"
 }

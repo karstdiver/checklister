@@ -234,7 +234,10 @@ class ProfilePictureEncouragement extends ConsumerWidget {
                         () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (context) => const UpgradeScreen(),
+                              builder: (context) => const UpgradeScreen(
+                                sourceFeature: 'Premium Features',
+                                targetTier: UserTier.premium,
+                              ),
                             ),
                           );
                         },
@@ -323,7 +326,10 @@ class ProfilePictureDetailsDialog extends ConsumerWidget {
               if (userTier == UserTier.free) {
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (context) => const UpgradeScreen(),
+                    builder: (context) => const UpgradeScreen(
+                      sourceFeature: 'Profile Pictures',
+                      targetTier: UserTier.premium,
+                    ),
                   ),
                 );
               } else {

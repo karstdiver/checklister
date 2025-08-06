@@ -14,6 +14,7 @@ import '../../../core/domain/user_tier.dart';
 import '../../../core/providers/privilege_provider.dart';
 import '../../auth/domain/profile_provider.dart';
 import '../../../features/auth/presentation/login_screen.dart';
+import 'upgrade_screen.dart';
 
 class ProfileEditScreen extends ConsumerStatefulWidget {
   const ProfileEditScreen({super.key});
@@ -373,11 +374,11 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
           );
         },
         onUpgrade: () {
-          // TODO: Navigate to upgrade screen
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                TranslationService.translate('upgrade_flow_coming_soon'),
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const UpgradeScreen(
+                sourceFeature: 'Profile Pictures',
+                targetTier: UserTier.premium,
               ),
             ),
           );

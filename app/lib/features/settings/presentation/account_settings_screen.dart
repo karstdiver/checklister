@@ -103,7 +103,10 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
                             onPressed: () {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
-                                  builder: (context) => const UpgradeScreen(),
+                                  builder: (context) => const UpgradeScreen(
+                                    sourceFeature: 'Account Features',
+                                    targetTier: UserTier.premium,
+                                  ),
                                 ),
                               );
                             },
