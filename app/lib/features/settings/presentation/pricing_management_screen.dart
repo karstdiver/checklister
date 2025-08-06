@@ -1,6 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../core/domain/pricing_tiers_config.dart';
 import '../../../core/services/pricing_tiers_management_service.dart';
@@ -415,27 +415,50 @@ class _PricingManagementScreenState
             TranslationService.translate('regional_pricing'),
             style: Theme.of(context).textTheme.headlineSmall,
           ),
-          const SizedBox(height: 16),
-          Expanded(
-            child: ListView.builder(
-              itemCount: _currentConfig!.regionalPricing.length,
-              itemBuilder: (context, index) {
-                final currency = _currentConfig!.regionalPricing.keys.elementAt(
-                  index,
-                );
-                final prices = _currentConfig!.regionalPricing[currency]!;
-                return _buildRegionalPricingCard(currency, prices);
-              },
+          const SizedBox(height: 8),
+          Text(
+            'Note: Regional pricing is synchronized with tier pricing. Changes in one will update the other.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Colors.grey[600],
+              fontStyle: FontStyle.italic,
             ),
+            textAlign: TextAlign.center,
           ),
+          const SizedBox(height: 16),
+          Expanded(child: _buildRegionalPricingList()),
         ],
       ),
+    );
+  }
+
+  Widget _buildRegionalPricingList() {
+    // Group tiers by currency
+    final tiersByCurrency = <String, List<MapEntry<String, TierConfig>>>{};
+
+    for (final entry in _currentConfig!.tiers.entries) {
+      final currency = entry.value.currency;
+      if (!tiersByCurrency.containsKey(currency)) {
+        tiersByCurrency[currency] = [];
+      }
+      tiersByCurrency[currency]!.add(entry);
+    }
+
+    return ListView.builder(
+      itemCount: tiersByCurrency.length,
+      itemBuilder: (context, index) {
+        final currency = tiersByCurrency.keys.elementAt(index);
+        final tiers = tiersByCurrency[currency]!;
+        final regionalPrices = _currentConfig!.regionalPricing[currency] ?? {};
+
+        return _buildRegionalPricingCard(currency, regionalPrices, tiers);
+      },
     );
   }
 
   Widget _buildRegionalPricingCard(
     String currency,
     Map<String, double> prices,
+    List<MapEntry<String, TierConfig>> tiers,
   ) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -445,24 +468,52 @@ class _PricingManagementScreenState
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
-              children: prices.entries.map((entry) {
+              children: tiers.map((tierEntry) {
+                final tierId = tierEntry.key;
+                final tier = tierEntry.value;
+                final regionalPrice = prices[tierId] ?? tier.price;
+
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Row(
                     children: [
-                      Expanded(flex: 2, child: Text(entry.key)),
+                      Expanded(
+                        flex: 2,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              tier.name,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              'Tier ID: $tierId',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                       Expanded(
                         flex: 3,
                         child: TextFormField(
-                          initialValue: entry.value.toString(),
+                          initialValue: regionalPrice.toString(),
                           decoration: InputDecoration(
                             labelText: TranslationService.translate('price'),
                             prefixText: currency,
+                            helperText: regionalPrice == tier.price
+                                ? 'Synced with tier'
+                                : 'Different from tier',
+                            helperMaxLines: 1,
                           ),
                           keyboardType: TextInputType.number,
                           onChanged: (value) => _updateRegionalPrice(
                             currency,
-                            entry.key,
+                            tierId,
                             double.tryParse(value) ?? 0,
                           ),
                         ),
@@ -592,63 +643,608 @@ class _PricingManagementScreenState
   }
 
   void _addNewTier() {
-    // TODO: Implement add new tier dialog
-    _showInfoSnackBar('Add new tier functionality coming soon');
+    showDialog(
+      context: context,
+      builder: (context) => _TierEditDialog(
+        tier: null,
+        onSave: (tierConfig) async {
+          await _saveNewTier(tierConfig);
+        },
+      ),
+    );
   }
 
   void _editTier(String tierId, TierConfig tier) {
-    // TODO: Implement edit tier dialog
-    _showInfoSnackBar('Edit tier functionality coming soon');
+    showDialog(
+      context: context,
+      builder: (context) => _TierEditDialog(
+        tier: tier,
+        onSave: (tierConfig) async {
+          await _updateExistingTier(tierId, tierConfig);
+        },
+      ),
+    );
   }
 
   void _deleteTier(String tierId) {
-    // TODO: Implement delete tier confirmation
-    _showInfoSnackBar('Delete tier functionality coming soon');
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(TranslationService.translate('delete_tier')),
+        content: Text(
+          '${TranslationService.translate('delete_tier_confirmation')} "${_currentConfig!.tiers[tierId]!.name}"?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(TranslationService.translate('cancel')),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.of(context).pop();
+              await _performDeleteTier(tierId);
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: Text(TranslationService.translate('delete')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _saveNewTier(TierConfig tierConfig) async {
+    try {
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) {
+        _showErrorSnackBar(
+          TranslationService.translate('user_not_authenticated'),
+        );
+        return;
+      }
+
+      final tierId = tierConfig.name.toLowerCase().replaceAll(' ', '_');
+      final success = await PricingTiersManagementService.addTier(
+        tierId,
+        tierConfig,
+        currentUser.uid,
+      );
+
+      if (success) {
+        _showSuccessSnackBar(
+          TranslationService.translate('tier_added_successfully'),
+        );
+        await _loadPricingConfig();
+      } else {
+        _showErrorSnackBar(TranslationService.translate('failed_to_add_tier'));
+      }
+    } catch (e) {
+      _showErrorSnackBar(e.toString());
+    }
+  }
+
+  Future<void> _updateExistingTier(String tierId, TierConfig tierConfig) async {
+    try {
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) {
+        _showErrorSnackBar(
+          TranslationService.translate('user_not_authenticated'),
+        );
+        return;
+      }
+
+      // First update the tier
+      final success = await PricingTiersManagementService.updateTier(
+        tierId,
+        tierConfig,
+        currentUser.uid,
+      );
+
+      if (success) {
+        // Then synchronize the regional pricing for this tier
+        await _synchronizeRegionalPricing(tierId, tierConfig);
+
+        _showSuccessSnackBar(
+          TranslationService.translate('tier_updated_successfully'),
+        );
+        await _loadPricingConfig();
+      } else {
+        _showErrorSnackBar(
+          TranslationService.translate('failed_to_update_tier'),
+        );
+      }
+    } catch (e) {
+      _showErrorSnackBar(e.toString());
+    }
+  }
+
+  Future<void> _synchronizeRegionalPricing(
+    String tierId,
+    TierConfig tierConfig,
+  ) async {
+    try {
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) return;
+
+      // Update the regional pricing for this tier's currency
+      final success = await PricingTiersManagementService.setCurrencyPrice(
+        tierConfig.currency,
+        tierId,
+        tierConfig.price,
+        currentUser.uid,
+      );
+
+      if (!success) {
+        _showErrorSnackBar(
+          TranslationService.translate('failed_to_sync_regional_pricing'),
+        );
+      }
+    } catch (e) {
+      _showErrorSnackBar('Failed to sync regional pricing: $e');
+    }
+  }
+
+  Future<void> _performDeleteTier(String tierId) async {
+    try {
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) {
+        _showErrorSnackBar(
+          TranslationService.translate('user_not_authenticated'),
+        );
+        return;
+      }
+
+      final success = await PricingTiersManagementService.removeTier(
+        tierId,
+        currentUser.uid,
+      );
+
+      if (success) {
+        _showSuccessSnackBar(
+          TranslationService.translate('tier_deleted_successfully'),
+        );
+        await _loadPricingConfig();
+      } else {
+        _showErrorSnackBar(
+          TranslationService.translate('failed_to_delete_tier'),
+        );
+      }
+    } catch (e) {
+      _showErrorSnackBar(e.toString());
+    }
   }
 
   void _addNewPromotion() {
-    // TODO: Implement add new promotion dialog
-    _showInfoSnackBar('Add new promotion functionality coming soon');
+    showDialog(
+      context: context,
+      builder: (context) => _SpecialOfferEditDialog(
+        offer: null,
+        onSave: (offer) async {
+          await _saveNewSpecialOffer(offer);
+        },
+      ),
+    );
   }
 
   void _editSpecialOffer(SpecialOffer offer) {
-    // TODO: Implement edit special offer dialog
-    _showInfoSnackBar('Edit special offer functionality coming soon');
+    showDialog(
+      context: context,
+      builder: (context) => _SpecialOfferEditDialog(
+        offer: offer,
+        onSave: (updatedOffer) async {
+          await _updateExistingSpecialOffer(offer.id, updatedOffer);
+        },
+      ),
+    );
   }
 
   void _deleteSpecialOffer(String offerId) {
-    // TODO: Implement delete special offer confirmation
-    _showInfoSnackBar('Delete special offer functionality coming soon');
+    final offer = _currentConfig!.promotions.specialOffers.firstWhere(
+      (offer) => offer.id == offerId,
+    );
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(TranslationService.translate('delete_special_offer')),
+        content: Text(
+          '${TranslationService.translate('delete_special_offer_confirmation')} "${offer.name}"?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(TranslationService.translate('cancel')),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.of(context).pop();
+              await _performDeleteSpecialOffer(offerId);
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: Text(TranslationService.translate('delete')),
+          ),
+        ],
+      ),
+    );
   }
 
-  void _toggleSpecialOffer(String offerId, bool active) {
-    // TODO: Implement toggle special offer
-    _showInfoSnackBar('Toggle special offer functionality coming soon');
+  void _toggleSpecialOffer(String offerId, bool active) async {
+    try {
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) {
+        _showErrorSnackBar(
+          TranslationService.translate('user_not_authenticated'),
+        );
+        return;
+      }
+
+      final currentOffers = List<SpecialOffer>.from(
+        _currentConfig!.promotions.specialOffers,
+      );
+      final offerIndex = currentOffers.indexWhere(
+        (offer) => offer.id == offerId,
+      );
+
+      if (offerIndex != -1) {
+        currentOffers[offerIndex] = currentOffers[offerIndex].copyWith(
+          active: active,
+        );
+
+        final updatedPromotions = _currentConfig!.promotions.copyWith(
+          specialOffers: currentOffers,
+        );
+
+        final success = await PricingTiersManagementService.updatePromotions(
+          updatedPromotions,
+          currentUser.uid,
+        );
+
+        if (success) {
+          _showSuccessSnackBar(
+            active
+                ? TranslationService.translate('special_offer_activated')
+                : TranslationService.translate('special_offer_deactivated'),
+          );
+          await _loadPricingConfig();
+        } else {
+          _showErrorSnackBar(
+            TranslationService.translate('failed_to_update_special_offer'),
+          );
+        }
+      }
+    } catch (e) {
+      _showErrorSnackBar(e.toString());
+    }
   }
 
-  void _updateAnnualDiscount(double discount) {
-    // TODO: Implement update annual discount
-    _showInfoSnackBar('Update annual discount functionality coming soon');
+  void _updateAnnualDiscount(double discount) async {
+    try {
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) {
+        _showErrorSnackBar(
+          TranslationService.translate('user_not_authenticated'),
+        );
+        return;
+      }
+
+      final updatedPromotions = _currentConfig!.promotions.copyWith(
+        annualDiscount: discount.round(),
+      );
+
+      final success = await PricingTiersManagementService.updatePromotions(
+        updatedPromotions,
+        currentUser.uid,
+      );
+
+      if (success) {
+        _showSuccessSnackBar(
+          TranslationService.translate('annual_discount_updated'),
+        );
+        await _loadPricingConfig();
+      } else {
+        _showErrorSnackBar(
+          TranslationService.translate('failed_to_update_annual_discount'),
+        );
+      }
+    } catch (e) {
+      _showErrorSnackBar(e.toString());
+    }
   }
 
-  void _updateTrialDays(int days) {
-    // TODO: Implement update trial days
-    _showInfoSnackBar('Update trial days functionality coming soon');
+  void _updateTrialDays(int days) async {
+    try {
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) {
+        _showErrorSnackBar(
+          TranslationService.translate('user_not_authenticated'),
+        );
+        return;
+      }
+
+      final updatedPromotions = _currentConfig!.promotions.copyWith(
+        trialDays: days,
+      );
+
+      final success = await PricingTiersManagementService.updatePromotions(
+        updatedPromotions,
+        currentUser.uid,
+      );
+
+      if (success) {
+        _showSuccessSnackBar(
+          TranslationService.translate('trial_days_updated'),
+        );
+        await _loadPricingConfig();
+      } else {
+        _showErrorSnackBar(
+          TranslationService.translate('failed_to_update_trial_days'),
+        );
+      }
+    } catch (e) {
+      _showErrorSnackBar(e.toString());
+    }
   }
 
-  void _updateRegionalPrice(String currency, String tier, double price) {
-    // TODO: Implement update regional price
-    _showInfoSnackBar('Update regional price functionality coming soon');
+  Future<void> _saveNewSpecialOffer(SpecialOffer offer) async {
+    try {
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) {
+        _showErrorSnackBar(
+          TranslationService.translate('user_not_authenticated'),
+        );
+        return;
+      }
+
+      final success = await PricingTiersManagementService.addSpecialOffer(
+        offer,
+        currentUser.uid,
+      );
+
+      if (success) {
+        _showSuccessSnackBar(
+          TranslationService.translate('special_offer_added_successfully'),
+        );
+        await _loadPricingConfig();
+      } else {
+        _showErrorSnackBar(
+          TranslationService.translate('failed_to_add_special_offer'),
+        );
+      }
+    } catch (e) {
+      _showErrorSnackBar(e.toString());
+    }
   }
 
-  void _saveConfiguration() {
-    // TODO: Implement save configuration
-    _showInfoSnackBar('Save configuration functionality coming soon');
+  Future<void> _updateExistingSpecialOffer(
+    String offerId,
+    SpecialOffer updatedOffer,
+  ) async {
+    try {
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) {
+        _showErrorSnackBar(
+          TranslationService.translate('user_not_authenticated'),
+        );
+        return;
+      }
+
+      final currentOffers = List<SpecialOffer>.from(
+        _currentConfig!.promotions.specialOffers,
+      );
+      final offerIndex = currentOffers.indexWhere(
+        (offer) => offer.id == offerId,
+      );
+
+      if (offerIndex != -1) {
+        currentOffers[offerIndex] = updatedOffer;
+
+        final updatedPromotions = _currentConfig!.promotions.copyWith(
+          specialOffers: currentOffers,
+        );
+
+        final success = await PricingTiersManagementService.updatePromotions(
+          updatedPromotions,
+          currentUser.uid,
+        );
+
+        if (success) {
+          _showSuccessSnackBar(
+            TranslationService.translate('special_offer_updated_successfully'),
+          );
+          await _loadPricingConfig();
+        } else {
+          _showErrorSnackBar(
+            TranslationService.translate('failed_to_update_special_offer'),
+          );
+        }
+      }
+    } catch (e) {
+      _showErrorSnackBar(e.toString());
+    }
+  }
+
+  Future<void> _performDeleteSpecialOffer(String offerId) async {
+    try {
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) {
+        _showErrorSnackBar(
+          TranslationService.translate('user_not_authenticated'),
+        );
+        return;
+      }
+
+      final currentOffers = List<SpecialOffer>.from(
+        _currentConfig!.promotions.specialOffers,
+      );
+      currentOffers.removeWhere((offer) => offer.id == offerId);
+
+      final updatedPromotions = _currentConfig!.promotions.copyWith(
+        specialOffers: currentOffers,
+      );
+
+      final success = await PricingTiersManagementService.updatePromotions(
+        updatedPromotions,
+        currentUser.uid,
+      );
+
+      if (success) {
+        _showSuccessSnackBar(
+          TranslationService.translate('special_offer_deleted_successfully'),
+        );
+        await _loadPricingConfig();
+      } else {
+        _showErrorSnackBar(
+          TranslationService.translate('failed_to_delete_special_offer'),
+        );
+      }
+    } catch (e) {
+      _showErrorSnackBar(e.toString());
+    }
+  }
+
+  void _updateRegionalPrice(String currency, String tier, double price) async {
+    try {
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) {
+        _showErrorSnackBar(
+          TranslationService.translate('user_not_authenticated'),
+        );
+        return;
+      }
+
+      final success = await PricingTiersManagementService.setCurrencyPrice(
+        currency,
+        tier,
+        price,
+        currentUser.uid,
+      );
+
+      if (success) {
+        // Also update the corresponding tier's price if it matches the currency
+        await _synchronizeTierPrice(tier, currency, price);
+
+        _showSuccessSnackBar(
+          TranslationService.translate('regional_price_updated'),
+        );
+        await _loadPricingConfig();
+      } else {
+        _showErrorSnackBar(
+          TranslationService.translate('failed_to_update_regional_price'),
+        );
+      }
+    } catch (e) {
+      _showErrorSnackBar(e.toString());
+    }
+  }
+
+  Future<void> _synchronizeTierPrice(
+    String tierId,
+    String currency,
+    double price,
+  ) async {
+    try {
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) return;
+
+      // Check if the tier exists and has the same currency
+      if (_currentConfig?.tiers.containsKey(tierId) == true) {
+        final tier = _currentConfig!.tiers[tierId]!;
+        if (tier.currency == currency && tier.price != price) {
+          // Update the tier's price to match the regional pricing
+          final updatedTier = tier.copyWith(price: price);
+          await PricingTiersManagementService.updateTier(
+            tierId,
+            updatedTier,
+            currentUser.uid,
+          );
+        }
+      }
+    } catch (e) {
+      _showErrorSnackBar('Failed to sync tier price: $e');
+    }
+  }
+
+  void _saveConfiguration() async {
+    try {
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) {
+        _showErrorSnackBar(
+          TranslationService.translate('user_not_authenticated'),
+        );
+        return;
+      }
+
+      if (_currentConfig == null) {
+        _showErrorSnackBar(
+          TranslationService.translate('no_configuration_to_save'),
+        );
+        return;
+      }
+
+      final success = await PricingTiersManagementService.updatePricingTiers(
+        _currentConfig!,
+        currentUser.uid,
+      );
+
+      if (success) {
+        _showSuccessSnackBar(
+          TranslationService.translate('configuration_saved_successfully'),
+        );
+        await _loadPricingConfig();
+      } else {
+        _showErrorSnackBar(
+          TranslationService.translate('failed_to_save_configuration'),
+        );
+      }
+    } catch (e) {
+      _showErrorSnackBar(e.toString());
+    }
   }
 
   void _exportConfiguration() {
-    // TODO: Implement export configuration
-    _showInfoSnackBar('Export configuration functionality coming soon');
+    if (_currentConfig == null) {
+      _showErrorSnackBar(
+        TranslationService.translate('no_configuration_to_export'),
+      );
+      return;
+    }
+
+    try {
+      final configJson = _currentConfig!.toFirestore();
+      final jsonString = const JsonEncoder.withIndent('  ').convert(configJson);
+
+      // For now, just show the JSON in a dialog
+      // In a real implementation, you might want to save to file or share
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(TranslationService.translate('export_configuration')),
+          content: SingleChildScrollView(
+            child: SelectableText(
+              jsonString,
+              style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(TranslationService.translate('close')),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                // TODO: Implement actual file export or sharing
+                _showInfoSnackBar(
+                  'Export functionality will be implemented in the next phase',
+                );
+                Navigator.of(context).pop();
+              },
+              child: Text(TranslationService.translate('export')),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      _showErrorSnackBar('Failed to export configuration: $e');
+    }
   }
 
   void _showSuccessSnackBar(String message) {
@@ -667,5 +1263,493 @@ class _PricingManagementScreenState
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: Colors.blue),
     );
+  }
+}
+
+class _TierEditDialog extends StatefulWidget {
+  final TierConfig? tier;
+  final Function(TierConfig) onSave;
+
+  const _TierEditDialog({required this.tier, required this.onSave});
+
+  @override
+  State<_TierEditDialog> createState() => _TierEditDialogState();
+}
+
+class _TierEditDialogState extends State<_TierEditDialog> {
+  final _formKey = GlobalKey<FormState>();
+  late TextEditingController _nameController;
+  late TextEditingController _priceController;
+  late TextEditingController _descriptionController;
+  late String _currency;
+  late String _billingCycle;
+  late bool _popular;
+  late bool _recommended;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.tier?.name ?? '');
+    _priceController = TextEditingController(
+      text: widget.tier?.price.toString() ?? '',
+    );
+    _descriptionController = TextEditingController(
+      text: widget.tier?.description ?? '',
+    );
+    _currency = widget.tier?.currency ?? 'USD';
+    _billingCycle = widget.tier?.billingCycle ?? 'monthly';
+    _popular = widget.tier?.popular ?? false;
+    _recommended = widget.tier?.recommended ?? false;
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _priceController.dispose();
+    _descriptionController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isEditing = widget.tier != null;
+
+    return AlertDialog(
+      title: Text(
+        isEditing
+            ? TranslationService.translate('edit_tier')
+            : TranslationService.translate('add_tier'),
+      ),
+      content: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: _nameController,
+                decoration: InputDecoration(
+                  labelText: TranslationService.translate('tier_name'),
+                  border: const OutlineInputBorder(),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return TranslationService.translate('tier_name_required');
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: TextFormField(
+                      controller: _priceController,
+                      decoration: InputDecoration(
+                        labelText: TranslationService.translate('price'),
+                        border: const OutlineInputBorder(),
+                      ),
+                      keyboardType: TextInputType.number,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return TranslationService.translate('price_required');
+                        }
+                        if (double.tryParse(value) == null) {
+                          return TranslationService.translate('invalid_price');
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: DropdownButtonFormField<String>(
+                      value: _currency,
+                      decoration: const InputDecoration(
+                        labelText: 'Currency',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: ['USD', 'EUR', 'GBP', 'CAD', 'AUD'].map((
+                        currency,
+                      ) {
+                        return DropdownMenuItem(
+                          value: currency,
+                          child: Text(currency),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          _currency = value!;
+                        });
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: _billingCycle,
+                decoration: InputDecoration(
+                  labelText: TranslationService.translate('billing_cycle'),
+                  border: const OutlineInputBorder(),
+                ),
+                items: ['monthly', 'yearly', 'weekly'].map((cycle) {
+                  return DropdownMenuItem(
+                    value: cycle,
+                    child: Text(TranslationService.translate(cycle)),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _billingCycle = value!;
+                  });
+                },
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _descriptionController,
+                decoration: InputDecoration(
+                  labelText: TranslationService.translate('description'),
+                  border: const OutlineInputBorder(),
+                ),
+                maxLines: 3,
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: CheckboxListTile(
+                      title: Text(TranslationService.translate('popular')),
+                      value: _popular,
+                      onChanged: (value) {
+                        setState(() {
+                          _popular = value ?? false;
+                        });
+                      },
+                    ),
+                  ),
+                  Expanded(
+                    child: CheckboxListTile(
+                      title: Text(TranslationService.translate('recommended')),
+                      value: _recommended,
+                      onChanged: (value) {
+                        setState(() {
+                          _recommended = value ?? false;
+                        });
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(TranslationService.translate('cancel')),
+        ),
+        ElevatedButton(
+          onPressed: _saveTier,
+          child: Text(
+            isEditing
+                ? TranslationService.translate('update')
+                : TranslationService.translate('add'),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _saveTier() {
+    if (_formKey.currentState!.validate()) {
+      final tierConfig = TierConfig(
+        name: _nameController.text.trim(),
+        price: double.parse(_priceController.text),
+        currency: _currency,
+        billingCycle: _billingCycle,
+        features: widget.tier?.features ?? {},
+        limits: widget.tier?.limits ?? {},
+        description: _descriptionController.text.trim(),
+        popular: _popular,
+        recommended: _recommended,
+      );
+
+      widget.onSave(tierConfig);
+      Navigator.of(context).pop();
+    }
+  }
+}
+
+class _SpecialOfferEditDialog extends StatefulWidget {
+  final SpecialOffer? offer;
+  final Function(SpecialOffer) onSave;
+
+  const _SpecialOfferEditDialog({required this.offer, required this.onSave});
+
+  @override
+  State<_SpecialOfferEditDialog> createState() =>
+      _SpecialOfferEditDialogState();
+}
+
+class _SpecialOfferEditDialogState extends State<_SpecialOfferEditDialog> {
+  final _formKey = GlobalKey<FormState>();
+  late TextEditingController _idController;
+  late TextEditingController _nameController;
+  late TextEditingController _discountController;
+  late TextEditingController _durationController;
+  late TextEditingController _conditionsController;
+  late DateTime _validFrom;
+  late DateTime _validTo;
+  late bool _active;
+
+  @override
+  void initState() {
+    super.initState();
+    _idController = TextEditingController(text: widget.offer?.id ?? '');
+    _nameController = TextEditingController(text: widget.offer?.name ?? '');
+    _discountController = TextEditingController(
+      text: widget.offer?.discount.toString() ?? '',
+    );
+    _durationController = TextEditingController(
+      text: widget.offer?.duration ?? '',
+    );
+    _conditionsController = TextEditingController(
+      text: widget.offer?.conditions.join(', ') ?? '',
+    );
+    _validFrom = widget.offer?.validFrom ?? DateTime.now();
+    _validTo =
+        widget.offer?.validTo ?? DateTime.now().add(const Duration(days: 30));
+    _active = widget.offer?.active ?? true;
+  }
+
+  @override
+  void dispose() {
+    _idController.dispose();
+    _nameController.dispose();
+    _discountController.dispose();
+    _durationController.dispose();
+    _conditionsController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isEditing = widget.offer != null;
+
+    return AlertDialog(
+      title: Text(
+        isEditing
+            ? TranslationService.translate('edit_special_offer')
+            : TranslationService.translate('add_special_offer'),
+      ),
+      content: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: _idController,
+                decoration: InputDecoration(
+                  labelText: TranslationService.translate('offer_id'),
+                  border: const OutlineInputBorder(),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return TranslationService.translate('offer_id_required');
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _nameController,
+                decoration: InputDecoration(
+                  labelText: TranslationService.translate('offer_name'),
+                  border: const OutlineInputBorder(),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return TranslationService.translate('offer_name_required');
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _discountController,
+                      decoration: InputDecoration(
+                        labelText: TranslationService.translate(
+                          'discount_percentage',
+                        ),
+                        border: const OutlineInputBorder(),
+                        suffixText: '%',
+                      ),
+                      keyboardType: TextInputType.number,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return TranslationService.translate(
+                            'discount_required',
+                          );
+                        }
+                        final discount = int.tryParse(value);
+                        if (discount == null ||
+                            discount < 0 ||
+                            discount > 100) {
+                          return TranslationService.translate(
+                            'invalid_discount',
+                          );
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _durationController,
+                      decoration: InputDecoration(
+                        labelText: TranslationService.translate('duration'),
+                        border: const OutlineInputBorder(),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return TranslationService.translate(
+                            'duration_required',
+                          );
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: ListTile(
+                      title: Text(TranslationService.translate('valid_from')),
+                      subtitle: Text(_formatDate(_validFrom)),
+                      onTap: () => _selectDate(true),
+                    ),
+                  ),
+                  Expanded(
+                    child: ListTile(
+                      title: Text(TranslationService.translate('valid_to')),
+                      subtitle: Text(_formatDate(_validTo)),
+                      onTap: () => _selectDate(false),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _conditionsController,
+                decoration: InputDecoration(
+                  labelText: TranslationService.translate('conditions'),
+                  hintText: TranslationService.translate('conditions_hint'),
+                  border: const OutlineInputBorder(),
+                ),
+                maxLines: 2,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return TranslationService.translate('conditions_required');
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              CheckboxListTile(
+                title: Text(TranslationService.translate('active')),
+                value: _active,
+                onChanged: (value) {
+                  setState(() {
+                    _active = value ?? false;
+                  });
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(TranslationService.translate('cancel')),
+        ),
+        ElevatedButton(
+          onPressed: _saveSpecialOffer,
+          child: Text(
+            isEditing
+                ? TranslationService.translate('update')
+                : TranslationService.translate('add'),
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year}';
+  }
+
+  Future<void> _selectDate(bool isFromDate) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: isFromDate ? _validFrom : _validTo,
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
+
+    if (picked != null) {
+      setState(() {
+        if (isFromDate) {
+          _validFrom = picked;
+        } else {
+          _validTo = picked;
+        }
+      });
+    }
+  }
+
+  void _saveSpecialOffer() {
+    if (_formKey.currentState!.validate()) {
+      if (_validFrom.isAfter(_validTo)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(TranslationService.translate('invalid_date_range')),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      final conditions = _conditionsController.text
+          .split(',')
+          .map((condition) => condition.trim())
+          .where((condition) => condition.isNotEmpty)
+          .toList();
+
+      final specialOffer = SpecialOffer(
+        id: _idController.text.trim(),
+        name: _nameController.text.trim(),
+        discount: int.parse(_discountController.text),
+        duration: _durationController.text.trim(),
+        validFrom: _validFrom,
+        validTo: _validTo,
+        conditions: conditions,
+        active: _active,
+      );
+
+      widget.onSave(specialOffer);
+      Navigator.of(context).pop();
+    }
   }
 }
