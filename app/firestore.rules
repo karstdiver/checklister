@@ -1,14 +1,77 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow authenticated users to read/write pricing tiers for testing
-    match /pricingTiers/{document} {
-      allow read, write: if request.auth != null;
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
     }
     
-    // Allow authenticated users to read their own user document
+    // Helper function to check if user is admin
+    function isAdmin() {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+    
+    // Pricing tiers configuration - admin only for write, authenticated users can read
+    match /pricingTiers/{document} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+    
+    // User documents - users can read/write their own document
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Checklists - users can read/write their own checklists
+    match /checklists/{checklistId} {
+      allow read, write: if isAuthenticated() && 
+        resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && 
+        request.resource.data.userId == request.auth.uid;
+    }
+    
+    // Checklist items - users can read/write items for their own checklists
+    match /checklists/{checklistId}/items/{itemId} {
+      allow read, write: if isAuthenticated() && 
+        get(/databases/$(database)/documents/checklists/$(checklistId)).data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && 
+        get(/databases/$(database)/documents/checklists/$(checklistId)).data.userId == request.auth.uid;
+    }
+    
+    // Sessions - users can read/write their own sessions
+    match /sessions/{sessionId} {
+      allow read, write: if isAuthenticated() && 
+        resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && 
+        request.resource.data.userId == request.auth.uid;
+    }
+    
+    // Session items - users can read/write items for their own sessions
+    match /sessions/{sessionId}/items/{itemId} {
+      allow read, write: if isAuthenticated() && 
+        get(/databases/$(database)/documents/sessions/$(sessionId)).data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && 
+        get(/databases/$(database)/documents/sessions/$(sessionId)).data.userId == request.auth.uid;
+    }
+    
+    // Achievements - users can read their own achievements
+    match /achievements/{achievementId} {
+      allow read, write: if isAuthenticated() && 
+        resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && 
+        request.resource.data.userId == request.auth.uid;
+    }
+    
+    // User settings - users can read/write their own settings
+    match /userSettings/{userId} {
+      allow read, write: if isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Notification settings - users can read/write their own notification settings
+    match /notificationSettings/{userId} {
+      allow read, write: if isAuthenticated() && request.auth.uid == userId;
     }
     
     // Default rule - deny all other access

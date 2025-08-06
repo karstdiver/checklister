@@ -7,27 +7,31 @@ service firebase.storage {
     }
     
     // Profile images - users can upload/read their own profile images
+    // Updated to match the actual upload path: profile_images/$fileName
+    match /profile_images/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+    
+    // Alternative profile images path with userId (for future use)
     match /profile-images/{userId}/{fileName} {
       allow read: if isAuthenticated();
       allow write: if isAuthenticated() && request.auth.uid == userId;
     }
     
     // Checklist images - users can upload/read images for their own checklists
-    // Note: We rely on the userId in the path for security
     match /checklist-images/{userId}/{checklistId}/{fileName} {
       allow read: if isAuthenticated();
       allow write: if isAuthenticated() && request.auth.uid == userId;
     }
     
     // Session images - users can upload/read images for their own sessions
-    // Note: We rely on the userId in the path for security
     match /session-images/{userId}/{sessionId}/{fileName} {
       allow read: if isAuthenticated();
       allow write: if isAuthenticated() && request.auth.uid == userId;
     }
     
     // Item photos - users can upload/read photos for their own checklist items
-    // Note: We rely on the userId in the path for security
     match /item-photos/{userId}/{itemId}/{fileName} {
       allow read: if isAuthenticated();
       allow write: if isAuthenticated() && request.auth.uid == userId;
