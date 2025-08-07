@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'checklist.dart';
 import 'checklist_view_type.dart';
 import '../presentation/views/list_view_widget.dart';
 import '../presentation/widgets/add_item_row.dart';
 import '../../../core/services/translation_service.dart';
 import '../../items/presentation/item_edit_screen.dart';
+import '../domain/checklist_providers.dart';
 
 /// Factory class for creating different checklist view widgets
 class ChecklistViewFactory {
@@ -127,7 +129,7 @@ class SwipeViewWidget extends StatelessWidget {
 }
 
 /// Matrix view widget with grid layout and inline editing
-class MatrixViewWidget extends StatefulWidget {
+class MatrixViewWidget extends ConsumerStatefulWidget {
   final Checklist checklist;
   final Function(ChecklistItem)? onItemTap;
   final Function(ChecklistItem)? onItemEdit;
@@ -152,14 +154,99 @@ class MatrixViewWidget extends StatefulWidget {
   });
 
   @override
-  State<MatrixViewWidget> createState() => _MatrixViewWidgetState();
+  ConsumerState<MatrixViewWidget> createState() => _MatrixViewWidgetState();
 }
 
-class _MatrixViewWidgetState extends State<MatrixViewWidget> {
+class _MatrixViewWidgetState extends ConsumerState<MatrixViewWidget> {
   int _getCrossAxisCount(double screenWidth) {
     if (screenWidth < 600) return 2;
     if (screenWidth < 900) return 3;
     return 4;
+  }
+
+  void _handleEditItem(ChecklistItem item) {
+    // Navigate to ItemEditScreen for editing
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => ItemEditScreen(
+          item: item,
+          onSave: (updatedItem) async {
+            try {
+              // Update the item in the checklist using the notifier
+              final checklistNotifier = ref.read(
+                checklistNotifierProvider.notifier,
+              );
+
+              // Wait for the checklist update to complete
+              final success = await checklistNotifier.updateItem(
+                widget.checklist.id,
+                updatedItem,
+              );
+
+              if (success) {
+                // Call the onItemEdit callback to notify parent (session screen) to refresh
+                widget.onItemEdit?.call(updatedItem);
+              } else {
+                throw Exception('Failed to update item');
+              }
+            } catch (e) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      TranslationService.translate('error_saving_item'),
+                    ),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+              rethrow;
+            }
+          },
+        ),
+      ),
+    );
+  }
+
+  void _handleDeleteItem(ChecklistItem item) {
+    // Show confirmation dialog
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(TranslationService.translate('delete_item')),
+        content: Text(
+          TranslationService.translate('delete_item_confirmation', [item.text]),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(TranslationService.translate('cancel')),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.of(context).pop();
+              try {
+                // Call the onItemDelete callback to notify parent (session screen) to delete
+                await widget.onItemDelete?.call(item);
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        TranslationService.translate('error_deleting_item'),
+                      ),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: Text(TranslationService.translate('delete')),
+          ),
+        ],
+      ),
+    );
   }
 
   void _handleAddItem() {
@@ -226,14 +313,18 @@ class _MatrixViewWidgetState extends State<MatrixViewWidget> {
               final item = items[index];
               final isFirst = index == 0;
               final isLast = index == items.length - 1;
-              
+
               return MatrixItemCard(
                 item: item,
                 onTap: () => widget.onItemTap?.call(item),
-                onEdit: () => widget.onItemEdit?.call(item),
-                onDelete: () => widget.onItemDelete?.call(item),
-                onMoveUp: isFirst ? null : () => widget.onItemMove?.call(item, -1),
-                onMoveDown: isLast ? null : () => widget.onItemMove?.call(item, 1),
+                onEdit: () => _handleEditItem(item),
+                onDelete: () => _handleDeleteItem(item),
+                onMoveUp: isFirst
+                    ? null
+                    : () => widget.onItemMove?.call(item, -1),
+                onMoveDown: isLast
+                    ? null
+                    : () => widget.onItemMove?.call(item, 1),
                 onTextUpdate: widget.onTextUpdate != null
                     ? (newText) => widget.onTextUpdate!(item, newText)
                     : null,
@@ -370,7 +461,7 @@ class _MatrixItemCardState extends State<MatrixItemCard> {
                           widget.onEdit();
                           break;
                         case 'delete':
-                          _showDeleteDialog(context);
+                          widget.onDelete();
                           break;
                         case 'move_up':
                           widget.onMoveUp?.call();
@@ -507,15 +598,16 @@ class _MatrixItemCardState extends State<MatrixItemCard> {
                                   child: Image.network(
                                     widget.item.imageUrl!,
                                     fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) =>
-                                        Container(
-                                          color: Colors.grey[200],
-                                          child: Icon(
-                                            Icons.broken_image,
-                                            size: 24,
-                                            color: Colors.grey[400],
-                                          ),
-                                        ),
+                                    errorBuilder:
+                                        (context, error, stackTrace) =>
+                                            Container(
+                                              color: Colors.grey[200],
+                                              child: Icon(
+                                                Icons.broken_image,
+                                                size: 24,
+                                                color: Colors.grey[400],
+                                              ),
+                                            ),
                                     loadingBuilder: (context, child, loadingProgress) {
                                       if (loadingProgress == null) return child;
                                       return Container(
@@ -526,9 +618,14 @@ class _MatrixItemCardState extends State<MatrixItemCard> {
                                             height: 24,
                                             child: CircularProgressIndicator(
                                               strokeWidth: 2,
-                                              value: loadingProgress.expectedTotalBytes != null
-                                                  ? loadingProgress.cumulativeBytesLoaded /
-                                                      loadingProgress.expectedTotalBytes!
+                                              value:
+                                                  loadingProgress
+                                                          .expectedTotalBytes !=
+                                                      null
+                                                  ? loadingProgress
+                                                            .cumulativeBytesLoaded /
+                                                        loadingProgress
+                                                            .expectedTotalBytes!
                                                   : null,
                                             ),
                                           ),
@@ -543,7 +640,11 @@ class _MatrixItemCardState extends State<MatrixItemCard> {
                           ],
                           // Item text
                           Expanded(
-                            flex: widget.item.imageUrl != null && widget.item.imageUrl!.isNotEmpty ? 1 : 3,
+                            flex:
+                                widget.item.imageUrl != null &&
+                                    widget.item.imageUrl!.isNotEmpty
+                                ? 1
+                                : 3,
                             child: Text(
                               widget.item.text,
                               style: TextStyle(
@@ -554,7 +655,11 @@ class _MatrixItemCardState extends State<MatrixItemCard> {
                                 color: isCompleted ? Colors.grey[600] : null,
                               ),
                               textAlign: TextAlign.center,
-                              maxLines: widget.item.imageUrl != null && widget.item.imageUrl!.isNotEmpty ? 2 : 3,
+                              maxLines:
+                                  widget.item.imageUrl != null &&
+                                      widget.item.imageUrl!.isNotEmpty
+                                  ? 2
+                                  : 3,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
@@ -564,34 +669,6 @@ class _MatrixItemCardState extends State<MatrixItemCard> {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  void _showDeleteDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(TranslationService.translate('delete_item')),
-        content: Text(
-          TranslationService.translate('delete_item_confirmation', [
-            widget.item.text,
-          ]),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(TranslationService.translate('cancel')),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              widget.onDelete();
-            },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: Text(TranslationService.translate('delete')),
-          ),
-        ],
       ),
     );
   }
