@@ -168,10 +168,22 @@ class _MatrixViewWidgetState extends State<MatrixViewWidget> {
       MaterialPageRoute(
         builder: (context) => ItemEditScreen(
           onSave: (newItem) async {
-            // Call the onItemAdd callback to notify parent (session screen) to add the item
-            widget.onItemAdd?.call(newItem);
-
-            // The navigation will pop back to the matrix view automatically
+            try {
+              // Call the onItemAdd callback to notify parent (session screen) to add the item
+              widget.onItemAdd?.call(newItem);
+            } catch (e) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      TranslationService.translate('error_saving_item'),
+                    ),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+              rethrow;
+            }
           },
         ),
       ),

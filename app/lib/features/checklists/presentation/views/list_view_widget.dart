@@ -108,23 +108,37 @@ class _ListViewWidgetState extends ConsumerState<ListViewWidget> {
         builder: (context) => ItemEditScreen(
           item: item,
           onSave: (updatedItem) async {
-            // Update the item in the checklist using the notifier
-            final checklistNotifier = ref.read(
-              checklistNotifierProvider.notifier,
-            );
+            try {
+              // Update the item in the checklist using the notifier
+              final checklistNotifier = ref.read(
+                checklistNotifierProvider.notifier,
+              );
 
-            // Wait for the checklist update to complete
-            final success = await checklistNotifier.updateItem(
-              widget.checklist.id,
-              updatedItem,
-            );
+              // Wait for the checklist update to complete
+              final success = await checklistNotifier.updateItem(
+                widget.checklist.id,
+                updatedItem,
+              );
 
-            if (success) {
-              // Call the onItemEdit callback to notify parent (session screen) to refresh
-              widget.onItemEdit(updatedItem);
+              if (success) {
+                // Call the onItemEdit callback to notify parent (session screen) to refresh
+                widget.onItemEdit(updatedItem);
+              } else {
+                throw Exception('Failed to update item');
+              }
+            } catch (e) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      TranslationService.translate('error_saving_item'),
+                    ),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+              rethrow;
             }
-
-            // The navigation will pop back to the list view automatically
           },
         ),
       ),
@@ -137,10 +151,22 @@ class _ListViewWidgetState extends ConsumerState<ListViewWidget> {
       MaterialPageRoute(
         builder: (context) => ItemEditScreen(
           onSave: (newItem) async {
-            // Call the onItemAdd callback to notify parent (session screen) to add the item
-            widget.onItemAdd?.call(newItem);
-
-            // The navigation will pop back to the list view automatically
+            try {
+              // Call the onItemAdd callback to notify parent (session screen) to add the item
+              widget.onItemAdd?.call(newItem);
+            } catch (e) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      TranslationService.translate('error_saving_item'),
+                    ),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+              rethrow;
+            }
           },
         ),
       ),

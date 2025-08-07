@@ -13,7 +13,7 @@ import '../../../features/settings/presentation/upgrade_screen.dart';
 
 class ItemEditScreen extends ConsumerStatefulWidget {
   final ChecklistItem? item; // null for creating new, non-null for editing
-  final Function(ChecklistItem) onSave;
+  final Future<void> Function(ChecklistItem) onSave;
   final VoidCallback? onCancel;
 
   const ItemEditScreen({
@@ -396,27 +396,79 @@ class _ItemEditScreenState extends ConsumerState<ItemEditScreen> {
     );
   }
 
-  void _saveItem() {
+  void _saveItem() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    final newItem = ChecklistItem.create(
-      text: _textController.text.trim(),
-      notes: _notesController.text.trim().isEmpty
-          ? null
-          : _notesController.text.trim(),
-      imageUrl: _currentImageUrl,
-    );
+    // Show loading state
+    setState(() {
+      _isLoading = true;
+    });
 
-    final savedItem = widget.item != null
-        ? newItem.copyWith(id: widget.item!.id, order: widget.item!.order)
-        : newItem.copyWith(
-            id: 'item_${DateTime.now().millisecondsSinceEpoch}',
-            order: 0, // Will be set by parent
-          );
+    try {
+      final newItem = ChecklistItem.create(
+        text: _textController.text.trim(),
+        notes: _notesController.text.trim().isEmpty
+            ? null
+            : _notesController.text.trim(),
+        imageUrl: _currentImageUrl,
+      );
 
-    widget.onSave(savedItem);
-    Navigator.of(context).pop();
+      final savedItem = widget.item != null
+          ? newItem.copyWith(id: widget.item!.id, order: widget.item!.order)
+          : newItem.copyWith(
+              id: 'item_${DateTime.now().millisecondsSinceEpoch}',
+              order: 0, // Will be set by parent
+            );
+
+      // Call the onSave callback and wait for it to complete
+      await widget.onSave(savedItem);
+
+      // Show success feedback
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              widget.item != null
+                  ? TranslationService.translate('item_updated_successfully')
+                  : TranslationService.translate('item_added_successfully'),
+            ),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+
+      // Navigate back only after successful save
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+    } catch (e) {
+      // Show error feedback
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              TranslationService.translate('error_saving_item'),
+            ),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+            action: SnackBarAction(
+              label: TranslationService.translate('retry'),
+              textColor: Colors.white,
+              onPressed: () => _saveItem(),
+            ),
+          ),
+        );
+      }
+    } finally {
+      // Hide loading state
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 }

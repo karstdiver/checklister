@@ -504,10 +504,24 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => ItemEditScreen(
-          onSave: (item) {
-            setState(() {
-              _items.add(item.copyWith(order: _items.length));
-            });
+          onSave: (item) async {
+            try {
+              setState(() {
+                _items.add(item.copyWith(order: _items.length));
+              });
+            } catch (e) {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      TranslationService.translate('error_saving_item'),
+                    ),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+              rethrow;
+            }
           },
         ),
       ),
@@ -519,10 +533,24 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
       MaterialPageRoute(
         builder: (context) => ItemEditScreen(
           item: _items[index],
-          onSave: (item) {
-            setState(() {
-              _items[index] = item.copyWith(order: _items[index].order);
-            });
+          onSave: (item) async {
+            try {
+              setState(() {
+                _items[index] = item.copyWith(order: _items[index].order);
+              });
+            } catch (e) {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      TranslationService.translate('error_saving_item'),
+                    ),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+              rethrow;
+            }
           },
         ),
       ),
@@ -715,15 +743,29 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
     final result = await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => ItemEditScreen(
-          onSave: (item) {
-            setState(() {
-              _items.add(
-                item.copyWith(
-                  id: 'item_${DateTime.now().millisecondsSinceEpoch}',
-                  order: _items.length,
-                ),
-              );
-            });
+          onSave: (item) async {
+            try {
+              setState(() {
+                _items.add(
+                  item.copyWith(
+                    id: 'item_${DateTime.now().millisecondsSinceEpoch}',
+                    order: _items.length,
+                  ),
+                );
+              });
+            } catch (e) {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      TranslationService.translate('error_saving_item'),
+                    ),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+              rethrow;
+            }
           },
         ),
       ),
