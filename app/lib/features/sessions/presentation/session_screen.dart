@@ -302,7 +302,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           children: [
             _buildExpirationWarning(session, sessionNotifier),
             _buildProgressIndicator(session, ref),
-            Expanded(child: _buildCurrentItem(session)),
+            Expanded(child: _buildCurrentItem(session, ref)),
             _buildNavigationControls(session, sessionNotifier, ref),
           ],
         ),
@@ -319,7 +319,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
             children: [
               _buildExpirationWarning(session, sessionNotifier),
               _buildProgressIndicator(session, ref),
-              Expanded(child: _buildCurrentItem(session)),
+              Expanded(child: _buildCurrentItem(session, ref)),
               _buildNavigationControls(session, sessionNotifier, ref),
             ],
           ),
@@ -749,7 +749,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     );
   }
 
-  Widget _buildCurrentItem(SessionState session) {
+  Widget _buildCurrentItem(SessionState session, WidgetRef ref) {
     final currentItem = session.currentItem;
 
     if (currentItem == null) {
@@ -910,14 +910,14 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
             const SizedBox(height: 16), // Reduced from 24
             // Swipe instructions
-            _buildSwipeInstructions(),
+            _buildSwipeInstructions(ref),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildSwipeInstructions() {
+  Widget _buildSwipeInstructions(WidgetRef ref) {
     return Container(
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
@@ -942,25 +942,37 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
             runSpacing: 8,
             alignment: WrapAlignment.spaceEvenly,
             children: [
-              _buildSwipeInstruction(
+              _buildSwipeInstructionButton(
                 '←',
                 TranslationService.translate('complete'),
                 Colors.green,
+                () async => await ref
+                    .read(sessionNotifierProvider.notifier)
+                    .handleSwipeLeft(),
               ),
-              _buildSwipeInstruction(
+              _buildSwipeInstructionButton(
                 '→',
                 TranslationService.translate('review'),
                 Colors.blue,
+                () => ref
+                    .read(sessionNotifierProvider.notifier)
+                    .handleSwipeRight(),
               ),
-              _buildSwipeInstruction(
+              _buildSwipeInstructionButton(
                 '↑',
                 TranslationService.translate('skip'),
                 Colors.orange,
+                () async => await ref
+                    .read(sessionNotifierProvider.notifier)
+                    .handleSwipeUp(),
               ),
-              _buildSwipeInstruction(
+              _buildSwipeInstructionButton(
                 '↓',
                 TranslationService.translate('pause'),
                 Colors.red,
+                () => ref
+                    .read(sessionNotifierProvider.notifier)
+                    .handleSwipeDown(),
               ),
             ],
           ),
@@ -969,24 +981,32 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     );
   }
 
-  Widget _buildSwipeInstruction(String icon, String label, Color color) {
+  Widget _buildSwipeInstructionButton(
+    String icon,
+    String label,
+    Color color,
+    VoidCallback onPressed,
+  ) {
     return Column(
       children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: color),
-          ),
-          child: Center(
-            child: Text(
-              icon,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: color,
+        GestureDetector(
+          onTap: onPressed,
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: color),
+            ),
+            child: Center(
+              child: Text(
+                icon,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
               ),
             ),
           ),
