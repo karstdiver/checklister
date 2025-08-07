@@ -440,13 +440,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           child: ChecklistCard(
                             checklist: checklist,
                             onTap: () {
-                              // Check if there's an active session
+                              // Check if there's an active session with actual progress
                               final activeSession = ref.read(
                                 sessionNotifierProvider,
                               );
                               if (activeSession != null &&
-                                  activeSession.checklistId == checklist.id) {
-                                // Show dialog to resume or start new session
+                                  activeSession.checklistId == checklist.id &&
+                                  activeSession.completedItems > 0) {
+                                // Show dialog to resume or start new session only if there's actual progress
                                 showDialog(
                                   context: context,
                                   builder: (context) => AlertDialog(
@@ -474,12 +475,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                       ),
                                       TextButton(
                                         onPressed: () {
-                                          ref
-                                              .read(
-                                                sessionNotifierProvider
-                                                    .notifier,
-                                              )
-                                              .clearSession();
                                           Navigator.pop(context);
                                           Navigator.push(
                                             context,
@@ -566,7 +561,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   ),
                                 );
                               } else {
-                                // Start new session
+                                // No progress to resume, navigate directly to session screen
+                                // Clear any existing session state first
                                 ref
                                     .read(sessionNotifierProvider.notifier)
                                     .clearSession();
@@ -576,8 +572,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     builder: (context) => SessionScreen(
                                       checklistId: checklist.id,
                                       checklistTitle: checklist.title,
-                                      // Debug print for checklist items
-                                      // ignore: avoid_print
                                       items: (() {
                                         return checklist.items
                                             .map(
