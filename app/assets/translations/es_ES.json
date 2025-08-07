@@ -709,5 +709,8 @@
   "pricing_plans": "Planes de Precios",
   "signup_free": "Registrarse Gratis",
   "upgrade_now": "Actualizar Ahora",
-  "already_max_tier": "Ya Nivel Máximo"
+  "already_max_tier": "Ya Nivel Máximo",
+  "upgrading_tier": "Actualizando nivel...",
+  "upgrade_successful": "¡Actualizado exitosamente a {}!",
+  "upgrade_failed": "Error al actualizar. Por favor, inténtalo de nuevo."
 }

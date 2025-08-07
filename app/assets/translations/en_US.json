@@ -715,5 +715,8 @@
   "pricing_plans": "Pricing Plans",
   "signup_free": "Sign Up Free",
   "upgrade_now": "Upgrade Now",
-  "already_max_tier": "Already Max Tier"
+  "already_max_tier": "Already Max Tier",
+  "upgrading_tier": "Upgrading tier...",
+  "upgrade_successful": "Successfully upgraded to {}!",
+  "upgrade_failed": "Upgrade failed. Please try again."
 }

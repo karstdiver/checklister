@@ -7,6 +7,7 @@ import '../../../core/domain/user_tier.dart';
 import '../../../core/domain/pricing_tiers_config.dart';
 import '../../../core/services/pricing_tiers_management_service.dart';
 import '../../../core/providers/privilege_provider.dart';
+import '../../../core/widgets/tier_indicator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class UpgradeScreen extends ConsumerStatefulWidget {
@@ -434,12 +435,107 @@ class _UpgradeScreenState extends ConsumerState<UpgradeScreen> {
   void _handleUpgrade() {
     AnalyticsService().logCustomEvent(name: 'upgrade_button_tap');
 
-    // TODO: Implement actual upgrade flow
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(TranslationService.translate('upgrade_coming_soon')),
-      ),
-    );
+    if (_selectedTier == null || _pricingConfig == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(TranslationService.translate('error_loading_pricing')),
+        ),
+      );
+      return;
+    }
+
+    // Get the selected tier's price from the pricing configuration
+    final selectedTierName = _getTierNameFromEnum(_selectedTier!);
+    final selectedTierConfig = _pricingConfig!.tiers[selectedTierName];
+
+    if (selectedTierConfig == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(TranslationService.translate('error_loading_pricing')),
+        ),
+      );
+      return;
+    }
+
+    // Check if the selected tier costs $0.00
+    if (selectedTierConfig.price == 0.0) {
+      // Free tier - immediately upgrade the user
+      _performFreeUpgrade();
+    } else {
+      // Paid tier - show coming soon message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(TranslationService.translate('upgrade_coming_soon')),
+        ),
+      );
+    }
+  }
+
+  String _getTierNameFromEnum(UserTier tier) {
+    switch (tier) {
+      case UserTier.free:
+        return 'free';
+      case UserTier.premium:
+        return 'premium';
+      case UserTier.pro:
+        return 'pro';
+      case UserTier.anonymous:
+        return 'free'; // Anonymous users can upgrade to free
+    }
+  }
+
+  Future<void> _performFreeUpgrade() async {
+    if (_selectedTier == null) return;
+
+    try {
+      // Show loading indicator
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+              const SizedBox(width: 16),
+              Text(TranslationService.translate('upgrading_tier')),
+            ],
+          ),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+
+      // Perform the upgrade using the privilege provider
+      await ref.read(privilegeProvider.notifier).upgradeTier(_selectedTier!);
+
+      // Show success message
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              TranslationService.translate('upgrade_successful', [
+                TierIndicator.getTierDisplayName(_selectedTier!),
+              ]),
+            ),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        // Navigate back to previous screen
+        Navigator.of(context).pop();
+      }
+    } catch (e) {
+      // Show error message
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(TranslationService.translate('upgrade_failed')),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }
 
