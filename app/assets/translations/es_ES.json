@@ -96,6 +96,8 @@
   "error_loading_checklists": "Error al cargar las listas",
   "error_saving_checklist": "Error al guardar la lista de verificación",
   "error_saving_item": "Error al guardar el elemento",
+  "error_deleting_item": "Error al eliminar el elemento",
+  "error_moving_item": "Error al mover el elemento",
   "error_unknown": "Ocurrió un error desconocido",
   "error_user_not_authenticated": "Usuario no autenticado",
   "finish": "Finalizar",

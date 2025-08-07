@@ -384,17 +384,106 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                     logger.w('🔄 Could not find updated checklist after edit');
                   }
                 },
-                onItemDelete: (item) {
-                  // Delete functionality - could be implemented if needed
-                  // For now, just log that delete was requested
-                  logger.d('Delete requested for item: ${item.id}');
-                },
-                onItemMove: (item, direction) {
-                  // Move functionality - could be implemented if needed
-                  // For now, just log that move was requested
-                  logger.d(
-                    'Move requested for item: ${item.id} in direction: $direction',
+                onItemDelete: (item) async {
+                  // Delete the item from the checklist database first
+                  final checklistNotifier = ref.read(
+                    checklistNotifierProvider.notifier,
                   );
+
+                  final success = await checklistNotifier.deleteItem(
+                    widget.checklistId,
+                    item.id,
+                  );
+
+                  if (success) {
+                    logger.i('✅ Deleted item from checklist database: ${item.text}');
+
+                    // Remove the item from the session
+                    await sessionNotifier.removeItemFromSession(item.id);
+                    logger.i('🗑️ Removed item from session: ${item.text}');
+
+                    // Force a rebuild of the UI to ensure changes are visible
+                    if (mounted) {
+                      setState(() {});
+                    }
+                  } else {
+                    logger.e('❌ Failed to delete item from checklist database');
+                    // Show error feedback to user
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            TranslationService.translate('error_deleting_item'),
+                          ),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  }
+                },
+                onItemMove: (item, direction) async {
+                  // Move the item in the checklist database first
+                  final checklistNotifier = ref.read(
+                    checklistNotifierProvider.notifier,
+                  );
+
+                  final success = await checklistNotifier.moveItem(
+                    widget.checklistId,
+                    item.id,
+                    direction,
+                  );
+
+                  if (success) {
+                    logger.i('✅ Moved item in checklist database: ${item.text} direction: $direction');
+
+                    // Refresh the session with the latest checklist data to reflect the new order
+                    final updatedChecklist = checklistNotifier.getChecklistById(
+                      widget.checklistId,
+                    );
+
+                    if (updatedChecklist != null) {
+                      // Convert checklist domain items to session items
+                      final sessionItems = updatedChecklist.items
+                          .map(
+                            (checklistItem) => ChecklistItem(
+                              id: checklistItem.id,
+                              text: checklistItem.text,
+                              imageUrl: checklistItem.imageUrl,
+                              status: _convertChecklistItemStatus(
+                                checklistItem.status,
+                              ),
+                              notes: checklistItem.notes,
+                              completedAt: checklistItem.completedAt,
+                              skippedAt: checklistItem.skippedAt,
+                            ),
+                          )
+                          .toList();
+
+                      // Update the session with the latest checklist items
+                      await sessionNotifier.updateSessionWithLatestItems(
+                        sessionItems,
+                      );
+                      logger.i('🔄 Session refreshed with updated item order');
+                    }
+
+                    // Force a rebuild of the UI to ensure changes are visible
+                    if (mounted) {
+                      setState(() {});
+                    }
+                  } else {
+                    logger.e('❌ Failed to move item in checklist database');
+                    // Show error feedback to user
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            TranslationService.translate('error_moving_item'),
+                          ),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  }
                 },
                 onTextUpdate: (item, newText) async {
                   // Update the item text in the checklist using the notifier

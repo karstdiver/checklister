@@ -96,6 +96,8 @@
   "error_loading_checklists": "Error loading checklists",
   "error_saving_checklist": "Error saving checklist",
   "error_saving_item": "Error saving item",
+  "error_deleting_item": "Error deleting item",
+  "error_moving_item": "Error moving item",
   "error_unknown": "An unknown error occurred",
   "error_user_not_authenticated": "User not authenticated",
   "finish": "Finish",

@@ -664,6 +664,36 @@ class SessionNotifier extends StateNotifier<SessionState?> {
     }
   }
 
+  /// Remove an item from the session by ID
+  Future<void> removeItemFromSession(String itemId) async {
+    if (state == null) return;
+
+    final itemIndex = state!.items.indexWhere((item) => item.id == itemId);
+    if (itemIndex == -1) {
+      logger.w('Item not found for removal: $itemId');
+      return;
+    }
+
+    final itemToRemove = state!.items[itemIndex];
+    logger.i('🗑️ Removing item from session: ${itemToRemove.text}');
+
+    // Create a new list with the item removed
+    final updatedItems = List<ChecklistItem>.from(state!.items);
+    updatedItems.removeAt(itemIndex);
+
+    // Update the session state
+    final updatedSession = state!.copyWith(items: updatedItems);
+    state = updatedSession;
+
+    // Save to database
+    try {
+      await _repository.saveSession(updatedSession);
+      logger.i('💾 Removed item from session and saved to database');
+    } catch (e) {
+      logger.e('💾 Failed to save session after removing item: $e');
+    }
+  }
+
   /// Update the last active time for the session
   Future<void> updateLastActiveTime() async {
     if (state == null) return;
