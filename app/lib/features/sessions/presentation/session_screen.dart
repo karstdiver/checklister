@@ -13,6 +13,8 @@ import '../../checklists/domain/checklist_view_type.dart';
 import '../../checklists/domain/checklist_providers.dart';
 import '../../checklists/domain/checklist_view_factory.dart';
 import '../../checklists/domain/checklist.dart' as checklist_domain;
+import '../../checklists/domain/checklist_notifier.dart';
+import '../../items/presentation/item_edit_screen.dart';
 
 final logger = Logger();
 
@@ -168,7 +170,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
             if (session != null) {
               try {
                 // Update the last active time to ensure session is properly saved
-                final sessionNotifier = ref.read(sessionNotifierProvider.notifier);
+                final sessionNotifier = ref.read(
+                  sessionNotifierProvider.notifier,
+                );
                 await sessionNotifier.updateLastActiveTime();
                 logger.i('💾 Session updated before navigation');
               } catch (e) {
@@ -181,7 +185,8 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           child: Scaffold(
             appBar: AppBar(
               title: Text(
-                widget.checklistTitle ?? TranslationService.translate('session'),
+                widget.checklistTitle ??
+                    TranslationService.translate('session'),
               ),
               leading: IconButton(
                 onPressed: () => Navigator.of(context).pop(),
@@ -396,7 +401,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                   );
 
                   if (success) {
-                    logger.i('✅ Deleted item from checklist database: ${item.text}');
+                    logger.i(
+                      '✅ Deleted item from checklist database: ${item.text}',
+                    );
 
                     // Remove the item from the session
                     await sessionNotifier.removeItemFromSession(item.id);
@@ -434,7 +441,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                   );
 
                   if (success) {
-                    logger.i('✅ Moved item in checklist database: ${item.text} direction: $direction');
+                    logger.i(
+                      '✅ Moved item in checklist database: ${item.text} direction: $direction',
+                    );
 
                     // Refresh the session with the latest checklist data to reflect the new order
                     final updatedChecklist = checklistNotifier.getChecklistById(
@@ -548,7 +557,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                   );
 
                   if (success) {
-                    logger.i('✅ Added new item to checklist database: ${newItem.text}');
+                    logger.i(
+                      '✅ Added new item to checklist database: ${newItem.text}',
+                    );
 
                     // Convert checklist domain item to session item
                     final sessionItem = ChecklistItem(
@@ -756,17 +767,113 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
               ),
 
             const SizedBox(height: 16), // Reduced from 24
-            // Item text
+            // Item text with hamburger menu
             AppCard(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: Text(
-                  currentItem.text,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  textAlign: TextAlign.center,
+                child: Row(
+                  children: [
+                    // Item text
+                    Expanded(
+                      child: Text(
+                        currentItem.text,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    // Hamburger menu
+                    PopupMenuButton<String>(
+                      icon: const Icon(Icons.more_vert),
+                      onSelected: (value) async {
+                        final checklistNotifier = ref.read(
+                          checklistNotifierProvider.notifier,
+                        );
+
+                        switch (value) {
+                          case 'edit':
+                            await _handleItemEdit(
+                              currentItem,
+                              checklistNotifier,
+                            );
+                            break;
+                          case 'delete':
+                            await _handleItemDelete(
+                              currentItem,
+                              checklistNotifier,
+                            );
+                            break;
+                          case 'move_up':
+                            await _handleItemMove(
+                              currentItem,
+                              -1,
+                              checklistNotifier,
+                            );
+                            break;
+                          case 'move_down':
+                            await _handleItemMove(
+                              currentItem,
+                              1,
+                              checklistNotifier,
+                            );
+                            break;
+                        }
+                      },
+                      itemBuilder: (context) => [
+                        PopupMenuItem(
+                          value: 'edit',
+                          child: Row(
+                            children: [
+                              const Icon(Icons.edit, size: 20),
+                              const SizedBox(width: 8),
+                              Text(TranslationService.translate('edit')),
+                            ],
+                          ),
+                        ),
+                        if (session.currentItemIndex > 0)
+                          PopupMenuItem(
+                            value: 'move_up',
+                            child: Row(
+                              children: [
+                                const Icon(Icons.keyboard_arrow_up, size: 20),
+                                const SizedBox(width: 8),
+                                Text(TranslationService.translate('move_up')),
+                              ],
+                            ),
+                          ),
+                        if (session.currentItemIndex < session.totalItems - 1)
+                          PopupMenuItem(
+                            value: 'move_down',
+                            child: Row(
+                              children: [
+                                const Icon(Icons.keyboard_arrow_down, size: 20),
+                                const SizedBox(width: 8),
+                                Text(TranslationService.translate('move_down')),
+                              ],
+                            ),
+                          ),
+                        PopupMenuItem(
+                          value: 'delete',
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.delete,
+                                size: 20,
+                                color: Colors.red,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                TranslationService.translate('delete'),
+                                style: const TextStyle(color: Colors.red),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -858,6 +965,229 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         Text(label, style: TextStyle(fontSize: 12, color: color)),
       ],
     );
+  }
+
+  // Handler methods for swipe view hamburger menu
+  Future<void> _handleItemEdit(
+    ChecklistItem item,
+    ChecklistNotifier checklistNotifier,
+  ) async {
+    // Navigate to ItemEditScreen for editing the current item
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => ItemEditScreen(
+          item: checklist_domain.ChecklistItem(
+            id: item.id,
+            text: item.text,
+            imageUrl: item.imageUrl,
+            status: _convertSessionItemStatus(item.status),
+            notes: item.notes,
+            completedAt: item.completedAt,
+            skippedAt: item.skippedAt,
+            order: 0, // Default order for editing
+          ),
+          onSave: (updatedItem) async {
+            try {
+              // Update the item in the checklist database
+              final success = await checklistNotifier.updateItem(
+                widget.checklistId,
+                updatedItem,
+              );
+
+              if (success) {
+                logger.i(
+                  '✅ Updated item in checklist database: ${updatedItem.text}',
+                );
+
+                // Refresh the session with the latest checklist data
+                final updatedChecklist = checklistNotifier.getChecklistById(
+                  widget.checklistId,
+                );
+
+                if (updatedChecklist != null) {
+                  // Convert checklist domain items to session items
+                  final sessionItems = updatedChecklist.items
+                      .map(
+                        (checklistItem) => ChecklistItem(
+                          id: checklistItem.id,
+                          text: checklistItem.text,
+                          imageUrl: checklistItem.imageUrl,
+                          status: _convertChecklistItemStatus(
+                            checklistItem.status,
+                          ),
+                          notes: checklistItem.notes,
+                          completedAt: checklistItem.completedAt,
+                          skippedAt: checklistItem.skippedAt,
+                        ),
+                      )
+                      .toList();
+
+                  // Update the session with the latest checklist items
+                  final sessionNotifier = ref.read(
+                    sessionNotifierProvider.notifier,
+                  );
+                  await sessionNotifier.updateSessionWithLatestItems(
+                    sessionItems,
+                  );
+                  logger.i('🔄 Session refreshed with updated item');
+                }
+
+                // Force a rebuild of the UI
+                if (mounted) {
+                  setState(() {});
+                }
+              } else {
+                logger.e('❌ Failed to update item in checklist database');
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        TranslationService.translate('error_saving_item'),
+                      ),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            } catch (e) {
+              logger.e('❌ Error updating item: $e');
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      TranslationService.translate('error_saving_item'),
+                    ),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            }
+          },
+        ),
+      ),
+    );
+  }
+
+  Future<void> _handleItemDelete(
+    ChecklistItem item,
+    ChecklistNotifier checklistNotifier,
+  ) async {
+    // Show confirmation dialog
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(TranslationService.translate('delete_item')),
+        content: Text(
+          TranslationService.translate('delete_item_confirmation', [item.text]),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(TranslationService.translate('cancel')),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: Text(TranslationService.translate('delete')),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldDelete == true) {
+      // Delete the item from the checklist database
+      final success = await checklistNotifier.deleteItem(
+        widget.checklistId,
+        item.id,
+      );
+
+      if (success) {
+        logger.i('✅ Deleted item from checklist database: ${item.text}');
+
+        // Remove the item from the session
+        final sessionNotifier = ref.read(sessionNotifierProvider.notifier);
+        await sessionNotifier.removeItemFromSession(item.id);
+        logger.i('🗑️ Removed item from session: ${item.text}');
+
+        // Force a rebuild of the UI
+        if (mounted) {
+          setState(() {});
+        }
+      } else {
+        logger.e('❌ Failed to delete item from checklist database');
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                TranslationService.translate('error_deleting_item'),
+              ),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> _handleItemMove(
+    ChecklistItem item,
+    int direction,
+    ChecklistNotifier checklistNotifier,
+  ) async {
+    // Move the item in the checklist database
+    final success = await checklistNotifier.moveItem(
+      widget.checklistId,
+      item.id,
+      direction,
+    );
+
+    if (success) {
+      logger.i(
+        '✅ Moved item in checklist database: ${item.text} direction: $direction',
+      );
+
+      // Refresh the session with the latest checklist data to reflect the new order
+      final updatedChecklist = checklistNotifier.getChecklistById(
+        widget.checklistId,
+      );
+
+      if (updatedChecklist != null) {
+        // Convert checklist domain items to session items
+        final sessionItems = updatedChecklist.items
+            .map(
+              (checklistItem) => ChecklistItem(
+                id: checklistItem.id,
+                text: checklistItem.text,
+                imageUrl: checklistItem.imageUrl,
+                status: _convertChecklistItemStatus(checklistItem.status),
+                notes: checklistItem.notes,
+                completedAt: checklistItem.completedAt,
+                skippedAt: checklistItem.skippedAt,
+              ),
+            )
+            .toList();
+
+        // Update the session with the latest checklist items
+        final sessionNotifier = ref.read(sessionNotifierProvider.notifier);
+        await sessionNotifier.updateSessionWithLatestItems(sessionItems);
+        logger.i('🔄 Session refreshed with updated item order');
+      }
+
+      // Force a rebuild of the UI
+      if (mounted) {
+        setState(() {});
+      }
+    } else {
+      logger.e('❌ Failed to move item in checklist database');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(TranslationService.translate('error_moving_item')),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildNavigationControls(
