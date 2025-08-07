@@ -45,13 +45,33 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   DateTime? _lastSwipeTime;
   static const Duration _swipeDebounceTime = Duration(milliseconds: 500);
   bool _isInitializing = true;
+  bool _isEditingCurrentItem = false;
+  late TextEditingController _currentItemTextController;
+  FocusNode? _currentItemFocusNode;
 
   @override
   void initState() {
     super.initState();
+    _currentItemTextController = TextEditingController();
+    _currentItemFocusNode = FocusNode();
+    _currentItemFocusNode?.addListener(_onCurrentItemFocusChange);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeSession();
     });
+  }
+
+  @override
+  void dispose() {
+    _currentItemTextController.dispose();
+    _currentItemFocusNode?.removeListener(_onCurrentItemFocusChange);
+    _currentItemFocusNode?.dispose();
+    super.dispose();
+  }
+
+  void _onCurrentItemFocusChange() {
+    if (!_currentItemFocusNode!.hasFocus && _isEditingCurrentItem) {
+      _cancelEditCurrentItem();
+    }
   }
 
   Future<void> _initializeSession() async {
@@ -769,125 +789,135 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
             const SizedBox(height: 16), // Reduced from 24
             // Item text with hamburger menu
             AppCard(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  children: [
-                    // Item text
-                    Expanded(
-                      child: Text(
-                        currentItem.text,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        textAlign: TextAlign.center,
+              child: GestureDetector(
+                onLongPress: () => _startEditingCurrentItem(currentItem),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    children: [
+                      // Item text
+                      Expanded(
+                        child: _isEditingCurrentItem
+                            ? _buildEditingTextField(currentItem)
+                            : Text(
+                                currentItem.text,
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
                       ),
-                    ),
-                    // Hamburger menu
-                    PopupMenuButton<String>(
-                      icon: const Icon(Icons.more_vert),
-                      onSelected: (value) async {
-                        final checklistNotifier = ref.read(
-                          checklistNotifierProvider.notifier,
-                        );
+                      // Hamburger menu
+                      PopupMenuButton<String>(
+                        icon: const Icon(Icons.more_vert),
+                        onSelected: (value) async {
+                          final checklistNotifier = ref.read(
+                            checklistNotifierProvider.notifier,
+                          );
 
-                        switch (value) {
-                          case 'edit':
-                            await _handleItemEdit(
-                              currentItem,
-                              checklistNotifier,
-                            );
-                            break;
-                          case 'delete':
-                            await _handleItemDelete(
-                              currentItem,
-                              checklistNotifier,
-                            );
-                            break;
-                          case 'move_up':
-                            await _handleItemMove(
-                              currentItem,
-                              -1,
-                              checklistNotifier,
-                            );
-                            break;
-                          case 'move_down':
-                            await _handleItemMove(
-                              currentItem,
-                              1,
-                              checklistNotifier,
-                            );
-                            break;
-                        }
-                      },
-                      itemBuilder: (context) => [
-                        PopupMenuItem(
-                          value: 'edit',
-                          child: Row(
-                            children: [
-                              const Icon(Icons.edit, size: 20),
-                              const SizedBox(width: 8),
-                              Text(TranslationService.translate('edit')),
-                            ],
-                          ),
-                        ),
-                        if (session.currentItemIndex > 0)
+                          switch (value) {
+                            case 'edit':
+                              await _handleItemEdit(
+                                currentItem,
+                                checklistNotifier,
+                              );
+                              break;
+                            case 'delete':
+                              await _handleItemDelete(
+                                currentItem,
+                                checklistNotifier,
+                              );
+                              break;
+                            case 'move_up':
+                              await _handleItemMove(
+                                currentItem,
+                                -1,
+                                checklistNotifier,
+                              );
+                              break;
+                            case 'move_down':
+                              await _handleItemMove(
+                                currentItem,
+                                1,
+                                checklistNotifier,
+                              );
+                              break;
+                          }
+                        },
+                        itemBuilder: (context) => [
                           PopupMenuItem(
-                            value: 'move_up',
+                            value: 'edit',
                             child: Row(
                               children: [
-                                const Icon(Icons.keyboard_arrow_up, size: 20),
+                                const Icon(Icons.edit, size: 20),
                                 const SizedBox(width: 8),
-                                Text(TranslationService.translate('move_up')),
+                                Text(TranslationService.translate('edit')),
                               ],
                             ),
                           ),
-                        if (session.currentItemIndex < session.totalItems - 1)
+                          if (session.currentItemIndex > 0)
+                            PopupMenuItem(
+                              value: 'move_up',
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.keyboard_arrow_up, size: 20),
+                                  const SizedBox(width: 8),
+                                  Text(TranslationService.translate('move_up')),
+                                ],
+                              ),
+                            ),
+                          if (session.currentItemIndex < session.totalItems - 1)
+                            PopupMenuItem(
+                              value: 'move_down',
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.keyboard_arrow_down,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    TranslationService.translate('move_down'),
+                                  ),
+                                ],
+                              ),
+                            ),
                           PopupMenuItem(
-                            value: 'move_down',
+                            value: 'delete',
                             child: Row(
                               children: [
-                                const Icon(Icons.keyboard_arrow_down, size: 20),
+                                const Icon(
+                                  Icons.delete,
+                                  size: 20,
+                                  color: Colors.red,
+                                ),
                                 const SizedBox(width: 8),
-                                Text(TranslationService.translate('move_down')),
+                                Text(
+                                  TranslationService.translate('delete'),
+                                  style: const TextStyle(color: Colors.red),
+                                ),
                               ],
                             ),
                           ),
-                        PopupMenuItem(
-                          value: 'delete',
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.delete,
-                                size: 20,
-                                color: Colors.red,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                TranslationService.translate('delete'),
-                                style: const TextStyle(color: Colors.red),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
 
             const SizedBox(height: 16), // Reduced from 24
             // Swipe instructions
-            _buildSwipeInstructions(ref),
+            _buildSwipeInstructions(),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildSwipeInstructions(WidgetRef ref) {
+  Widget _buildSwipeInstructions() {
     return Container(
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
@@ -1718,5 +1748,129 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       case checklist_domain.ItemStatus.reviewed:
         return ItemStatus.reviewed;
     }
+  }
+
+  void _startEditingCurrentItem(ChecklistItem item) {
+    setState(() {
+      _isEditingCurrentItem = true;
+      _currentItemTextController.text = item.text;
+    });
+    Future.delayed(const Duration(milliseconds: 100), () {
+      _currentItemFocusNode?.requestFocus();
+    });
+  }
+
+  void _saveEditCurrentItem(ChecklistItem item) async {
+    final newText = _currentItemTextController.text.trim();
+    if (newText.isNotEmpty && newText != item.text) {
+      try {
+        final checklistNotifier = ref.read(checklistNotifierProvider.notifier);
+
+        // Create updated item
+        final updatedItem = item.copyWith(text: newText);
+
+        // Update the item in the checklist database
+        final success = await checklistNotifier.updateItem(
+          widget.checklistId,
+          checklist_domain.ChecklistItem(
+            id: updatedItem.id,
+            text: updatedItem.text,
+            imageUrl: updatedItem.imageUrl,
+            status: _convertSessionItemStatus(updatedItem.status),
+            notes: updatedItem.notes,
+            completedAt: updatedItem.completedAt,
+            skippedAt: updatedItem.skippedAt,
+            order: 0, // Default order for editing
+          ),
+        );
+
+        if (success) {
+          // Refresh the session with the latest checklist data
+          final updatedChecklist = checklistNotifier.getChecklistById(
+            widget.checklistId,
+          );
+
+          if (updatedChecklist != null) {
+            // Convert checklist domain items to session items
+            final sessionItems = updatedChecklist.items
+                .map(
+                  (checklistItem) => ChecklistItem(
+                    id: checklistItem.id,
+                    text: checklistItem.text,
+                    imageUrl: checklistItem.imageUrl,
+                    status: _convertChecklistItemStatus(checklistItem.status),
+                    notes: checklistItem.notes,
+                    completedAt: checklistItem.completedAt,
+                    skippedAt: checklistItem.skippedAt,
+                  ),
+                )
+                .toList();
+
+            // Update the session with the latest checklist items
+            final sessionNotifier = ref.read(sessionNotifierProvider.notifier);
+            await sessionNotifier.updateSessionWithLatestItems(sessionItems);
+            logger.i('🔄 Session refreshed with updated item text');
+          }
+        } else {
+          throw Exception('Failed to update item');
+        }
+      } catch (e) {
+        logger.e('❌ Error updating item text: $e');
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(TranslationService.translate('error_saving_item')),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+    setState(() {
+      _isEditingCurrentItem = false;
+    });
+    _currentItemFocusNode?.unfocus();
+  }
+
+  void _cancelEditCurrentItem() {
+    setState(() {
+      _isEditingCurrentItem = false;
+    });
+    _currentItemFocusNode?.unfocus();
+  }
+
+  Widget _buildEditingTextField(ChecklistItem item) {
+    return GestureDetector(
+      onTap: () {
+        // Prevent tap from bubbling up when editing
+      },
+      child: TextField(
+        controller: _currentItemTextController,
+        focusNode: _currentItemFocusNode,
+        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
+        decoration: InputDecoration(
+          border: InputBorder.none,
+          contentPadding: EdgeInsets.zero,
+          suffixIcon: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.check, size: 20),
+                onPressed: () => _saveEditCurrentItem(item),
+                color: Colors.green,
+              ),
+              IconButton(
+                icon: const Icon(Icons.close, size: 20),
+                onPressed: _cancelEditCurrentItem,
+                color: Colors.red,
+              ),
+            ],
+          ),
+        ),
+        maxLines: null,
+        textAlign: TextAlign.center,
+        onSubmitted: (_) => _saveEditCurrentItem(item),
+      ),
+    );
   }
 }
