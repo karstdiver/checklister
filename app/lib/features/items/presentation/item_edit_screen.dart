@@ -6,8 +6,10 @@ import '../../../core/providers/privilege_provider.dart';
 import '../../../core/widgets/feature_guard.dart';
 import '../../../core/widgets/signup_encouragement.dart';
 import '../../../core/services/translation_service.dart';
+import '../../../core/domain/user_tier.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../features/auth/presentation/login_screen.dart';
+import '../../../features/settings/presentation/upgrade_screen.dart';
 
 class ItemEditScreen extends ConsumerStatefulWidget {
   final ChecklistItem? item; // null for creating new, non-null for editing
@@ -352,134 +354,35 @@ class _ItemEditScreenState extends ConsumerState<ItemEditScreen> {
                                   ],
                                 ),
                               ),
-                              fallback: GestureDetector(
-                                onTap: () {
-                                  // Show encouragement when low privilege user taps
-                                  showDialog(
-                                    context: context,
-                                    barrierDismissible: true,
-                                    builder: (context) => AlertDialog(
-                                      title: Row(
-                                        children: [
-                                          Icon(
-                                            Icons.star,
-                                            color: Colors.orange[600],
-                                            size: 24,
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Expanded(
-                                            child: Text(
-                                              TranslationService.translate(
-                                                'item_photos_title',
-                                              ),
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .titleMedium
-                                                  ?.copyWith(
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                            ),
-                                          ),
-                                        ],
+                              fallback: ItemPhotosEncouragement(
+                                onSignUp: () async {
+                                  await Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (context) => const LoginScreen(
+                                        initialSignUpMode: true,
                                       ),
-                                      content: Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            TranslationService.translate(
-                                              'item_photos_description',
-                                            ),
-                                            style: Theme.of(
-                                              context,
-                                            ).textTheme.bodyMedium,
-                                          ),
-                                          const SizedBox(height: 12),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 8,
-                                              vertical: 4,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: Colors.blue[100],
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                            ),
-                                            child: Text(
-                                              '✨ itemPhotos',
-                                              style: TextStyle(
-                                                color: Colors.blue[800],
-                                                fontWeight: FontWeight.w500,
-                                                fontSize: 12,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.of(context).pop(),
-                                          child: Text(
-                                            TranslationService.translate(
-                                              'maybe_later',
-                                            ),
-                                          ),
-                                        ),
-                                        ElevatedButton.icon(
-                                          onPressed: () {
-                                            Navigator.of(context).pop();
-                                            Navigator.of(context).push(
-                                              MaterialPageRoute(
-                                                builder: (context) =>
-                                                    LoginScreen(
-                                                      initialSignUpMode: true,
-                                                    ),
-                                              ),
-                                            );
-                                          },
-                                          icon: const Icon(
-                                            Icons.person_add,
-                                            size: 18,
-                                          ),
-                                          label: Text(
-                                            TranslationService.translate(
-                                              'sign_up_free',
-                                            ),
-                                          ),
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: Colors.blue[600],
-                                            foregroundColor: Colors.white,
-                                          ),
-                                        ),
-                                      ],
                                     ),
                                   );
                                 },
-                                child: const Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.image,
-                                      size: 64,
-                                      color: Colors.grey,
-                                    ),
-                                    SizedBox(height: 16),
-                                    Text(
-                                      'No photo',
-                                      style: TextStyle(color: Colors.grey),
-                                    ),
-                                    SizedBox(height: 8),
-                                    Text(
-                                      'Tap to add photo',
-                                      style: TextStyle(
-                                        color: Colors.grey,
-                                        fontSize: 12,
+                                onUpgrade: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (context) => const UpgradeScreen(
+                                        sourceFeature: 'Item Photos',
+                                        targetTier: UserTier.premium,
                                       ),
                                     ),
-                                  ],
-                                ),
+                                  );
+                                },
+                                onDetails: () {
+                                  final privileges = ref.read(privilegeProvider);
+                                  final currentTier = privileges?.tier ?? UserTier.anonymous;
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) =>
+                                        ItemPhotosDetailsDialog(userTier: currentTier),
+                                  );
+                                },
                               ),
                             ),
                     ),

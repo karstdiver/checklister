@@ -425,3 +425,256 @@ class ProfilePictureDetailsDialog extends ConsumerWidget {
     }
   }
 }
+
+class ItemPhotosEncouragement extends ConsumerWidget {
+  final VoidCallback? onSignUp;
+  final VoidCallback? onUpgrade;
+  final VoidCallback? onDetails;
+
+  const ItemPhotosEncouragement({
+    super.key,
+    this.onSignUp,
+    this.onUpgrade,
+    this.onDetails,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final privileges = ref.watch(privilegeProvider);
+    final currentTier = privileges?.tier ?? UserTier.anonymous;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Icon
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primaryContainer,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.photo_library,
+              size: 32,
+              color: Theme.of(context).colorScheme.onPrimaryContainer,
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Title
+          Text(
+            _getTitle(currentTier),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+
+          // Description
+          Text(
+            _getDescription(currentTier),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 20),
+
+          // Action Button
+          Row(
+            children: [
+              if (onDetails != null)
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: onDetails,
+                    child: Text(TranslationService.translate('details')),
+                  ),
+                ),
+              if (onDetails != null) const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    if (currentTier == UserTier.anonymous) {
+                      onSignUp?.call();
+                    } else {
+                      onUpgrade?.call();
+                    }
+                  },
+                  child: Text(
+                    currentTier == UserTier.anonymous
+                        ? TranslationService.translate('signup')
+                        : TranslationService.translate('upgrade'),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getTitle(UserTier tier) {
+    switch (tier) {
+      case UserTier.anonymous:
+        return TranslationService.translate('enhance_your_items');
+      case UserTier.free:
+        return TranslationService.translate('unlock_item_photos');
+      case UserTier.premium:
+      case UserTier.pro:
+        return TranslationService.translate('item_photos_available');
+    }
+  }
+
+  String _getDescription(UserTier tier) {
+    switch (tier) {
+      case UserTier.anonymous:
+        return TranslationService.translate('signup_item_photos_description');
+      case UserTier.free:
+        return TranslationService.translate('upgrade_item_photos_description');
+      case UserTier.premium:
+      case UserTier.pro:
+        return TranslationService.translate('premium_item_photos_description');
+    }
+  }
+}
+
+class ItemPhotosDetailsDialog extends ConsumerWidget {
+  final UserTier userTier;
+
+  const ItemPhotosDetailsDialog({super.key, required this.userTier});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return AlertDialog(
+      title: Text(_getDialogTitle()),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(_getDialogContent()),
+          const SizedBox(height: 16),
+          _buildFeatureList(context),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(TranslationService.translate('close')),
+        ),
+        if (userTier == UserTier.anonymous || userTier == UserTier.free)
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              if (userTier == UserTier.free) {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const UpgradeScreen(
+                      sourceFeature: 'Item Photos',
+                      targetTier: UserTier.premium,
+                    ),
+                  ),
+                );
+              } else {
+                Navigator.pushReplacementNamed(context, '/login');
+              }
+            },
+            child: Text(
+              userTier == UserTier.anonymous
+                  ? TranslationService.translate('signup')
+                  : TranslationService.translate('upgrade'),
+            ),
+          ),
+      ],
+    );
+  }
+
+  String _getDialogTitle() {
+    switch (userTier) {
+      case UserTier.anonymous:
+        return TranslationService.translate('why_sign_up');
+      case UserTier.free:
+        return TranslationService.translate('premium_features');
+      case UserTier.premium:
+      case UserTier.pro:
+        return TranslationService.translate('your_premium_benefits');
+    }
+  }
+
+  String _getDialogContent() {
+    switch (userTier) {
+      case UserTier.anonymous:
+        return TranslationService.translate('signup_unlock_features');
+      case UserTier.free:
+        return TranslationService.translate('upgrade_access_features');
+      case UserTier.premium:
+      case UserTier.pro:
+        return TranslationService.translate('currently_have_access');
+    }
+  }
+
+  Widget _buildFeatureList(BuildContext context) {
+    final features = _getFeatures();
+
+    return Column(
+      children: features
+          .map(
+            (feature) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.check_circle,
+                    color: Theme.of(context).colorScheme.primary,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text(feature)),
+                ],
+              ),
+            ),
+          )
+          .toList(),
+    );
+  }
+
+  List<String> _getFeatures() {
+    switch (userTier) {
+      case UserTier.anonymous:
+        return [
+          TranslationService.translate('item_photos_customization'),
+          TranslationService.translate('unlimited_checklists'),
+          TranslationService.translate('session_persistence'),
+          TranslationService.translate('advanced_features'),
+          TranslationService.translate('data_backup_sync'),
+        ];
+      case UserTier.free:
+        return [
+          TranslationService.translate('item_photos_customization'),
+          TranslationService.translate('advanced_personalization'),
+          TranslationService.translate('priority_support'),
+          TranslationService.translate('custom_themes'),
+          TranslationService.translate('export_capabilities'),
+        ];
+      case UserTier.premium:
+      case UserTier.pro:
+        return [
+          TranslationService.translate('item_photos_check'),
+          TranslationService.translate('advanced_personalization_check'),
+          TranslationService.translate('priority_support_check'),
+          TranslationService.translate('custom_themes_check'),
+          TranslationService.translate('export_capabilities_check'),
+        ];
+    }
+  }
+}
