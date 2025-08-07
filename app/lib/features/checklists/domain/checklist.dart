@@ -322,8 +322,14 @@ class ChecklistItem {
 
   // Factory constructor to create from Map
   factory ChecklistItem.fromMap(Map<String, dynamic> map) {
+    // Generate a unique ID if one is missing to prevent check/uncheck issues
+    String itemId = map['id'] ?? '';
+    if (itemId.isEmpty) {
+      itemId = 'item_${DateTime.now().millisecondsSinceEpoch}_${map['order'] ?? 0}';
+    }
+    
     return ChecklistItem(
-      id: map['id'] ?? '',
+      id: itemId,
       text: map['text'] ?? '',
       imageUrl: map['imageUrl'],
       status: ItemStatus.values.firstWhere(
@@ -402,8 +408,14 @@ class ChecklistItem {
   }
 
   factory ChecklistItem.fromJson(Map<String, dynamic> json) {
+    // Generate a unique ID if one is missing to prevent check/uncheck issues
+    String itemId = json['id'] ?? '';
+    if (itemId.isEmpty) {
+      itemId = 'item_${DateTime.now().millisecondsSinceEpoch}_${json['order'] ?? 0}';
+    }
+    
     return ChecklistItem(
-      id: json['id'] ?? '',
+      id: itemId,
       text: json['text'] ?? '',
       imageUrl: json['imageUrl'],
       status: ItemStatus.values.firstWhere(
