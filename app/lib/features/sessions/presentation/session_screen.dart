@@ -161,23 +161,41 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
     return Consumer(
       builder: (context, ref, child) {
-        return Scaffold(
-          appBar: AppBar(
-            title: Text(
-              widget.checklistTitle ?? TranslationService.translate('session'),
-            ),
-            leading: IconButton(
-              onPressed: () => Navigator.of(context).pop(),
-              icon: const Icon(Icons.arrow_back),
-            ),
-            actions: [
-              IconButton(
-                onPressed: () => _showSessionMenu(context, sessionNotifier),
-                icon: const Icon(Icons.more_vert),
+        return WillPopScope(
+          onWillPop: () async {
+            // Ensure any pending changes are saved before navigating away
+            final session = ref.read(currentSessionProvider);
+            if (session != null) {
+              try {
+                // Update the last active time to ensure session is properly saved
+                final sessionNotifier = ref.read(sessionNotifierProvider.notifier);
+                await sessionNotifier.updateLastActiveTime();
+                logger.i('💾 Session updated before navigation');
+              } catch (e) {
+                logger.e('💾 Failed to update session before navigation: $e');
+                // Continue with navigation even if save fails
+              }
+            }
+            return true;
+          },
+          child: Scaffold(
+            appBar: AppBar(
+              title: Text(
+                widget.checklistTitle ?? TranslationService.translate('session'),
               ),
-            ],
+              leading: IconButton(
+                onPressed: () => Navigator.of(context).pop(),
+                icon: const Icon(Icons.arrow_back),
+              ),
+              actions: [
+                IconButton(
+                  onPressed: () => _showSessionMenu(context, sessionNotifier),
+                  icon: const Icon(Icons.more_vert),
+                ),
+              ],
+            ),
+            body: _buildViewContent(session, sessionNotifier, ref),
           ),
-          body: _buildViewContent(session, sessionNotifier, ref),
         );
       },
     );
@@ -430,24 +448,51 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                   }
                 },
                 onItemAdd: (newItem) async {
-                  // Convert checklist domain item to session item
-                  final sessionItem = ChecklistItem(
-                    id: newItem.id,
-                    text: newItem.text,
-                    imageUrl: newItem.imageUrl,
-                    status: _convertChecklistItemStatus(newItem.status),
-                    notes: newItem.notes,
-                    completedAt: newItem.completedAt,
-                    skippedAt: newItem.skippedAt,
+                  // First, add the item to the checklist database
+                  final checklistNotifier = ref.read(
+                    checklistNotifierProvider.notifier,
                   );
 
-                  // Add the new item to the session
-                  await sessionNotifier.addItemToSession(sessionItem);
-                  logger.i('➕ Added new item to session: ${newItem.text}');
+                  final success = await checklistNotifier.addItem(
+                    widget.checklistId,
+                    newItem,
+                  );
 
-                  // Force a rebuild of the UI to ensure changes are visible
-                  if (mounted) {
-                    setState(() {});
+                  if (success) {
+                    logger.i('✅ Added new item to checklist database: ${newItem.text}');
+
+                    // Convert checklist domain item to session item
+                    final sessionItem = ChecklistItem(
+                      id: newItem.id,
+                      text: newItem.text,
+                      imageUrl: newItem.imageUrl,
+                      status: _convertChecklistItemStatus(newItem.status),
+                      notes: newItem.notes,
+                      completedAt: newItem.completedAt,
+                      skippedAt: newItem.skippedAt,
+                    );
+
+                    // Add the new item to the session
+                    await sessionNotifier.addItemToSession(sessionItem);
+                    logger.i('➕ Added new item to session: ${newItem.text}');
+
+                    // Force a rebuild of the UI to ensure changes are visible
+                    if (mounted) {
+                      setState(() {});
+                    }
+                  } else {
+                    logger.e('❌ Failed to add item to checklist database');
+                    // Show error feedback to user
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            TranslationService.translate('error_saving_item'),
+                          ),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
                   }
                 },
                 onQuickAdd: (quickAddText) async {
