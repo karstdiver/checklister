@@ -437,18 +437,79 @@ class _MatrixItemCardState extends State<MatrixItemCard> {
                           ],
                         ),
                       )
-                    : Text(
-                        widget.item.text,
-                        style: TextStyle(
-                          fontSize: 12,
-                          decoration: isCompleted
-                              ? TextDecoration.lineThrough
-                              : null,
-                          color: isCompleted ? Colors.grey[600] : null,
-                        ),
-                        textAlign: TextAlign.center,
-                        maxLines: 3,
-                        overflow: TextOverflow.ellipsis,
+                    : Column(
+                        children: [
+                          // Item image (if available)
+                          if (widget.item.imageUrl != null &&
+                              widget.item.imageUrl!.isNotEmpty) ...[
+                            Expanded(
+                              flex: 2,
+                              child: Container(
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: Colors.grey[300]!,
+                                    width: 1,
+                                  ),
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.network(
+                                    widget.item.imageUrl!,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) =>
+                                        Container(
+                                          color: Colors.grey[200],
+                                          child: Icon(
+                                            Icons.broken_image,
+                                            size: 24,
+                                            color: Colors.grey[400],
+                                          ),
+                                        ),
+                                    loadingBuilder: (context, child, loadingProgress) {
+                                      if (loadingProgress == null) return child;
+                                      return Container(
+                                        color: Colors.grey[200],
+                                        child: Center(
+                                          child: SizedBox(
+                                            width: 24,
+                                            height: 24,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              value: loadingProgress.expectedTotalBytes != null
+                                                  ? loadingProgress.cumulativeBytesLoaded /
+                                                      loadingProgress.expectedTotalBytes!
+                                                  : null,
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                          ],
+                          // Item text
+                          Expanded(
+                            flex: widget.item.imageUrl != null && widget.item.imageUrl!.isNotEmpty ? 1 : 3,
+                            child: Text(
+                              widget.item.text,
+                              style: TextStyle(
+                                fontSize: 12,
+                                decoration: isCompleted
+                                    ? TextDecoration.lineThrough
+                                    : null,
+                                color: isCompleted ? Colors.grey[600] : null,
+                              ),
+                              textAlign: TextAlign.center,
+                              maxLines: widget.item.imageUrl != null && widget.item.imageUrl!.isNotEmpty ? 2 : 3,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
               ),
             ],
