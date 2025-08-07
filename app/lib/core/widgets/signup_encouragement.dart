@@ -444,10 +444,10 @@ class ItemPhotosEncouragement extends ConsumerWidget {
     final currentTier = privileges?.tier ?? UserTier.anonymous;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
         ),
@@ -457,28 +457,28 @@ class ItemPhotosEncouragement extends ConsumerWidget {
         children: [
           // Icon
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.primaryContainer,
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.photo_library,
-              size: 24,
+              size: 20,
               color: Theme.of(context).colorScheme.onPrimaryContainer,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
 
           // Title
           Text(
             _getTitle(currentTier),
             style: Theme.of(
               context,
-            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+            ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
 
           // Description
           Text(
@@ -488,7 +488,7 @@ class ItemPhotosEncouragement extends ConsumerWidget {
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
 
           // Action Button
           Row(
@@ -498,15 +498,15 @@ class ItemPhotosEncouragement extends ConsumerWidget {
                   child: OutlinedButton(
                     onPressed: onDetails,
                     style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      padding: const EdgeInsets.symmetric(vertical: 6),
                     ),
                     child: Text(
                       TranslationService.translate('details'),
-                      style: const TextStyle(fontSize: 12),
+                      style: const TextStyle(fontSize: 11),
                     ),
                   ),
                 ),
-              if (onDetails != null) const SizedBox(width: 8),
+              if (onDetails != null) const SizedBox(width: 6),
               Expanded(
                 child: ElevatedButton(
                   onPressed: () {
@@ -517,13 +517,13 @@ class ItemPhotosEncouragement extends ConsumerWidget {
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    padding: const EdgeInsets.symmetric(vertical: 6),
                   ),
                   child: Text(
                     currentTier == UserTier.anonymous
                         ? TranslationService.translate('signup')
                         : TranslationService.translate('upgrade'),
-                    style: const TextStyle(fontSize: 12),
+                    style: const TextStyle(fontSize: 11),
                   ),
                 ),
               ),
