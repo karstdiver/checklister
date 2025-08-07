@@ -224,11 +224,16 @@ class _MatrixViewWidgetState extends State<MatrixViewWidget> {
               }
 
               final item = items[index];
+              final isFirst = index == 0;
+              final isLast = index == items.length - 1;
+              
               return MatrixItemCard(
                 item: item,
                 onTap: () => widget.onItemTap?.call(item),
                 onEdit: () => widget.onItemEdit?.call(item),
                 onDelete: () => widget.onItemDelete?.call(item),
+                onMoveUp: isFirst ? null : () => widget.onItemMove?.call(item, -1),
+                onMoveDown: isLast ? null : () => widget.onItemMove?.call(item, 1),
                 onTextUpdate: widget.onTextUpdate != null
                     ? (newText) => widget.onTextUpdate!(item, newText)
                     : null,
@@ -247,6 +252,8 @@ class MatrixItemCard extends StatefulWidget {
   final VoidCallback onTap;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+  final VoidCallback? onMoveUp;
+  final VoidCallback? onMoveDown;
   final Function(String)? onTextUpdate;
 
   const MatrixItemCard({
@@ -255,6 +262,8 @@ class MatrixItemCard extends StatefulWidget {
     required this.onTap,
     required this.onEdit,
     required this.onDelete,
+    this.onMoveUp,
+    this.onMoveDown,
     this.onTextUpdate,
   });
 
@@ -363,6 +372,12 @@ class _MatrixItemCardState extends State<MatrixItemCard> {
                         case 'delete':
                           _showDeleteDialog(context);
                           break;
+                        case 'move_up':
+                          widget.onMoveUp?.call();
+                          break;
+                        case 'move_down':
+                          widget.onMoveDown?.call();
+                          break;
                       }
                     },
                     itemBuilder: (context) => [
@@ -376,6 +391,28 @@ class _MatrixItemCardState extends State<MatrixItemCard> {
                           ],
                         ),
                       ),
+                      if (widget.onMoveUp != null)
+                        PopupMenuItem(
+                          value: 'move_up',
+                          child: Row(
+                            children: [
+                              const Icon(Icons.keyboard_arrow_up, size: 16),
+                              const SizedBox(width: 8),
+                              Text(TranslationService.translate('move_up')),
+                            ],
+                          ),
+                        ),
+                      if (widget.onMoveDown != null)
+                        PopupMenuItem(
+                          value: 'move_down',
+                          child: Row(
+                            children: [
+                              const Icon(Icons.keyboard_arrow_down, size: 16),
+                              const SizedBox(width: 8),
+                              Text(TranslationService.translate('move_down')),
+                            ],
+                          ),
+                        ),
                       PopupMenuItem(
                         value: 'delete',
                         child: Row(
