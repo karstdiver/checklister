@@ -794,7 +794,7 @@ async function deleteUserItemPhotos(userId) {
     const allPhotos = [];
     for (const itemId of itemIds) {
       const [files] = await bucket.getFiles({
-        prefix: `item_photos/item_${itemId}_`
+        prefix: `item-photos/${userId}/${itemId}/item_${itemId}_`
       });
       allPhotos.push(...files);
     }

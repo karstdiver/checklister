@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:logger/logger.dart';
 import '../../../core/services/translation_service.dart';
@@ -149,6 +150,12 @@ class ItemPhotoService {
     try {
       _logger.i('Uploading item photo: ${imageFile.path}');
 
+      // Get current user ID for storage path
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) {
+        throw Exception('User must be authenticated to upload item photos');
+      }
+
       // Get original file size for logging
       final int originalSize = await _webpService.getFileSize(imageFile);
       _logger.i(
@@ -180,7 +187,10 @@ class ItemPhotoService {
       // Create filename with WebP extension
       final fileName =
           'item_${itemId}_${DateTime.now().millisecondsSinceEpoch}.webp';
-      final storageRef = _storage.ref().child('item_photos/$fileName');
+      // Use the path structure expected by storage rules: item-photos/{userId}/{itemId}/{fileName}
+      final storageRef = _storage.ref().child(
+        'item-photos/${currentUser.uid}/$itemId/$fileName',
+      );
 
       // Upload the processed image
       final uploadTask = storageRef.putFile(processedImage);
