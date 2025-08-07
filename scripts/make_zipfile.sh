@@ -91,6 +91,8 @@ SENSITIVE_FILES=(
   "${APPNAME}/app/ios/Runner/GoogleService-Info-Test.plist"
   "${APPNAME}/app/ios/Runner/GoogleService-Info-UAT.plist"
   "${APPNAME}/app/ios/Runner/GoogleService-Info-Prod.plist"
+  "${APPNAME}/app/android/app/checklister.keystore"
+  "${APPNAME}/app/android/key.properties"
 )
 
 # Check for sensitive files
