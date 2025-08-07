@@ -105,9 +105,20 @@ flutter drive --driver=test_driver/integration_test.dart
 - **Quick Add/Template Selector**: Enhanced long press on "Add Item" row with dual-option selector (Quick Add text input vs Quick Template grid)
 - **Checklist Import**: Implemented paste import and file picker import functionality with full-screen modal UI, user tier limit enforcement, and proper navigation flow
 - **TTL & Cleanup System**: Implemented hybrid TTL cleanup system with app-based cleanup service and Firebase admin scripts for anonymous user cleanup and session management
+- **Pricing Management System**: Implemented full CRUD operations for pricing tiers, promotions, and regional pricing with admin interface
+- **Profile Picture Management**: Fixed profile image upload authorization and UI state management issues
+- **Item Photo Upgrade Path**: Created tier-based encouragement system for item photos (signup for anonymous, upgrade for free users)
+- **Session Startup Logic**: Fixed "session in progress" dialog to show only when there's actual progress (completedItems > 0)
+- **Upgrade Flow Enhancement**: Implemented immediate $0.00 tier upgrades for "friends and family" without payment processing
+- **Firestore Rules & Storage**: Fixed admin permissions and item photo storage path issues
+- **Item Pictures in Matrix View**: Enhanced matrix view to display item images with responsive layout
+- **Item Persistence**: Fixed item saving during sessions to ensure database persistence and prevent data loss
+- **Hamburger Menu Functionality**: Implemented full CRUD operations for items in all view types (list, matrix, swipe)
+- **Long Press Editing**: Added inline editing capability to swipe view with consistent behavior across all view types
+- **Swipe View Arrow Buttons**: Converted arrow icons in swipe instructions panel to functional clickable buttons for enhanced accessibility
 
 ### 🔄 In Progress
-- **Upgrade Flow**: Full privilege level upgrade flow (e.g., free → premium/pro) and related UI/UX polish
+- **UI/UX Polish**: Final refinements and user experience improvements across all features
 
 ### 📋 Pending
 - **Checklist Export**: Design and implement checklist JSON export functionality
