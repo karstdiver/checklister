@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/services/translation_service.dart';
+import 'welcome_screen.dart';
 
 class HelpScreen extends ConsumerStatefulWidget {
   const HelpScreen({super.key});
@@ -398,19 +399,9 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
   }
 
   void _showGettingStartedGuide(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(TranslationService.translate('getting_started')),
-        content: Text(
-          TranslationService.translate('future_feature_coming_soon'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
-          ),
-        ],
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const WelcomeScreen(),
       ),
     );
   }
