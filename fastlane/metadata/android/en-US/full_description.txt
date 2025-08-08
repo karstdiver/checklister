@@ -1,0 +1,44 @@
+Checklister - Your Smart Checklist Companion
+
+Transform your productivity with Checklister, the intelligent checklist app designed to help you organize tasks, stay focused, and achieve your goals.
+
+KEY FEATURES:
+
+📋 Smart Navigation
+• Swipe through your checklists with intuitive gestures
+• One-tap item completion and skipping
+• Multiple view modes: Swipe, List, and Matrix views
+
+📸 Visual Guides
+• Add photos to your checklist items
+• Make your tasks more visual and engaging
+• Enhanced item descriptions with images
+
+🎯 Focus Sessions
+• Start timed work sessions to stay focused
+• Track your progress and productivity
+• Session persistence across app restarts
+
+🏆 Achievements System
+• Earn achievements as you complete tasks
+• Track your progress over time
+• Stay motivated with gamified productivity
+
+🌐 Multiple Languages
+• Available in English and Spanish
+• Localized interface and content
+
+☁️ Cloud Sync
+• Your data syncs across all devices
+• Never lose your progress
+• Backup and restore functionality
+
+PERFECT FOR:
+• Daily task management
+• Project planning and tracking
+• Shopping lists and errands
+• Goal setting and achievement
+• Team collaboration (coming soon)
+• Personal productivity
+
+Download Checklister today and take control of your tasks with the most intuitive checklist app available! 
