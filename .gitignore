@@ -97,3 +97,4 @@ junk*
 
 # Android signing
 android/key.properties
+app/.firebase/
