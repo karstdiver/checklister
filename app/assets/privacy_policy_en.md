@@ -7,7 +7,7 @@ Your privacy is important to us. This app does **not** collect or store any pers
 We may collect anonymized data about how you use the app. This information is used solely to improve the app experience and for analytics purposes. All analytics are performed on anonymized, aggregated data and cannot be traced back to any individual user.
 
 ## Who we are
-Checklister (“we”, “us”, “our”). Contact: support@checklister.app.
+Checklister (“we”, “us”, “our”). Contact: schecklister@gmail.com.
 
 ## Data we collect
 - Account: email, display name, authentication UID (via Google/Firebase Auth).
@@ -36,10 +36,10 @@ Checklister (“we”, “us”, “our”). Contact: support@checklister.app.
 - Not directed to children. Users should be of legal age to consent in their region.
 
 ## Your choices
-- You can delete content in‑app and request account/data deletion via support@checklister.app.
+- You can delete content in‑app and request account/data deletion via schecklister@gmail.com.
 
 ## Changes
 - We may update this policy and will post the new effective date here.
 
 ## Contact
-support@checklister.app
+schecklister@gmail.com

@@ -223,7 +223,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
                   ListTile(
                     leading: const Icon(Icons.email),
                     title: Text(TranslationService.translate('email_support')),
-                    subtitle: const Text('support@checklister.app'),
+                    subtitle: const Text('schecklister@gmail.com'),
                     onTap: () {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(

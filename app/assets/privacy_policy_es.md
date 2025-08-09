@@ -7,7 +7,7 @@ Su privacidad es importante para nosotros. Esta aplicación **no** recopila ni a
 Podemos recopilar datos anónimos sobre cómo utiliza la aplicación. Esta información se utili# Política de Privacidad
 
 ## Quiénes somos
-Checklister (“nosotros”). Contacto: support@checklister.app.
+Checklister (“nosotros”). Contacto: schecklister@gmail.com.
 
 ## Datos que recopilamos
 - Cuenta: correo electrónico, nombre para mostrar, UID de autenticación (Google/Firebase Auth).
@@ -36,11 +36,11 @@ Checklister (“nosotros”). Contacto: support@checklister.app.
 - No dirigida a menores.
 
 ## Sus opciones
-- Puede eliminar contenido en la app y solicitar la eliminación de la cuenta/datos a support@checklister.app.
+- Puede eliminar contenido en la app y solicitar la eliminación de la cuenta/datos a schecklister@gmail.com.
 
 ## Cambios
 - Publicaremos actualizaciones con nueva fecha de vigencia.
 
 ## Contacto
-support@checklister.appza únicamente para mejorar la experiencia de la aplicación y con fines analíticos. Todos los análisis se realizan sobre datos anónimos y agregados que no pueden vincularse a ningún usuario individual.
+schecklister@gmail.comza únicamente para mejorar la experiencia de la aplicación y con fines analíticos. Todos los análisis se realizan sobre datos anónimos y agregados que no pueden vincularse a ningún usuario individual.
 
