@@ -94,3 +94,6 @@ Thumbs.db
 junk
 junk*
 **/delme
+
+# Android signing
+android/key.properties
