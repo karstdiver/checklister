@@ -100,6 +100,36 @@ To run with localization and Firebase:
 
 ---
 
+## 🌐 Web Hosting
+
+### Firebase Hosting
+The app's web presence is hosted on Firebase Hosting at: **https://checklister-firebase-dev.web.app**
+
+### Available Pages
+- **Homepage**: Professional landing page with app features and promotional content
+- **Privacy Policy**: https://checklister-firebase-dev.web.app/privacy.html
+- **Terms of Service**: https://checklister-firebase-dev.web.app/terms.html
+- **Delete Account**: https://checklister-firebase-dev.web.app/delete-account.html
+
+### Deployment
+```bash
+cd app
+firebase deploy --only hosting
+```
+
+### Local Development
+```bash
+cd app
+firebase serve
+```
+
+### Files Location
+- Web files: `app/public/`
+- Homepage: `app/public/index.html`
+- Legal pages: `app/public/privacy.html`, `app/public/terms.html`, `app/public/delete-account.html`
+
+---
+
 ## 🧪 Testing
 
 ```bash
