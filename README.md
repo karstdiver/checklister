@@ -4,6 +4,8 @@
 
 **Checklister** is a cross-platform Flutter app designed to guide users through checklist-driven tasks. Inspired by aviation-grade checklists, the app provides swipe-based, image-enhanced, and voice-activated interactions to ensure step-by-step execution for any repeatable procedure.
 
+**Current Version:** `0.9.0-beta.3+2`
+
 ---
 
 ## 📱 Features
@@ -75,6 +77,26 @@ flutter run
 To run with localization and Firebase:
 - Set up `assets/translations/`
 - Configure `firebase_options.dart` (use `flutterfire configure`)
+
+---
+
+## 📱 Publishing to Google Play Store
+
+### Prerequisites
+- Google Play Console account ($25 registration fee)
+- Valid keystore with 25+ year certificate validity
+- Complete store listing metadata
+
+### Build Process
+1. Generate keystore: `keytool -genkey -v -keystore app/checklister.keystore -alias checklister -keyalg RSA -keysize 2048 -validity 9125`
+2. Build AAB: `flutter build appbundle --release`
+3. Upload to Play Console Internal Testing
+
+### Store Assets
+- Metadata: `fastlane/metadata/android/en-US/`
+- Screenshots: `fastlane/metadata/android/en-US/images/phoneScreenshots/`
+- Privacy Policy: https://checklister-firebase-dev.web.app/privacy.html
+- Contact: schecklister@gmail.com
 
 ---
 
