@@ -1,89 +1,139 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Welcome to Firebase Hosting</title>
-
-    <!-- update the version number as needed -->
-    <script defer src="/__/firebase/11.10.0/firebase-app-compat.js"></script>
-    <!-- include only the Firebase features as you need -->
-    <script defer src="/__/firebase/11.10.0/firebase-auth-compat.js"></script>
-    <script defer src="/__/firebase/11.10.0/firebase-database-compat.js"></script>
-    <script defer src="/__/firebase/11.10.0/firebase-firestore-compat.js"></script>
-    <script defer src="/__/firebase/11.10.0/firebase-functions-compat.js"></script>
-    <script defer src="/__/firebase/11.10.0/firebase-messaging-compat.js"></script>
-    <script defer src="/__/firebase/11.10.0/firebase-storage-compat.js"></script>
-    <script defer src="/__/firebase/11.10.0/firebase-analytics-compat.js"></script>
-    <script defer src="/__/firebase/11.10.0/firebase-remote-config-compat.js"></script>
-    <script defer src="/__/firebase/11.10.0/firebase-performance-compat.js"></script>
-    <!-- 
-      initialize the SDK after all desired features are loaded, set useEmulator to false
-      to avoid connecting the SDK to running emulators.
-    -->
-    <script defer src="/__/firebase/init.js?useEmulator=true"></script>
-
-    <style media="screen">
-      body { background: #ECEFF1; color: rgba(0,0,0,0.87); font-family: Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; }
-      #message { background: white; max-width: 360px; margin: 100px auto 16px; padding: 32px 24px; border-radius: 3px; }
-      #message h2 { color: #ffa100; font-weight: bold; font-size: 16px; margin: 0 0 8px; }
-      #message h1 { font-size: 22px; font-weight: 300; color: rgba(0,0,0,0.6); margin: 0 0 16px;}
-      #message p { line-height: 140%; margin: 16px 0 24px; font-size: 14px; }
-      #message a { display: block; text-align: center; background: #039be5; text-transform: uppercase; text-decoration: none; color: white; padding: 16px; border-radius: 4px; }
-      #message, #message a { box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24); }
-      #load { color: rgba(0,0,0,0.4); text-align: center; font-size: 13px; }
-      @media (max-width: 600px) {
-        body, #message { margin-top: 0; background: white; box-shadow: none; }
-        body { border-top: 16px solid #ffa100; }
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Checklister - Professional Checklist App</title>
+    <style>
+      :root { color-scheme: light dark; }
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; margin: 0; padding: 0; line-height: 1.6; }
+      .header { background: linear-gradient(135deg, #1BA55A 0%, #147D43 100%); color: white; padding: 4rem 2rem; text-align: center; }
+      .header h1 { font-size: 3rem; margin: 0 0 1rem 0; font-weight: 700; }
+      .header p { font-size: 1.25rem; margin: 0; opacity: 0.9; }
+      .container { max-width: 1200px; margin: 0 auto; padding: 0 2rem; }
+      .hero { padding: 4rem 0; text-align: center; }
+      .hero h2 { font-size: 2.5rem; color: #333; margin-bottom: 1rem; }
+      .hero p { font-size: 1.2rem; color: #666; max-width: 800px; margin: 0 auto 2rem auto; }
+      .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; padding: 4rem 0; }
+      .feature { background: #f8f9fa; padding: 2rem; border-radius: 12px; text-align: center; }
+      .feature h3 { color: #1BA55A; font-size: 1.5rem; margin-bottom: 1rem; }
+      .feature p { color: #666; }
+      .cta { background: #1BA55A; color: white; padding: 4rem 0; text-align: center; }
+      .cta h2 { font-size: 2.5rem; margin-bottom: 1rem; }
+      .cta p { font-size: 1.2rem; margin-bottom: 2rem; opacity: 0.9; }
+      .btn { display: inline-block; background: white; color: #1BA55A; padding: 1rem 2rem; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 1.1rem; transition: transform 0.2s; }
+      .btn:hover { transform: translateY(-2px); }
+      .footer { background: #333; color: white; padding: 2rem 0; margin-top: 4rem; }
+      .footer-content { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; }
+      .footer-section h4 { color: #1BA55A; margin-bottom: 1rem; }
+      .footer-section a { color: #ccc; text-decoration: none; display: block; margin-bottom: 0.5rem; }
+      .footer-section a:hover { color: white; }
+      .legal-links { text-align: center; padding: 1rem 0; border-top: 1px solid #555; margin-top: 2rem; }
+      .legal-links a { color: #ccc; text-decoration: none; margin: 0 1rem; }
+      .legal-links a:hover { color: white; }
+      .badge { display: inline-block; background: #1BA55A; color: white; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.9rem; margin: 0.5rem; }
+      @media (max-width: 768px) {
+        .header h1 { font-size: 2rem; }
+        .hero h2 { font-size: 2rem; }
+        .features { grid-template-columns: 1fr; }
       }
     </style>
   </head>
   <body>
-    <div id="message">
-      <h2>Welcome</h2>
-      <h1>Firebase Hosting Setup Complete</h1>
-      <p>You're seeing this because you've successfully setup Firebase Hosting. Now it's time to go build something extraordinary!</p>
-      <a target="_blank" href="https://firebase.google.com/docs/hosting/">Open Hosting Documentation</a>
-    </div>
-    <p id="load">Firebase SDK Loading&hellip;</p>
+    <header class="header">
+      <div class="container">
+        <h1>✅ Checklister</h1>
+        <p>Professional checklist app inspired by aviation-grade procedures</p>
+        <div>
+          <span class="badge">Cross-Platform</span>
+          <span class="badge">Cloud Sync</span>
+          <span class="badge">Professional Grade</span>
+        </div>
+      </div>
+    </header>
 
-    <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        const loadEl = document.querySelector('#load');
-        // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
-        // // The Firebase SDK is initialized and available here!
-        //
-        // firebase.auth().onAuthStateChanged(user => { });
-        // firebase.database().ref('/path/to/ref').on('value', snapshot => { });
-        // firebase.firestore().doc('/foo/bar').get().then(() => { });
-        // firebase.functions().httpsCallable('yourFunction')().then(() => { });
-        // firebase.messaging().requestPermission().then(() => { });
-        // firebase.storage().ref('/path/to/ref').getDownloadURL().then(() => { });
-        // firebase.analytics(); // call to activate
-        // firebase.analytics().logEvent('tutorial_completed');
-        // firebase.performance(); // call to activate
-        //
-        // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
+    <main>
+      <section class="hero">
+        <div class="container">
+          <h2>Transform Your Workflow</h2>
+          <p>Checklister brings aviation-grade checklist reliability to your daily tasks. Whether you're managing complex procedures, quality control, or personal projects, our swipe-based interface ensures nothing gets missed.</p>
+        </div>
+      </section>
 
-        try {
-          let app = firebase.app();
-          let features = [
-            'auth', 
-            'database', 
-            'firestore',
-            'functions',
-            'messaging', 
-            'storage', 
-            'analytics', 
-            'remoteConfig',
-            'performance',
-          ].filter(feature => typeof app[feature] === 'function');
-          loadEl.textContent = `Firebase SDK loaded with ${features.join(', ')}`;
-        } catch (e) {
-          console.error(e);
-          loadEl.textContent = 'Error loading the Firebase SDK, check the console.';
-        }
-      });
-    </script>
+      <section class="features">
+        <div class="container">
+          <div class="feature">
+            <h3>🔄 Multiple Views</h3>
+            <p>Choose your preferred way to work: swipe through items, view in a list, or organize in a matrix layout. Each view is optimized for different use cases.</p>
+          </div>
+          <div class="feature">
+            <h3>📱 Session Tracking</h3>
+            <p>Focus on one checklist at a time with dedicated sessions. Track progress, mark items complete, and maintain concentration on the task at hand.</p>
+          </div>
+          <div class="feature">
+            <h3>🖼️ Photo Support</h3>
+            <p>Add images to checklist items for visual reference. Perfect for quality control, maintenance procedures, or any task requiring visual verification.</p>
+          </div>
+          <div class="feature">
+            <h3>☁️ Cloud Sync</h3>
+            <p>Your checklists sync across all devices. Start on your phone, continue on your tablet, and review on your computer - seamless workflow everywhere.</p>
+          </div>
+          <div class="feature">
+            <h3>🔐 Secure & Private</h3>
+            <p>Built with privacy in mind. Your data is encrypted, secure, and never shared with third parties. Professional-grade security for sensitive procedures.</p>
+          </div>
+          <div class="feature">
+            <h3>🌍 Multi-Language</h3>
+            <p>Available in multiple languages with more coming soon. Perfect for international teams and global operations.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="cta">
+        <div class="container">
+          <h2>Ready to Get Started?</h2>
+          <p>Join professionals who trust Checklister for their critical procedures</p>
+          <a href="#" class="btn">Download on Google Play</a>
+          <p style="margin-top: 1rem; font-size: 1rem; opacity: 0.8;">Coming soon to iOS App Store</p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="container">
+        <div class="footer-content">
+          <div class="footer-section">
+            <h4>Product</h4>
+            <a href="#features">Features</a>
+            <a href="#pricing">Pricing</a>
+            <a href="#support">Support</a>
+          </div>
+          <div class="footer-section">
+            <h4>Company</h4>
+            <a href="mailto:schecklister@gmail.com">Contact Us</a>
+            <a href="#about">About</a>
+            <a href="#careers">Careers</a>
+          </div>
+          <div class="footer-section">
+            <h4>Resources</h4>
+            <a href="#help">Help Center</a>
+            <a href="#blog">Blog</a>
+            <a href="#api">API</a>
+          </div>
+          <div class="footer-section">
+            <h4>Legal</h4>
+            <a href="privacy.html">Privacy Policy</a>
+            <a href="terms.html">Terms of Service</a>
+            <a href="delete-account.html">Delete Account</a>
+          </div>
+        </div>
+        <div class="legal-links">
+          <a href="privacy.html">Privacy Policy</a>
+          <a href="terms.html">Terms of Service</a>
+          <a href="delete-account.html">Delete Account</a>
+          <a href="mailto:schecklister@gmail.com">Contact</a>
+        </div>
+      </div>
+    </footer>
   </body>
 </html>
