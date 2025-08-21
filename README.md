@@ -100,6 +100,303 @@ To run with localization and Firebase:
 
 ---
 
+## 🍎 Publishing to Apple App Store
+
+### Prerequisites
+- Apple Developer Program membership ($99/year)
+- Valid iOS Distribution Certificate
+- App Store Distribution Provisioning Profile
+- Xcode with iOS development tools
+
+### Build Process
+1. **Update version in `pubspec.yaml`**:
+   ```yaml
+   version: 0.9.0+3  # Format: x.y.z+build_number
+   ```
+
+2. **Build and export IPA**:
+   ```bash
+   # Use the automated build script
+   ./scripts/ios-build-script.sh
+   
+   # Or manual process:
+   flutter build ipa --release
+   xcodebuild -exportArchive \
+       -archivePath build/ios/archive/Runner.xcarchive \
+       -exportPath build/ios/ipa \
+       -exportOptionsPlist ios/ExportOptions.plist
+   ```
+
+3. **Upload to App Store Connect**:
+   - Use **Transporter app** (recommended for Flutter builds)
+   - Or use **Xcode Organizer** (requires creating archive through Xcode)
+
+### Store Assets
+- Metadata: `fastlane/metadata/ios/en-US/`
+- Screenshots: `fastlane/metadata/ios/en-US/images/phoneScreenshots/`
+- Privacy Policy: https://checklister-firebase-dev.web.app/privacy.html
+- Contact: schecklister@gmail.com
+
+### Configuration Files
+- **ExportOptions.plist**: `ios/ExportOptions.plist` (App Store distribution settings)
+- **Info.plist**: `ios/Runner/Info.plist` (App configuration, encryption declaration)
+- **Bundle ID**: `com.checklister.checklister`
+- **Team ID**: `CP33BNG333`
+
+### Encryption Export Compliance
+The app includes `ITSAppUsesNonExemptEncryption = false` in Info.plist to declare no custom encryption (standard HTTPS only).
+
+---
+
+## 🚀 Automated Build Scripts
+
+### iOS Build Script
+Located at `scripts/ios-build-script.sh`, this script automates the entire iOS build process:
+
+```bash
+./scripts/ios-build-script.sh
+```
+
+**Features:**
+- ✅ Validates environment and configuration
+- 🔄 Cleans and builds IPA
+- 📋 Verifies version, bundle ID, and encryption settings
+- 📱 Provides step-by-step next steps for App Store Connect
+- 🎨 Colored output for easy reading
+
+### Unified Build Script (Recommended)
+Located at `scripts/build-release.sh`, this script provides an interactive menu for building both platforms:
+
+```bash
+./scripts/build-release.sh
+```
+
+**Features:**
+- 🎯 **Interactive Menu**: Choose build target (Android/iOS/Both)
+- 📋 **List Existing Builds**: See what's already built with different detail levels
+- 🔍 **Build Directory Structure**: Explore build files and organization
+- ✅ **Environment Validation**: Automatic checks before building
+- 🔄 **Error Handling**: Graceful failures with clear error messages
+- 📱 **Next Steps Guidance**: Clear instructions after successful builds
+- 🎨 **Colored Output**: Easy-to-read status messages
+
+**Menu Options:**
+1. **List existing builds (basic)** - Quick overview of built files
+2. **List existing builds (detailed)** - Version info, sizes, dates
+3. **Show build directory structure** - Complete build file tree
+4. **Build Android only** - Create AAB for Google Play Store
+5. **Build iOS only** - Create IPA for App Store Connect
+6. **Build both platforms** - Create both AAB and IPA
+7. **Exit** - Close the script
+
+**Unattended Mode:**
+```bash
+# Build specific platform without interaction
+BUILD_TARGET=android ./scripts/build-release.sh
+BUILD_TARGET=ios ./scripts/build-release.sh
+BUILD_TARGET=both ./scripts/build-release.sh
+```
+
+#### Build Exploration Features
+The unified build script includes powerful exploration capabilities:
+
+**List Existing Builds (Basic):**
+- Shows file locations and existence
+- Quick overview of current build state
+- Fast execution for quick checks
+
+**List Existing Builds (Detailed):**
+- **File sizes** and **modification dates**
+- **Version information** extracted from builds
+- **Build numbers** for iOS
+- **Archive information** for iOS
+- **pubspec.yaml** current version
+
+**Build Directory Structure:**
+- Shows all build files in the directory tree
+- Finds all `.aab`, `.apk`, `.ipa`, `.xcarchive` files
+- Complete build directory overview
+
+**Example Output:**
+```
+📋 Existing Builds
+==================
+ℹ️  Android AAB:
+   Location: build/app/outputs/bundle/release/app-release.aab
+   Size: 53M
+   Modified: Aug 21 16:30
+   Version: 0.9.0
+
+ℹ️  iOS IPA:
+   Location: build/ios/ipa/checklister.ipa
+   Size: 55M
+   Modified: Aug 21 16:30
+   Version: 0.9.0
+   Build: 4
+
+ℹ️  Current pubspec.yaml version: 0.9.0+4
+```
+
+#### Error Handling & Validation
+The unified build script includes comprehensive error handling:
+
+**Environment Validation:**
+- ✅ **Flutter installation** check
+- ✅ **pubspec.yaml** existence verification
+- ✅ **Flutter doctor** status check
+- ✅ **Directory structure** validation
+
+**Platform-Specific Validation:**
+- **Android**: SDK, keystore, key.properties
+- **iOS**: Xcode, certificates, ExportOptions.plist
+
+**Build Process Validation:**
+- ✅ **File existence** after builds
+- ✅ **Version extraction** and verification
+- ✅ **Size and date** information
+- ✅ **Next steps** guidance
+
+**Graceful Error Handling:**
+- 🟡 **Warnings** for non-critical issues
+- 🔴 **Errors** for critical failures
+- 🔄 **Continue options** for user choice
+- 📱 **Clear next steps** after completion
+
+### Android Build Script
+For Android builds, use the standard Flutter command:
+```bash
+flutter build appbundle --release
+```
+
+---
+
+## 📋 Store Submission Checklist
+
+### Google Play Store
+- [ ] **App Bundle**: `build/app/outputs/bundle/release/app-release.aab`
+- [ ] **Store Listing**: Title, description, screenshots
+- [ ] **Content Rating**: Completed questionnaire
+- [ ] **Data Safety**: Privacy policy, data collection details
+- [ ] **App Access**: Internal testing → Closed testing → Production
+- [ ] **Release Notes**: Version-specific release notes
+
+### Apple App Store
+- [ ] **IPA File**: `build/ios/ipa/checklister.ipa`
+- [ ] **App Information**: Name, description, keywords
+- [ ] **Screenshots**: iPhone and iPad screenshots (correct dimensions)
+- [ ] **App Review**: Submit for review process
+- [ ] **TestFlight**: Internal/External testing available
+- [ ] **Encryption**: Export compliance declaration
+
+### Common Issues & Solutions
+- **Version Format**: Ensure `CFBundleShortVersionString` is x.y.z format (not x.y.z.w)
+- **Provisioning Profile**: Use "Automatically manage signing" in Xcode
+- **Certificate Expiration**: Generate keystore with 25+ year validity
+- **Screenshot Dimensions**: Resize to required dimensions (1290x2796px for iPhone)
+- **Encryption Declaration**: Add `ITSAppUsesNonExemptEncryption = false` to Info.plist
+
+---
+
+## 🔄 Release Process
+
+### Version Management
+1. **Update version** in `pubspec.yaml`
+2. **Build both platforms** using scripts
+3. **Test thoroughly** on both platforms
+4. **Upload to stores** (Google Play Console, App Store Connect)
+5. **Submit for review** (Apple App Store)
+6. **Release to testers** (Google Play Internal Testing)
+7. **Monitor feedback** and iterate
+
+### Version Management
+
+#### Version Format
+- **Format**: `x.y.z+build_number` (e.g., `0.9.0+4`)
+- **x.y.z**: Semantic version (major.minor.patch)
+- **build_number**: Incremental build number for store submission
+
+#### Version Alignment Process
+To align versions across both platforms:
+
+1. **Update pubspec.yaml**:
+   ```yaml
+   version: 0.9.0+4  # Increment build number
+   ```
+
+2. **Use unified build script**:
+   ```bash
+   ./scripts/build-release.sh
+   # Option 6: Build both platforms
+   ```
+
+3. **Verify alignment**:
+   ```bash
+   ./scripts/build-release.sh
+   # Option 2: List existing builds (detailed)
+   ```
+
+4. **Upload to stores**:
+   - **Google Play Console**: Upload new AAB
+   - **App Store Connect**: Upload new IPA
+
+#### Version History
+- **0.9.0+2**: Initial deployment infrastructure
+- **0.9.0+3**: iOS encryption compliance
+- **0.9.0+4**: Version alignment and unified build script
+
+### Current Status
+- **Google Play Store**: Version 0.9.0-beta.3+2 (Internal Testing)
+- **Apple App Store**: Version 0.9.0+3 (Ready for TestFlight)
+- **Web Hosting**: Active at https://checklister-firebase-dev.web.app
+
+---
+
+## 📝 Release Documentation
+
+### RELEASE.md Process
+The project uses a **hybrid approach** for release documentation:
+
+1. **RELEASE.md**: Project-level template and guide for creating releases
+2. **Git Tags**: Actual release notes embedded in git tags
+3. **GitHub Releases**: Enhanced release pages with rich formatting
+
+### How It Works:
+- **RELEASE.md** contains templates and examples for creating releases
+- **Git tag message** contains the actual release notes for that specific release
+- **GitHub Releases** can be enhanced with additional formatting and downloads
+
+### Creating a Release:
+1. **Copy template** from RELEASE.md
+2. **Fill in specific information** for your release
+3. **Create git tag** with the release notes
+4. **Push tag** to create GitHub release
+5. **Optionally enhance** GitHub release with additional content
+
+### Example Git Tag:
+```bash
+git tag -a v0.9.0-rc1 -m "Release Candidate 1: Complete deployment infrastructure
+
+## 🚀 What's New
+- iOS Build Automation: New scripts/ios-build-script.sh
+- Unified Build Script: Interactive menu with build exploration
+- Comprehensive Documentation: Complete deployment guides
+
+## 📱 Platform Status
+- Android: Version 0.9.0+4 (Internal Testing)
+- iOS: Version 0.9.0+4 (Ready for TestFlight)
+
+## 📋 Next Steps
+1. Upload iOS build to App Store Connect
+2. Submit for TestFlight review"
+```
+
+### Documentation Files:
+- **RELEASE.md**: Release process guide and templates
+- **README.md**: Main project documentation
+- **CHANGELOG.md**: Technical change log (optional)
+
+---
+
 ## 🌐 Web Hosting
 
 ### Firebase Hosting

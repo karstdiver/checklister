@@ -68,3 +68,15 @@ scripts/firebase-admin/serviceAccountKey.json
   
 # Node.js dependencies
 node_modules/
+
+# Android Signing (Sensitive - DO NOT COMMIT)
+*.keystore
+*.jks
+key.properties
+
+# iOS Signing (Sensitive - DO NOT COMMIT)
+*.mobileprovision
+*.p12
+*.cer
+*.crt
+*.pem
