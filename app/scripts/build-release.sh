@@ -203,10 +203,29 @@ validate_environment() {
 validate_android() {
     print_info "Validating Android environment..."
     
-    # Check Android SDK
-    if [ ! -d "$ANDROID_HOME" ]; then
-        print_error "ANDROID_HOME not set. Please configure Android SDK."
-        exit 1
+    # Check Android SDK (try multiple possible locations)
+    local android_sdk_found=false
+    local android_sdk_paths=(
+        "$ANDROID_HOME"
+        "/Users/rich/Library/Android/sdk"
+        "$HOME/Library/Android/sdk"
+        "/usr/local/android-sdk"
+    )
+    
+    for sdk_path in "${android_sdk_paths[@]}"; do
+        if [ -d "$sdk_path" ]; then
+            print_info "Android SDK found at: $sdk_path"
+            android_sdk_found=true
+            break
+        fi
+    done
+    
+    if [ "$android_sdk_found" = false ]; then
+        print_warning "Android SDK not found in common locations. Continue anyway? (y/N)"
+        read -p "" -n 1 -r
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            exit 1
+        fi
     fi
     
     # Check keystore
@@ -252,10 +271,12 @@ validate_ios() {
 build_android() {
     print_info "Building Android AAB..."
     
-    # Clean previous builds
-    print_info "Cleaning previous builds..."
-    flutter clean
-    flutter pub get
+    # Clean previous builds only if building Android first
+    if [ "$1" = "first" ]; then
+        print_info "Cleaning previous builds..."
+        flutter clean
+        flutter pub get
+    fi
     
     # Build AAB
     if flutter build appbundle --release; then
@@ -281,7 +302,7 @@ build_ios() {
     
     # Use existing iOS script if available
     if [ -f "scripts/ios-build-script.sh" ]; then
-        if ./scripts/ios-build-script.sh; then
+        if UNIFIED_BUILD=true ./scripts/ios-build-script.sh; then
             print_status "iOS IPA built successfully"
         else
             print_error "iOS build script failed"
@@ -322,7 +343,7 @@ main_build() {
     case $build_target in
         "android")
             validate_android
-            if ! build_android; then
+            if ! build_android "first"; then
                 errors=$((errors + 1))
             fi
             ;;
@@ -337,7 +358,7 @@ main_build() {
             validate_ios
             
             # Build Android first (usually faster)
-            if build_android; then
+            if build_android "first"; then
                 print_status "Android build completed"
             else
                 errors=$((errors + 1))
@@ -359,6 +380,7 @@ main_build() {
 # Verify builds
 verify_builds() {
     local build_target=$1
+    local verification_errors=0
     print_info "Verifying builds..."
     
     case $build_target in
@@ -367,7 +389,7 @@ verify_builds() {
                 print_status "Android AAB verified: $ANDROID_AAB_PATH"
             else
                 print_error "Android AAB not found"
-                return 1
+                verification_errors=$((verification_errors + 1))
             fi
             ;;
     esac
@@ -378,10 +400,12 @@ verify_builds() {
                 print_status "iOS IPA verified: $IOS_IPA_PATH"
             else
                 print_error "iOS IPA not found"
-                return 1
+                verification_errors=$((verification_errors + 1))
             fi
             ;;
     esac
+    
+    return $verification_errors
 }
 
 # Display next steps
@@ -643,20 +667,24 @@ main() {
         print_status "Build completed successfully!"
         
         # Verify builds
-        if verify_builds "$build_target"; then
-            # Show next steps
-            show_next_steps "$build_target"
-            
-            # Show timing
-            END_TIME=$(date +%s)
-            DURATION=$((END_TIME - START_TIME))
-            print_info "Total build time: ${DURATION} seconds"
-            
-            # Show release prompt
-            show_release_prompt "$build_target"
-        else
+        verify_builds "$build_target"
+        local verification_result=$?
+        
+        # Show next steps regardless of verification result
+        show_next_steps "$build_target"
+        
+        # Show timing
+        END_TIME=$(date +%s)
+        DURATION=$((END_TIME - START_TIME))
+        print_info "Total build time: ${DURATION} seconds"
+        
+        # Show release prompt
+        show_release_prompt "$build_target"
+        
+        # Exit with verification result
+        if [ $verification_result -ne 0 ]; then
             print_error "Build verification failed"
-            exit 1
+            exit $verification_result
         fi
     else
         print_error "Build failed with errors"

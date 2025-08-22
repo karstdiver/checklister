@@ -57,10 +57,12 @@ fi
 VERSION=$(grep "^version:" pubspec.yaml | sed 's/version: //')
 print_info "Building version: $VERSION"
 
-# Clean previous builds
-print_info "Cleaning previous builds..."
-flutter clean
-flutter pub get
+# Clean previous builds only if not called from unified script
+if [ -z "$UNIFIED_BUILD" ]; then
+    print_info "Cleaning previous builds..."
+    flutter clean
+    flutter pub get
+fi
 
 # Build the IPA
 print_info "Building iOS IPA..."
@@ -129,8 +131,10 @@ if [[ "$BUNDLE_VERSION" == *"."*"."*"."* ]]; then
     exit 1
 fi
 
-if [[ "$ENCRYPTION_STATUS" == *"false"* ]]; then
+if [[ "$ENCRYPTION_STATUS" == *"=> 0"* ]]; then
     print_status "Encryption declaration: No custom encryption (exempt)"
+elif [[ "$ENCRYPTION_STATUS" == *"=> 1"* ]]; then
+    print_warning "Encryption declaration: Custom encryption detected"
 else
     print_warning "Encryption declaration not found - you may need to answer encryption questions in App Store Connect"
 fi
