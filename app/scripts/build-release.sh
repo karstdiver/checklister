@@ -19,6 +19,27 @@ ANDROID_AAB_PATH="$BUILD_DIR/app/outputs/bundle/release/app-release.aab"
 IOS_IPA_PATH="$BUILD_DIR/ios/ipa/checklister.ipa"
 IOS_ARCHIVE_PATH="$BUILD_DIR/ios/archive/Runner.xcarchive"
 
+# Function to validate we're in the correct directory
+validate_directory() {
+    # Check if we're in a Flutter project directory
+    if [ ! -f "pubspec.yaml" ]; then
+        print_error "This script must be run from the Flutter project root directory (where pubspec.yaml is located)"
+        print_info "Current directory: $(pwd)"
+        print_info "Expected location: app/ directory containing pubspec.yaml"
+        exit 1
+    fi
+    
+    # Check if we're in the app directory specifically
+    if [ ! -f "android/app/build.gradle.kts" ] && [ ! -f "ios/Runner.xcworkspace" ]; then
+        print_error "This script must be run from the app/ directory"
+        print_info "Current directory: $(pwd)"
+        print_info "Expected location: app/ directory containing android/ and ios/ folders"
+        exit 1
+    fi
+    
+    print_status "Directory validation passed - running from app/ directory"
+}
+
 # Function to print colored output
 print_status() { echo -e "${GREEN}✅ $1${NC}"; }
 print_warning() { echo -e "${YELLOW}⚠️  $1${NC}"; }
@@ -157,9 +178,10 @@ show_main_menu() {
     echo "4) Build Android only"
     echo "5) Build iOS only" 
     echo "6) Build both platforms"
-    echo "7) Exit"
+    echo "7) Show post-build instructions"
+    echo "8) Exit"
     echo ""
-    read -p "Enter your choice (1-7): " MENU_CHOICE
+    read -p "Enter your choice (1-8): " MENU_CHOICE
     
     case $MENU_CHOICE in
         1) list_builds "basic"; show_main_menu;;
@@ -168,7 +190,8 @@ show_main_menu() {
         4) BUILD_TARGET="android";;
         5) BUILD_TARGET="ios";;
         6) BUILD_TARGET="both";;
-        7) echo "Exiting..."; exit 0;;
+        7) show_post_build_instructions; show_main_menu;;
+        8) echo "Exiting..."; exit 0;;
         *) print_error "Invalid choice. Please try again."; show_main_menu;;
     esac
 }
@@ -273,8 +296,13 @@ build_android() {
     
     # Clean previous builds only if building Android first
     if [ "$1" = "first" ]; then
-        print_info "Cleaning previous builds..."
-        flutter clean
+        print_info "Cleaning Android build artifacts..."
+        if [ -f "scripts/clean-platform.sh" ]; then
+            ./scripts/clean-platform.sh android
+        else
+            print_warning "Platform-specific cleaner not found, using flutter clean..."
+            flutter clean
+        fi
         flutter pub get
     fi
     
@@ -434,6 +462,64 @@ show_next_steps() {
     echo ""
     echo "3. Monitor upload progress and processing"
     echo "4. Submit for review (iOS) or release to testers (Android)"
+}
+
+# Display post-build instructions (standalone function)
+show_post_build_instructions() {
+    echo ""
+    echo -e "${PURPLE}📋 Post-Build Instructions${NC}"
+    echo "============================="
+    echo ""
+    
+    echo -e "${BLUE}📱 Upload to Stores:${NC}"
+    echo "========================"
+    
+    # Check if builds exist and show relevant instructions
+    if [ -f "$ANDROID_AAB_PATH" ]; then
+        echo -e "${GREEN}✅ Android AAB found${NC}"
+        echo "1. Upload Android AAB to Google Play Console:"
+        echo "   - Go to Play Console → Internal Testing"
+        echo "   - Upload: $ANDROID_AAB_PATH"
+        echo ""
+    else
+        echo -e "${YELLOW}⚠️  Android AAB not found${NC}"
+        echo "   Build Android first using option 4 or 6"
+        echo ""
+    fi
+    
+    if [ -f "$IOS_IPA_PATH" ]; then
+        echo -e "${GREEN}✅ iOS IPA found${NC}"
+        echo "2. Upload iOS IPA to App Store Connect:"
+        echo "   - Use Transporter app"
+        echo "   - Upload: $IOS_IPA_PATH"
+        echo ""
+    else
+        echo -e "${YELLOW}⚠️  iOS IPA not found${NC}"
+        echo "   Build iOS first using option 5 or 6"
+        echo ""
+    fi
+    
+    echo -e "${BLUE}📝 Release Process:${NC}"
+    echo "====================="
+    echo "3. Monitor upload progress and processing"
+    echo "4. Submit for review (iOS) or release to testers (Android)"
+    echo "5. Create release notes and git tag"
+    echo ""
+    
+    echo -e "${BLUE}🔧 Additional Steps:${NC}"
+    echo "====================="
+    echo "• Update version numbers in pubspec.yaml for next release"
+    echo "• Test the uploaded builds thoroughly"
+    echo "• Monitor crash reports and user feedback"
+    echo "• Prepare marketing materials if needed"
+    echo ""
+    
+    echo -e "${YELLOW}💡 Tips:${NC}"
+    echo "====="
+    echo "• Use option 2 to see detailed build information"
+    echo "• Use option 3 to explore build directory structure"
+    echo "• Keep track of which builds are uploaded to which store"
+    echo "• Document any issues encountered during the process"
 }
 
 # Display release information prompt
@@ -658,6 +744,9 @@ create_git_tag() {
 # Main execution
 main() {
     local build_target=$1
+    
+    # Validate we're in the correct directory
+    validate_directory
     
     # Start timer
     START_TIME=$(date +%s)

@@ -59,8 +59,13 @@ print_info "Building version: $VERSION"
 
 # Clean previous builds only if not called from unified script
 if [ -z "$UNIFIED_BUILD" ]; then
-    print_info "Cleaning previous builds..."
-    flutter clean
+    print_info "Cleaning iOS build artifacts..."
+    if [ -f "scripts/clean-platform.sh" ]; then
+        ./scripts/clean-platform.sh ios
+    else
+        print_warning "Platform-specific cleaner not found, using flutter clean..."
+        flutter clean
+    fi
     flutter pub get
 fi
 
