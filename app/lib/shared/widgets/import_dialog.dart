@@ -115,9 +115,26 @@ class _ImportDialogState extends ConsumerState<ImportDialog> {
 
       if (result != null && result.files.isNotEmpty) {
         final file = result.files.first;
+        
+        // Validate file size before reading content
+        final fileSizeBytes = file.size ?? 0;
+        final sizeValidationErrors = ImportService().validateFileSize(fileSizeBytes);
+        
+        if (sizeValidationErrors != null) {
+          _showError(sizeValidationErrors);
+          return;
+        }
+
         final content = file.bytes != null
             ? String.fromCharCodes(file.bytes!)
             : await File(file.path!).readAsString();
+
+        // Validate content length and item count
+        final validationErrors = ImportService().validateFile(fileSizeBytes, content);
+        if (validationErrors.isNotEmpty) {
+          _showError(validationErrors.join('\n'));
+          return;
+        }
 
         setState(() {
           _selectedFileName = file.name;
@@ -199,10 +216,9 @@ class _ImportDialogState extends ConsumerState<ImportDialog> {
     setState(() {
       if (value.isEmpty) {
         _contentError = TranslationService.translate('content_required');
-      } else if (value.length > 10000) {
-        _contentError = TranslationService.translate('content_too_long');
       } else {
-        _contentError = null;
+        // Use the service's validation method
+        _contentError = ImportService().validateContentLength(value);
       }
     });
   }

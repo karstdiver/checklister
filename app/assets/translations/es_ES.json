@@ -97,6 +97,8 @@
         "reason_too_long": "La razón debe tener 200 caracteres o menos",
         "content_required": "El contenido es requerido",
         "content_too_long": "El contenido debe tener 10000 caracteres o menos",
+        "file_too_large": "El tamaño del archivo excede el tamaño máximo permitido",
+        "too_many_items": "El número de elementos excede el máximo permitido",
   "duplicate": "Duplicar",
   "edit": "Editar",
   "edit_checklist": "Editar Lista de Verificación",

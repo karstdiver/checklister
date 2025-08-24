@@ -97,6 +97,8 @@
         "reason_too_long": "Reason must be 200 characters or less",
         "content_required": "Content is required",
         "content_too_long": "Content must be 10000 characters or less",
+        "file_too_large": "File size exceeds maximum allowed size",
+        "too_many_items": "Number of items exceeds maximum allowed",
   "duplicate": "Duplicate",
   "edit": "Edit",
   "edit_checklist": "Edit Checklist",
