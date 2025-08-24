@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:checklister/features/checklists/domain/checklist.dart';
 import '../../../../core/services/translation_service.dart';
+import '../../../../core/services/validation_service.dart';
 
 class ChecklistItemRow extends StatefulWidget {
   final ChecklistItem item;
@@ -30,6 +31,9 @@ class _ChecklistItemRowState extends State<ChecklistItemRow> {
   late TextEditingController _textController;
   bool _isEditing = false;
   FocusNode? _focusNode;
+  
+  // Validation state
+  String? _inlineEditError;
 
   @override
   void initState() {
@@ -53,6 +57,18 @@ class _ChecklistItemRowState extends State<ChecklistItemRow> {
     }
   }
 
+  // Validation methods
+  void _validateInlineEdit(String value) {
+    setState(() {
+      _inlineEditError = ValidationService.validateItemText(value);
+    });
+  }
+
+  bool _isInlineEditValid() {
+    return _inlineEditError == null && 
+           _textController.text.trim().isNotEmpty;
+  }
+
   @override
   void didUpdateWidget(ChecklistItemRow oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -73,6 +89,19 @@ class _ChecklistItemRowState extends State<ChecklistItemRow> {
 
   void _saveEdit() {
     final newText = _textController.text.trim();
+    
+    // Validate before saving
+    if (!_isInlineEditValid()) {
+      // Show error message if validation fails
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(TranslationService.translate('please_fix_errors')),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    
     if (newText.isNotEmpty && newText != widget.item.text) {
       widget.onTextUpdate?.call(newText);
     }
@@ -141,13 +170,15 @@ class _ChecklistItemRowState extends State<ChecklistItemRow> {
                                 decoration: InputDecoration(
                                   border: InputBorder.none,
                                   contentPadding: EdgeInsets.zero,
+                                  errorText: _inlineEditError,
+                                  suffixText: '${_textController.text.length}/200',
                                   suffixIcon: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       IconButton(
                                         icon: const Icon(Icons.check, size: 20),
-                                        onPressed: _saveEdit,
-                                        color: Colors.green,
+                                        onPressed: _isInlineEditValid() ? _saveEdit : null,
+                                        color: _isInlineEditValid() ? Colors.green : Colors.grey,
                                       ),
                                       IconButton(
                                         icon: const Icon(Icons.close, size: 20),
@@ -157,6 +188,7 @@ class _ChecklistItemRowState extends State<ChecklistItemRow> {
                                     ],
                                   ),
                                 ),
+                                onChanged: _validateInlineEdit,
                                 onSubmitted: (_) => _saveEdit(),
                               ),
                             )
