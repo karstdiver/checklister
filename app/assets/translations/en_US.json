@@ -95,6 +95,8 @@
         "user_id_too_short": "User ID must be at least 3 characters",
         "user_id_too_long": "User ID must be 50 characters or less",
         "reason_too_long": "Reason must be 200 characters or less",
+        "content_required": "Content is required",
+        "content_too_long": "Content must be 10000 characters or less",
   "duplicate": "Duplicate",
   "edit": "Edit",
   "edit_checklist": "Edit Checklist",
