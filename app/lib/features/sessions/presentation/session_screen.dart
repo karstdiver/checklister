@@ -632,6 +632,20 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                   }
                 },
                 onQuickAdd: (quickAddText) async {
+                  // Validate the quick add text before creating the item
+                  final validationError = ValidationService.validateItemText(quickAddText);
+                  if (validationError != null) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(validationError),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                    return;
+                  }
+                  
                   // Create a new checklist item with the quick add text
                   final newItem = checklist_domain.ChecklistItem(
                     id: 'item_${DateTime.now().millisecondsSinceEpoch}',

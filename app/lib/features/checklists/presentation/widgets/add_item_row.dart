@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/services/translation_service.dart';
+import '../../../../core/services/validation_service.dart';
 
 class AddItemRow extends StatefulWidget {
   final VoidCallback onTap;
@@ -18,6 +19,9 @@ class AddItemRow extends StatefulWidget {
 }
 
 class _AddItemRowState extends State<AddItemRow> {
+  // Validation state for quick add
+  String? _quickAddError;
+  
   void _showQuickOptionsSelector() {
     showModalBottomSheet(
       context: context,
@@ -152,20 +156,39 @@ class _AddItemRowState extends State<AddItemRow> {
     );
   }
 
+  // Validation methods for quick add
+  void _validateQuickAdd(String value) {
+    setState(() {
+      _quickAddError = ValidationService.validateItemText(value);
+    });
+  }
+
+  bool _isQuickAddValid() {
+    return _quickAddError == null && 
+           _quickAddTextController.text.trim().isNotEmpty;
+  }
+
+  // Controller for quick add text field
+  late TextEditingController _quickAddTextController;
+
   void _showQuickAddDialog() {
-    final textController = TextEditingController();
+    _quickAddTextController = TextEditingController();
+    _quickAddError = null;
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(TranslationService.translate('quick_add')),
         content: TextField(
-          controller: textController,
+          controller: _quickAddTextController,
           autofocus: true,
           decoration: InputDecoration(
             hintText: TranslationService.translate('enter_item_text'),
             border: const OutlineInputBorder(),
+            errorText: _quickAddError,
+            suffixText: '${_quickAddTextController.text.length}/200',
           ),
+          onChanged: _validateQuickAdd,
           maxLines: 3,
         ),
         actions: [
@@ -174,13 +197,13 @@ class _AddItemRowState extends State<AddItemRow> {
             child: Text(TranslationService.translate('cancel')),
           ),
           ElevatedButton(
-            onPressed: () {
-              final text = textController.text.trim();
+            onPressed: _isQuickAddValid() ? () {
+              final text = _quickAddTextController.text.trim();
               if (text.isNotEmpty) {
                 Navigator.of(context).pop();
                 widget.onQuickAdd?.call(text);
               }
-            },
+            } : null,
             child: Text(TranslationService.translate('add')),
           ),
         ],
@@ -247,6 +270,17 @@ class _AddItemRowState extends State<AddItemRow> {
                   return InkWell(
                     onTap: () {
                       Navigator.of(context).pop();
+                      // Validate template option before calling quick add
+                      final validationError = ValidationService.validateItemText(option);
+                      if (validationError != null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(validationError),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        return;
+                      }
                       widget.onQuickAdd?.call(option);
                     },
                     borderRadius: BorderRadius.circular(8),
