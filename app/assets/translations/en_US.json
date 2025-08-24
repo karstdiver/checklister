@@ -73,6 +73,8 @@
   "display_name": "Display Name",
   "display_name_required": "Display name is required",
   "display_name_too_short": "Display name must be at least 2 characters",
+  "display_name_too_long": "Display name must be {} characters or less",
+  "email_too_long": "Email must be {} characters or less",
   "duplicate": "Duplicate",
   "edit": "Edit",
   "edit_checklist": "Edit Checklist",

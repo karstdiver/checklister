@@ -73,6 +73,8 @@
   "display_name": "Nombre de Mostrar",
   "display_name_required": "El nombre de mostrar es requerido",
   "display_name_too_short": "El nombre debe tener al menos 2 caracteres",
+  "display_name_too_long": "El nombre debe tener {} caracteres o menos",
+  "email_too_long": "El correo electrónico debe tener {} caracteres o menos",
   "duplicate": "Duplicar",
   "edit": "Editar",
   "edit_checklist": "Editar Lista de Verificación",

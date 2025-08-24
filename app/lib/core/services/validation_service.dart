@@ -8,6 +8,8 @@ class ValidationService {
   static const int maxTagsCount = 10;
   static const int minTitleLength = 1;
   static const int minTagLength = 1;
+  static const int maxDisplayNameLength = 50;
+  static const int minDisplayNameLength = 2;
 
   /// Validates checklist title
   static String? validateTitle(String? value) {
@@ -104,6 +106,42 @@ class ValidationService {
     final trimmedValue = value.trim();
     if (trimmedValue.length > 1000) { // Max notes length
       return TranslationService.translate('notes_too_long', ['1000']);
+    }
+    
+    return null; // Valid
+  }
+
+  /// Validates display name
+  static String? validateDisplayName(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return TranslationService.translate('display_name_required');
+    }
+    
+    final trimmedValue = value.trim();
+    if (trimmedValue.length < minDisplayNameLength) {
+      return TranslationService.translate('display_name_too_short');
+    }
+    
+    if (trimmedValue.length > maxDisplayNameLength) {
+      return TranslationService.translate('display_name_too_long', [maxDisplayNameLength.toString()]);
+    }
+    
+    return null; // Valid
+  }
+
+  /// Validates email address
+  static String? validateEmail(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return TranslationService.translate('email_required');
+    }
+    
+    final trimmedValue = value.trim();
+    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(trimmedValue)) {
+      return TranslationService.translate('email_invalid');
+    }
+    
+    if (trimmedValue.length > 254) { // RFC 5321 limit
+      return TranslationService.translate('email_too_long', ['254']);
     }
     
     return null; // Valid

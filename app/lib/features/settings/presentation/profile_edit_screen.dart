@@ -7,6 +7,7 @@ import '../../../shared/widgets/app_card.dart';
 import '../../../features/settings/presentation/language_screen.dart';
 import '../../../features/auth/presentation/widgets/profile_image_picker.dart';
 import '../../../core/services/translation_service.dart';
+import '../../../core/services/validation_service.dart';
 import '../../../core/widgets/feature_guard.dart';
 import '../../../core/widgets/signup_encouragement.dart';
 import '../../../core/widgets/anonymous_profile_encouragement.dart';
@@ -36,6 +37,10 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   String? _initialDisplayName;
   String? _initialEmail;
   ThemeMode? _initialThemeMode;
+  
+  // Validation state
+  String? _displayNameError;
+  String? _emailError;
 
   @override
   void initState() {
@@ -50,6 +55,25 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     _displayNameController.dispose();
     _emailController.dispose();
     super.dispose();
+  }
+
+  // Validation methods
+  void _validateDisplayName(String value) {
+    setState(() {
+      _displayNameError = ValidationService.validateDisplayName(value);
+    });
+  }
+
+  void _validateEmail(String value) {
+    setState(() {
+      _emailError = ValidationService.validateEmail(value);
+    });
+  }
+
+  bool _isFormValid() {
+    return _displayNameError == null && 
+           _emailError == null &&
+           _displayNameController.text.trim().isNotEmpty;
   }
 
   Future<void> _loadProfile() async {
@@ -86,7 +110,17 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   }
 
   Future<void> _saveProfile() async {
-    if (!_formKey.currentState!.validate()) return;
+    // Validate form and check for errors
+    if (!_formKey.currentState!.validate() || !_isFormValid()) {
+      // Show error message if form is invalid
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(TranslationService.translate('please_fix_errors')),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
 
     try {
       setState(() {
@@ -249,7 +283,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                 if (!profileState.isLoading &&
                     profileState.errorMessage == null)
                   TextButton(
-                    onPressed: _isSaving ? null : _saveProfile,
+                    onPressed: (_isSaving || !_isFormValid()) ? null : _saveProfile,
                     child: _isSaving
                         ? const SizedBox(
                             width: 16,
@@ -435,15 +469,12 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                 hintStyle: TextStyle(color: hintColor),
                 border: const OutlineInputBorder(),
                 prefixIcon: Icon(Icons.person, color: textColor),
+                errorText: _displayNameError,
+                suffixText: '${_displayNameController.text.length}/${ValidationService.maxDisplayNameLength}',
               ),
+              onChanged: _validateDisplayName,
               validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return TranslationService.translate('display_name_required');
-                }
-                if (value.trim().length < 2) {
-                  return TranslationService.translate('display_name_too_short');
-                }
-                return null;
+                return ValidationService.validateDisplayName(value);
               },
             ),
             const SizedBox(height: 16),
@@ -458,18 +489,13 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                 hintStyle: TextStyle(color: hintColor),
                 border: const OutlineInputBorder(),
                 prefixIcon: Icon(Icons.email, color: textColor),
+                errorText: _emailError,
+                suffixText: '${_emailController.text.length}/254',
               ),
+              onChanged: _validateEmail,
               keyboardType: TextInputType.emailAddress,
               validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return TranslationService.translate('email_required');
-                }
-                if (!RegExp(
-                  r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                ).hasMatch(value.trim())) {
-                  return TranslationService.translate('email_invalid');
-                }
-                return null;
+                return ValidationService.validateEmail(value);
               },
             ),
           ],
