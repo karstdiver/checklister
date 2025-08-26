@@ -6,9 +6,9 @@ import 'package:logger/logger.dart';
 import '../../../core/services/webp_image_service.dart';
 
 class ProfileImageService {
-  final FirebaseStorage _storage = FirebaseStorage.instance;
+  FirebaseStorage get _storage => FirebaseStorage.instance;
   final ImagePicker _picker = ImagePicker();
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  FirebaseAuth get _auth => FirebaseAuth.instance;
   final Logger _logger = Logger();
   final WebPImageService _webpService = WebPImageService();
 

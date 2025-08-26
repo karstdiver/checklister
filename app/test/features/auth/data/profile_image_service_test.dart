@@ -1,8 +1,21 @@
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:checklister/features/auth/data/profile_image_service.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:checklister/firebase_options.dart';
 
 void main() {
+  setUpAll(() async {
+    TestWidgetsFlutterBinding.ensureInitialized();
+    try {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+    } catch (_) {
+      // Ignore if already initialized in this test run
+    }
+  });
+
   group('ProfileImageService', () {
     late ProfileImageService service;
 

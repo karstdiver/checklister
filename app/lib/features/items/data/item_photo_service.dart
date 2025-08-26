@@ -8,7 +8,7 @@ import '../../../core/services/translation_service.dart';
 import '../../../core/services/webp_image_service.dart';
 
 class ItemPhotoService {
-  final FirebaseStorage _storage = FirebaseStorage.instance;
+  FirebaseStorage get _storage => FirebaseStorage.instance;
   final ImagePicker _picker = ImagePicker();
   final Logger _logger = Logger();
   final WebPImageService _webpService = WebPImageService();

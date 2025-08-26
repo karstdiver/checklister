@@ -1,7 +1,20 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:checklister/features/items/data/item_photo_service.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:checklister/firebase_options.dart';
 
 void main() {
+  setUpAll(() async {
+    TestWidgetsFlutterBinding.ensureInitialized();
+    try {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+    } catch (_) {
+      // Ignore if already initialized
+    }
+  });
+
   group('ItemPhotoService', () {
     late ItemPhotoService service;
 
