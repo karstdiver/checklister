@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../../core/domain/pricing_tiers_config.dart';
 import '../../../core/services/pricing_tiers_management_service.dart';
 import '../../../core/services/translation_service.dart';
+import '../../../core/services/validation_service.dart';
 
 class PricingManagementScreen extends ConsumerStatefulWidget {
   const PricingManagementScreen({super.key});
@@ -1285,6 +1286,11 @@ class _TierEditDialogState extends State<_TierEditDialog> {
   late String _billingCycle;
   late bool _popular;
   late bool _recommended;
+  
+  // Validation state
+  String? _nameError;
+  String? _priceError;
+  String? _descriptionError;
 
   @override
   void initState() {
@@ -1310,6 +1316,41 @@ class _TierEditDialogState extends State<_TierEditDialog> {
     super.dispose();
   }
 
+  // Validation methods
+  void _validateName(String value) {
+    setState(() {
+      _nameError = ValidationService.validateTitle(value);
+    });
+  }
+
+  void _validatePrice(String value) {
+    setState(() {
+      if (value.isEmpty) {
+        _priceError = TranslationService.translate('price_required');
+      } else if (double.tryParse(value) == null) {
+        _priceError = TranslationService.translate('invalid_price');
+      } else if (double.parse(value) < 0) {
+        _priceError = TranslationService.translate('price_must_be_positive');
+      } else {
+        _priceError = null;
+      }
+    });
+  }
+
+  void _validateDescription(String value) {
+    setState(() {
+      _descriptionError = ValidationService.validateDescription(value);
+    });
+  }
+
+  bool _isFormValid() {
+    return _nameError == null && 
+           _priceError == null && 
+           _descriptionError == null &&
+           _nameController.text.trim().isNotEmpty &&
+           _priceController.text.trim().isNotEmpty;
+  }
+
   @override
   Widget build(BuildContext context) {
     final isEditing = widget.tier != null;
@@ -1331,12 +1372,12 @@ class _TierEditDialogState extends State<_TierEditDialog> {
                 decoration: InputDecoration(
                   labelText: TranslationService.translate('tier_name'),
                   border: const OutlineInputBorder(),
+                  errorText: _nameError,
+                  suffixText: '${_nameController.text.length}/50',
                 ),
+                onChanged: _validateName,
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return TranslationService.translate('tier_name_required');
-                  }
-                  return null;
+                  return ValidationService.validateTitle(value);
                 },
               ),
               const SizedBox(height: 16),
@@ -1349,14 +1390,20 @@ class _TierEditDialogState extends State<_TierEditDialog> {
                       decoration: InputDecoration(
                         labelText: TranslationService.translate('price'),
                         border: const OutlineInputBorder(),
+                        errorText: _priceError,
+                        suffixText: '${_priceController.text.length}/10',
                       ),
                       keyboardType: TextInputType.number,
+                      onChanged: _validatePrice,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return TranslationService.translate('price_required');
                         }
                         if (double.tryParse(value) == null) {
                           return TranslationService.translate('invalid_price');
+                        }
+                        if (double.parse(value) < 0) {
+                          return TranslationService.translate('price_must_be_positive');
                         }
                         return null;
                       },
@@ -1412,7 +1459,10 @@ class _TierEditDialogState extends State<_TierEditDialog> {
                 decoration: InputDecoration(
                   labelText: TranslationService.translate('description'),
                   border: const OutlineInputBorder(),
+                  errorText: _descriptionError,
+                  suffixText: '${_descriptionController.text.length}/500',
                 ),
+                onChanged: _validateDescription,
                 maxLines: 3,
               ),
               const SizedBox(height: 16),
@@ -1452,7 +1502,7 @@ class _TierEditDialogState extends State<_TierEditDialog> {
           child: Text(TranslationService.translate('cancel')),
         ),
         ElevatedButton(
-          onPressed: _saveTier,
+          onPressed: _isFormValid() ? _saveTier : null,
           child: Text(
             isEditing
                 ? TranslationService.translate('update')
@@ -1464,7 +1514,7 @@ class _TierEditDialogState extends State<_TierEditDialog> {
   }
 
   void _saveTier() {
-    if (_formKey.currentState!.validate()) {
+    if (_formKey.currentState!.validate() && _isFormValid()) {
       final tierConfig = TierConfig(
         name: _nameController.text.trim(),
         price: double.parse(_priceController.text),
@@ -1479,6 +1529,14 @@ class _TierEditDialogState extends State<_TierEditDialog> {
 
       widget.onSave(tierConfig);
       Navigator.of(context).pop();
+    } else {
+      // Show error message if form is invalid
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(TranslationService.translate('please_fix_errors')),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 }
@@ -1504,6 +1562,13 @@ class _SpecialOfferEditDialogState extends State<_SpecialOfferEditDialog> {
   late DateTime _validFrom;
   late DateTime _validTo;
   late bool _active;
+  
+  // Validation state
+  String? _idError;
+  String? _nameError;
+  String? _discountError;
+  String? _durationError;
+  String? _conditionsError;
 
   @override
   void initState() {
@@ -1535,6 +1600,74 @@ class _SpecialOfferEditDialogState extends State<_SpecialOfferEditDialog> {
     super.dispose();
   }
 
+  // Validation methods
+  void _validateId(String value) {
+    setState(() {
+      if (value.isEmpty) {
+        _idError = TranslationService.translate('offer_id_required');
+      } else if (value.length < 3) {
+        _idError = TranslationService.translate('offer_id_too_short');
+      } else if (value.length > 20) {
+        _idError = TranslationService.translate('offer_id_too_long');
+      } else {
+        _idError = null;
+      }
+    });
+  }
+
+  void _validateName(String value) {
+    setState(() {
+      _nameError = ValidationService.validateTitle(value);
+    });
+  }
+
+  void _validateDiscount(String value) {
+    setState(() {
+      if (value.isEmpty) {
+        _discountError = TranslationService.translate('discount_required');
+      } else if (double.tryParse(value) == null) {
+        _discountError = TranslationService.translate('invalid_discount');
+      } else if (double.parse(value) < 0 || double.parse(value) > 100) {
+        _discountError = TranslationService.translate('discount_range_error');
+      } else {
+        _discountError = null;
+      }
+    });
+  }
+
+  void _validateDuration(String value) {
+    setState(() {
+      if (value.isEmpty) {
+        _durationError = TranslationService.translate('duration_required');
+      } else if (value.length > 50) {
+        _durationError = TranslationService.translate('duration_too_long');
+      } else {
+        _durationError = null;
+      }
+    });
+  }
+
+  void _validateConditions(String value) {
+    setState(() {
+      if (value.length > 200) {
+        _conditionsError = TranslationService.translate('conditions_too_long');
+      } else {
+        _conditionsError = null;
+      }
+    });
+  }
+
+  bool _isFormValid() {
+    return _idError == null && 
+           _nameError == null && 
+           _discountError == null &&
+           _durationError == null &&
+           _conditionsError == null &&
+           _idController.text.trim().isNotEmpty &&
+           _nameController.text.trim().isNotEmpty &&
+           _discountController.text.trim().isNotEmpty;
+  }
+
   @override
   Widget build(BuildContext context) {
     final isEditing = widget.offer != null;
@@ -1556,10 +1689,19 @@ class _SpecialOfferEditDialogState extends State<_SpecialOfferEditDialog> {
                 decoration: InputDecoration(
                   labelText: TranslationService.translate('offer_id'),
                   border: const OutlineInputBorder(),
+                  errorText: _idError,
+                  suffixText: '${_idController.text.length}/20',
                 ),
+                onChanged: _validateId,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return TranslationService.translate('offer_id_required');
+                  }
+                  if (value.length < 3) {
+                    return TranslationService.translate('offer_id_too_short');
+                  }
+                  if (value.length > 20) {
+                    return TranslationService.translate('offer_id_too_long');
                   }
                   return null;
                 },
@@ -1570,12 +1712,12 @@ class _SpecialOfferEditDialogState extends State<_SpecialOfferEditDialog> {
                 decoration: InputDecoration(
                   labelText: TranslationService.translate('offer_name'),
                   border: const OutlineInputBorder(),
+                  errorText: _nameError,
+                  suffixText: '${_nameController.text.length}/50',
                 ),
+                onChanged: _validateName,
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return TranslationService.translate('offer_name_required');
-                  }
-                  return null;
+                  return ValidationService.validateTitle(value);
                 },
               ),
               const SizedBox(height: 16),
@@ -1589,9 +1731,11 @@ class _SpecialOfferEditDialogState extends State<_SpecialOfferEditDialog> {
                           'discount_percentage',
                         ),
                         border: const OutlineInputBorder(),
-                        suffixText: '%',
+                        errorText: _discountError,
+                        suffixText: '${_discountController.text.length}/3%',
                       ),
                       keyboardType: TextInputType.number,
+                      onChanged: _validateDiscount,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return TranslationService.translate(
@@ -1617,7 +1761,10 @@ class _SpecialOfferEditDialogState extends State<_SpecialOfferEditDialog> {
                       decoration: InputDecoration(
                         labelText: TranslationService.translate('duration'),
                         border: const OutlineInputBorder(),
+                        errorText: _durationError,
+                        suffixText: '${_durationController.text.length}/50',
                       ),
+                      onChanged: _validateDuration,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return TranslationService.translate(
@@ -1656,7 +1803,10 @@ class _SpecialOfferEditDialogState extends State<_SpecialOfferEditDialog> {
                   labelText: TranslationService.translate('conditions'),
                   hintText: TranslationService.translate('conditions_hint'),
                   border: const OutlineInputBorder(),
+                  errorText: _conditionsError,
+                  suffixText: '${_conditionsController.text.length}/200',
                 ),
+                onChanged: _validateConditions,
                 maxLines: 2,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -1685,7 +1835,7 @@ class _SpecialOfferEditDialogState extends State<_SpecialOfferEditDialog> {
           child: Text(TranslationService.translate('cancel')),
         ),
         ElevatedButton(
-          onPressed: _saveSpecialOffer,
+          onPressed: _isFormValid() ? _saveSpecialOffer : null,
           child: Text(
             isEditing
                 ? TranslationService.translate('update')
@@ -1720,7 +1870,7 @@ class _SpecialOfferEditDialogState extends State<_SpecialOfferEditDialog> {
   }
 
   void _saveSpecialOffer() {
-    if (_formKey.currentState!.validate()) {
+    if (_formKey.currentState!.validate() && _isFormValid()) {
       if (_validFrom.isAfter(_validTo)) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

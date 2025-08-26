@@ -5,6 +5,7 @@ import 'checklist_view_type.dart';
 import '../presentation/views/list_view_widget.dart';
 import '../presentation/widgets/add_item_row.dart';
 import '../../../core/services/translation_service.dart';
+import '../../../core/services/validation_service.dart';
 import '../../items/presentation/item_edit_screen.dart';
 import '../domain/checklist_providers.dart';
 
@@ -366,6 +367,9 @@ class _MatrixItemCardState extends State<MatrixItemCard> {
   late TextEditingController _textController;
   bool _isEditing = false;
   FocusNode? _focusNode;
+  
+  // Validation state
+  String? _inlineEditError;
 
   @override
   void initState() {
@@ -389,6 +393,18 @@ class _MatrixItemCardState extends State<MatrixItemCard> {
     }
   }
 
+  // Validation methods
+  void _validateInlineEdit(String value) {
+    setState(() {
+      _inlineEditError = ValidationService.validateItemText(value);
+    });
+  }
+
+  bool _isInlineEditValid() {
+    return _inlineEditError == null && 
+           _textController.text.trim().isNotEmpty;
+  }
+
   @override
   void didUpdateWidget(MatrixItemCard oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -408,6 +424,19 @@ class _MatrixItemCardState extends State<MatrixItemCard> {
 
   void _saveEdit() {
     final newText = _textController.text.trim();
+    
+    // Validate before saving
+    if (!_isInlineEditValid()) {
+      // Show error message if validation fails
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(TranslationService.translate('please_fix_errors')),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    
     if (newText.isNotEmpty && newText != widget.item.text) {
       widget.onTextUpdate?.call(newText);
     }
@@ -551,7 +580,10 @@ class _MatrixItemCardState extends State<MatrixItemCard> {
                                   border: InputBorder.none,
                                   contentPadding: EdgeInsets.zero,
                                   hintText: 'Enter item text...',
+                                  errorText: _inlineEditError,
+                                  suffixText: '${_textController.text.length}/200',
                                 ),
+                                onChanged: _validateInlineEdit,
                                 maxLines: null,
                                 expands: true,
                                 textAlignVertical: TextAlignVertical.top,
@@ -564,8 +596,8 @@ class _MatrixItemCardState extends State<MatrixItemCard> {
                               children: [
                                 IconButton(
                                   icon: const Icon(Icons.check, size: 16),
-                                  onPressed: _saveEdit,
-                                  color: Colors.green,
+                                  onPressed: _isInlineEditValid() ? _saveEdit : null,
+                                  color: _isInlineEditValid() ? Colors.green : Colors.grey,
                                 ),
                                 IconButton(
                                   icon: const Icon(Icons.close, size: 16),

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/services.dart';
 import '../../features/checklists/domain/checklist.dart';
+import '../services/translation_service.dart';
 
 /// Import result containing parsed items and metadata
 class ImportResult {
@@ -34,6 +35,11 @@ class ImportService {
   static const ImportService _instance = ImportService._internal();
   factory ImportService() => _instance;
   const ImportService._internal();
+
+  // File size limits (in bytes)
+  static const int maxFileSizeBytes = 1024 * 1024; // 1MB
+  static const int maxContentLength = 10000; // 10,000 characters
+  static const int maxItemsPerFile = 1000; // 1,000 items
 
   static int _itemIdCounter = 0;
 
@@ -322,6 +328,53 @@ class ImportService {
     final nonEmptyLines = lines.where((line) => line.trim().isNotEmpty).length;
 
     return nonEmptyLines > 0;
+  }
+
+  /// Validate file size
+  String? validateFileSize(int fileSizeBytes) {
+    if (fileSizeBytes > maxFileSizeBytes) {
+      final maxSizeMB = maxFileSizeBytes / (1024 * 1024);
+      final actualSizeMB = fileSizeBytes / (1024 * 1024);
+      return '${TranslationService.translate('file_too_large')} (${actualSizeMB.toStringAsFixed(1)}MB > ${maxSizeMB.toStringAsFixed(1)}MB)';
+    }
+    return null;
+  }
+
+  /// Validate content length
+  String? validateContentLength(String content) {
+    if (content.length > maxContentLength) {
+      return '${TranslationService.translate('content_too_long')} (${content.length} > $maxContentLength)';
+    }
+    return null;
+  }
+
+  /// Validate number of items
+  String? validateItemCount(int itemCount) {
+    if (itemCount > maxItemsPerFile) {
+      return '${TranslationService.translate('too_many_items')} ($itemCount > $maxItemsPerFile)';
+    }
+    return null;
+  }
+
+  /// Comprehensive file validation
+  List<String> validateFile(int fileSizeBytes, String content) {
+    final errors = <String>[];
+    
+    // Check file size
+    final sizeError = validateFileSize(fileSizeBytes);
+    if (sizeError != null) errors.add(sizeError);
+    
+    // Check content length
+    final lengthError = validateContentLength(content);
+    if (lengthError != null) errors.add(lengthError);
+    
+    // Check item count (estimate from lines)
+    final lines = content.split('\n');
+    final estimatedItems = lines.where((line) => line.trim().isNotEmpty).length;
+    final itemError = validateItemCount(estimatedItems);
+    if (itemError != null) errors.add(itemError);
+    
+    return errors;
   }
 
   /// Get supported file extensions

@@ -7,6 +7,7 @@ import '../domain/session_notifier.dart';
 import '../../../core/providers/providers.dart';
 import '../../../core/providers/privilege_provider.dart';
 import '../../../core/services/translation_service.dart';
+import '../../../core/services/validation_service.dart';
 import '../../../core/domain/user_tier.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../checklists/domain/checklist_view_type.dart';
@@ -48,6 +49,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   bool _isEditingCurrentItem = false;
   late TextEditingController _currentItemTextController;
   FocusNode? _currentItemFocusNode;
+  
+  // Validation state for inline editing
+  String? _inlineEditError;
 
   @override
   void initState() {
@@ -66,6 +70,18 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     _currentItemFocusNode?.removeListener(_onCurrentItemFocusChange);
     _currentItemFocusNode?.dispose();
     super.dispose();
+  }
+
+  // Validation methods for inline editing
+  void _validateInlineEdit(String value) {
+    setState(() {
+      _inlineEditError = ValidationService.validateItemText(value);
+    });
+  }
+
+  bool _isInlineEditValid() {
+    return _inlineEditError == null && 
+           _currentItemTextController.text.trim().isNotEmpty;
   }
 
   void _onCurrentItemFocusChange() {
@@ -616,6 +632,20 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                   }
                 },
                 onQuickAdd: (quickAddText) async {
+                  // Validate the quick add text before creating the item
+                  final validationError = ValidationService.validateItemText(quickAddText);
+                  if (validationError != null) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(validationError),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                    return;
+                  }
+                  
                   // Create a new checklist item with the quick add text
                   final newItem = checklist_domain.ChecklistItem(
                     id: 'item_${DateTime.now().millisecondsSinceEpoch}',
@@ -1782,6 +1812,21 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
   void _saveEditCurrentItem(ChecklistItem item) async {
     final newText = _currentItemTextController.text.trim();
+    
+    // Validate the text before saving
+    if (!_isInlineEditValid()) {
+      // Show error message if validation fails
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(TranslationService.translate('please_fix_errors')),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+    
     if (newText.isNotEmpty && newText != item.text) {
       try {
         final checklistNotifier = ref.read(checklistNotifierProvider.notifier);
@@ -1864,32 +1909,39 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       onTap: () {
         // Prevent tap from bubbling up when editing
       },
-      child: TextField(
-        controller: _currentItemTextController,
-        focusNode: _currentItemFocusNode,
-        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
-        decoration: InputDecoration(
-          border: InputBorder.none,
-          contentPadding: EdgeInsets.zero,
-          suffixIcon: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.check, size: 20),
-                onPressed: () => _saveEditCurrentItem(item),
-                color: Colors.green,
+      child: Column(
+        children: [
+          TextField(
+            controller: _currentItemTextController,
+            focusNode: _currentItemFocusNode,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
+            decoration: InputDecoration(
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.zero,
+              errorText: _inlineEditError,
+              suffixText: '${_currentItemTextController.text.length}/200',
+              suffixIcon: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.check, size: 20),
+                    onPressed: _isInlineEditValid() ? () => _saveEditCurrentItem(item) : null,
+                    color: _isInlineEditValid() ? Colors.green : Colors.grey,
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, size: 20),
+                    onPressed: _cancelEditCurrentItem,
+                    color: Colors.red,
+                  ),
+                ],
               ),
-              IconButton(
-                icon: const Icon(Icons.close, size: 20),
-                onPressed: _cancelEditCurrentItem,
-                color: Colors.red,
-              ),
-            ],
+            ),
+            onChanged: _validateInlineEdit,
+            maxLines: null,
+            textAlign: TextAlign.center,
+            onSubmitted: (_) => _saveEditCurrentItem(item),
           ),
-        ),
-        maxLines: null,
-        textAlign: TextAlign.center,
-        onSubmitted: (_) => _saveEditCurrentItem(item),
+        ],
       ),
     );
   }

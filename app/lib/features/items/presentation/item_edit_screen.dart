@@ -6,6 +6,7 @@ import '../../../core/providers/privilege_provider.dart';
 import '../../../core/widgets/feature_guard.dart';
 import '../../../core/widgets/signup_encouragement.dart';
 import '../../../core/services/translation_service.dart';
+import '../../../core/services/validation_service.dart';
 import '../../../core/domain/user_tier.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../features/auth/presentation/login_screen.dart';
@@ -34,6 +35,10 @@ class _ItemEditScreenState extends ConsumerState<ItemEditScreen> {
   String? _currentImageUrl;
   bool _isLoading = false;
   final _itemPhotoService = ItemPhotoService();
+  
+  // Validation state
+  String? _textError;
+  String? _notesError;
 
   @override
   void initState() {
@@ -54,6 +59,25 @@ class _ItemEditScreenState extends ConsumerState<ItemEditScreen> {
     _textController.dispose();
     _notesController.dispose();
     super.dispose();
+  }
+
+  // Validation methods
+  void _validateText(String value) {
+    setState(() {
+      _textError = ValidationService.validateItemText(value);
+    });
+  }
+
+  void _validateNotes(String value) {
+    setState(() {
+      _notesError = ValidationService.validateItemNotes(value);
+    });
+  }
+
+  bool _isFormValid() {
+    return _textError == null && 
+           _notesError == null &&
+           _textController.text.trim().isNotEmpty;
   }
 
   bool _isDirty() {
@@ -142,7 +166,7 @@ class _ItemEditScreenState extends ConsumerState<ItemEditScreen> {
               )
             else
               TextButton(
-                onPressed: _saveItem,
+                onPressed: _isFormValid() ? _saveItem : null,
                 child: Text(TranslationService.translate('save')),
               ),
           ],
@@ -172,14 +196,12 @@ class _ItemEditScreenState extends ConsumerState<ItemEditScreen> {
                           'enter_item_text',
                         ),
                         border: const OutlineInputBorder(),
+                        errorText: _textError,
+                        suffixText: '${_textController.text.length}/200',
                       ),
+                      onChanged: _validateText,
                       validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return TranslationService.translate(
-                            'item_text_required',
-                          );
-                        }
-                        return null;
+                        return ValidationService.validateItemText(value);
                       },
                     ),
                   ],
@@ -206,7 +228,10 @@ class _ItemEditScreenState extends ConsumerState<ItemEditScreen> {
                         labelText: TranslationService.translate('notes'),
                         hintText: TranslationService.translate('enter_notes'),
                         border: const OutlineInputBorder(),
+                        errorText: _notesError,
+                        suffixText: '${_notesController.text.length}/1000',
                       ),
+                      onChanged: _validateNotes,
                       maxLines: 3,
                     ),
                   ],
@@ -397,7 +422,15 @@ class _ItemEditScreenState extends ConsumerState<ItemEditScreen> {
   }
 
   void _saveItem() async {
-    if (!_formKey.currentState!.validate()) {
+    // Validate form and check for errors
+    if (!_formKey.currentState!.validate() || !_isFormValid()) {
+      // Show error message if form is invalid
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(TranslationService.translate('please_fix_errors')),
+          backgroundColor: Colors.red,
+        ),
+      );
       return;
     }
 

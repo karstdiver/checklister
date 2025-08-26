@@ -4,6 +4,7 @@ import '../../../core/domain/user_tier.dart';
 import '../../../core/providers/privilege_provider.dart';
 import '../../../core/services/limit_management_service.dart';
 import '../../../core/services/translation_service.dart';
+import '../../../core/services/validation_service.dart';
 import '../../../shared/widgets/app_card.dart';
 
 class LimitManagementScreen extends ConsumerStatefulWidget {
@@ -290,11 +291,55 @@ class _TierLimitsDialogState extends State<_TierLimitsDialog> {
   final _checklistController = TextEditingController();
   final _itemController = TextEditingController();
   bool _isLoading = false;
+  
+  // Validation state
+  String? _checklistError;
+  String? _itemError;
 
   @override
   void initState() {
     super.initState();
     _loadCurrentLimits();
+  }
+
+  // Validation methods
+  void _validateChecklistLimit(String value) {
+    setState(() {
+      if (value.isEmpty) {
+        _checklistError = TranslationService.translate('limit_required');
+      } else if (int.tryParse(value) == null) {
+        _checklistError = TranslationService.translate('invalid_limit');
+      } else if (int.parse(value) < -1) {
+        _checklistError = TranslationService.translate('limit_too_low');
+      } else if (int.parse(value) > 10000) {
+        _checklistError = TranslationService.translate('limit_too_high');
+      } else {
+        _checklistError = null;
+      }
+    });
+  }
+
+  void _validateItemLimit(String value) {
+    setState(() {
+      if (value.isEmpty) {
+        _itemError = TranslationService.translate('limit_required');
+      } else if (int.tryParse(value) == null) {
+        _itemError = TranslationService.translate('invalid_limit');
+      } else if (int.parse(value) < -1) {
+        _itemError = TranslationService.translate('limit_too_low');
+      } else if (int.parse(value) > 1000) {
+        _itemError = TranslationService.translate('limit_too_high');
+      } else {
+        _itemError = null;
+      }
+    });
+  }
+
+  bool _isFormValid() {
+    return _checklistError == null && 
+           _itemError == null &&
+           _checklistController.text.trim().isNotEmpty &&
+           _itemController.text.trim().isNotEmpty;
   }
 
   Future<void> _loadCurrentLimits() async {
@@ -316,20 +361,26 @@ class _TierLimitsDialogState extends State<_TierLimitsDialog> {
         children: [
           TextField(
             controller: _checklistController,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Max Checklists',
               hintText: 'Enter limit (-1 for unlimited)',
+              errorText: _checklistError,
+              suffixText: '${_checklistController.text.length}/5',
             ),
             keyboardType: TextInputType.number,
+            onChanged: _validateChecklistLimit,
           ),
           const SizedBox(height: 16),
           TextField(
             controller: _itemController,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Max Items per Checklist',
               hintText: 'Enter limit (-1 for unlimited)',
+              errorText: _itemError,
+              suffixText: '${_itemController.text.length}/4',
             ),
             keyboardType: TextInputType.number,
+            onChanged: _validateItemLimit,
           ),
         ],
       ),
@@ -339,7 +390,7 @@ class _TierLimitsDialogState extends State<_TierLimitsDialog> {
           child: Text(TranslationService.translate('cancel')),
         ),
         ElevatedButton(
-          onPressed: _isLoading ? null : _saveLimits,
+          onPressed: (_isLoading || !_isFormValid()) ? null : _saveLimits,
           child: _isLoading
               ? const SizedBox(
                   width: 16,
@@ -353,6 +404,16 @@ class _TierLimitsDialogState extends State<_TierLimitsDialog> {
   }
 
   Future<void> _saveLimits() async {
+    if (!_isFormValid()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(TranslationService.translate('please_fix_errors')),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     setState(() {
       _isLoading = true;
     });
@@ -416,6 +477,81 @@ class _UserOverrideDialogState extends State<_UserOverrideDialog> {
   final _itemController = TextEditingController();
   final _reasonController = TextEditingController();
   bool _isLoading = false;
+  
+  // Validation state
+  String? _userIdError;
+  String? _checklistError;
+  String? _itemError;
+  String? _reasonError;
+
+  // Validation methods
+  void _validateUserId(String value) {
+    setState(() {
+      if (value.isEmpty) {
+        _userIdError = TranslationService.translate('user_id_required');
+      } else if (value.length < 3) {
+        _userIdError = TranslationService.translate('user_id_too_short');
+      } else if (value.length > 50) {
+        _userIdError = TranslationService.translate('user_id_too_long');
+      } else {
+        _userIdError = null;
+      }
+    });
+  }
+
+  void _validateChecklistLimit(String value) {
+    setState(() {
+      if (value.isNotEmpty) {
+        if (int.tryParse(value) == null) {
+          _checklistError = TranslationService.translate('invalid_limit');
+        } else if (int.parse(value) < -1) {
+          _checklistError = TranslationService.translate('limit_too_low');
+        } else if (int.parse(value) > 10000) {
+          _checklistError = TranslationService.translate('limit_too_high');
+        } else {
+          _checklistError = null;
+        }
+      } else {
+        _checklistError = null;
+      }
+    });
+  }
+
+  void _validateItemLimit(String value) {
+    setState(() {
+      if (value.isNotEmpty) {
+        if (int.tryParse(value) == null) {
+          _itemError = TranslationService.translate('invalid_limit');
+        } else if (int.parse(value) < -1) {
+          _itemError = TranslationService.translate('limit_too_low');
+        } else if (int.parse(value) > 1000) {
+          _itemError = TranslationService.translate('limit_too_high');
+        } else {
+          _itemError = null;
+        }
+      } else {
+        _itemError = null;
+      }
+    });
+  }
+
+  void _validateReason(String value) {
+    setState(() {
+      if (value.length > 200) {
+        _reasonError = TranslationService.translate('reason_too_long');
+      } else {
+        _reasonError = null;
+      }
+    });
+  }
+
+  bool _isFormValid() {
+    return _userIdError == null && 
+           _checklistError == null &&
+           _itemError == null &&
+           _reasonError == null &&
+           _userIdController.text.trim().isNotEmpty;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -426,36 +562,48 @@ class _UserOverrideDialogState extends State<_UserOverrideDialog> {
         children: [
           TextField(
             controller: _userIdController,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'User ID',
               hintText: 'Enter user ID',
+              errorText: _userIdError,
+              suffixText: '${_userIdController.text.length}/50',
             ),
+            onChanged: _validateUserId,
           ),
           const SizedBox(height: 16),
           TextField(
             controller: _checklistController,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Max Checklists (optional)',
               hintText: 'Enter limit (-1 for unlimited)',
+              errorText: _checklistError,
+              suffixText: '${_checklistController.text.length}/5',
             ),
             keyboardType: TextInputType.number,
+            onChanged: _validateChecklistLimit,
           ),
           const SizedBox(height: 16),
           TextField(
             controller: _itemController,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Max Items per Checklist (optional)',
               hintText: 'Enter limit (-1 for unlimited)',
+              errorText: _itemError,
+              suffixText: '${_itemController.text.length}/4',
             ),
             keyboardType: TextInputType.number,
+            onChanged: _validateItemLimit,
           ),
           const SizedBox(height: 16),
           TextField(
             controller: _reasonController,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Reason',
               hintText: 'Why is this override needed?',
+              errorText: _reasonError,
+              suffixText: '${_reasonController.text.length}/200',
             ),
+            onChanged: _validateReason,
             maxLines: 2,
           ),
         ],
@@ -466,7 +614,7 @@ class _UserOverrideDialogState extends State<_UserOverrideDialog> {
           child: Text(TranslationService.translate('cancel')),
         ),
         ElevatedButton(
-          onPressed: _isLoading ? null : _addOverride,
+          onPressed: (_isLoading || !_isFormValid()) ? null : _addOverride,
           child: _isLoading
               ? const SizedBox(
                   width: 16,
@@ -480,10 +628,10 @@ class _UserOverrideDialogState extends State<_UserOverrideDialog> {
   }
 
   Future<void> _addOverride() async {
-    if (_userIdController.text.trim().isEmpty) {
+    if (!_isFormValid()) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('User ID is required'),
+        SnackBar(
+          content: Text(TranslationService.translate('please_fix_errors')),
           backgroundColor: Colors.red,
         ),
       );

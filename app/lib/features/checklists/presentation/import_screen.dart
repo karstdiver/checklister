@@ -7,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../../core/services/import_service.dart';
 import '../../../core/services/translation_service.dart';
 import '../../../core/services/analytics_service.dart';
+import '../../../core/services/validation_service.dart';
 import '../domain/checklist.dart';
 import '../domain/checklist_providers.dart';
 import '../../../core/providers/providers.dart';
@@ -38,6 +39,12 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
   bool _isLoading = false;
   ImportResult? _importResult;
   String? _selectedFileName;
+  
+  // Validation state
+  String? _contentError;
+  String? _titleError;
+  String? _descriptionError;
+  String? _tagError;
 
   @override
   void initState() {
@@ -71,6 +78,12 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
         _importResult = null;
         _selectedFileName = null;
         _currentMode = ImportMode.paste;
+        
+        // Clear validation errors
+        _contentError = null;
+        _titleError = null;
+        _descriptionError = null;
+        _tagError = null;
       });
     }
   }
@@ -150,7 +163,24 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
 
       if (result != null && result.files.isNotEmpty) {
         final file = File(result.files.first.path!);
+        
+        // Validate file size before reading content
+        final fileSizeBytes = await file.length();
+        final sizeValidationErrors = ImportService().validateFileSize(fileSizeBytes);
+        
+        if (sizeValidationErrors != null) {
+          _showError(sizeValidationErrors);
+          return;
+        }
+
         final content = await file.readAsString();
+
+        // Validate content length and item count
+        final validationErrors = ImportService().validateFile(fileSizeBytes, content);
+        if (validationErrors.isNotEmpty) {
+          _showError(validationErrors.join('\n'));
+          return;
+        }
 
         setState(() {
           _contentController.text = content;
@@ -248,10 +278,18 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
   void _addTag() {
     final tag = _tagController.text.trim();
     if (tag.isNotEmpty && !_tags.contains(tag)) {
-      setState(() {
-        _tags.add(tag);
-        _tagController.clear();
-      });
+      final tagError = ValidationService.validateTag(tag);
+      if (tagError == null) {
+        setState(() {
+          _tags.add(tag);
+          _tagController.clear();
+          _tagError = null;
+        });
+      } else {
+        setState(() {
+          _tagError = tagError;
+        });
+      }
     }
   }
 
@@ -300,6 +338,11 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
   Future<void> _createChecklist() async {
     if (_importResult == null || _importResult!.items.isEmpty) {
       _showError('No items to import');
+      return;
+    }
+
+    if (!_isFormValid()) {
+      _showError(TranslationService.translate('please_fix_errors'));
       return;
     }
 
@@ -420,6 +463,45 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
     }
   }
 
+  // Validation methods
+  void _validateContent(String value) {
+    setState(() {
+      if (value.isEmpty) {
+        _contentError = TranslationService.translate('content_required');
+      } else {
+        // Use the service's validation method
+        _contentError = ImportService().validateContentLength(value);
+      }
+    });
+  }
+
+  void _validateTitle(String value) {
+    setState(() {
+      _titleError = ValidationService.validateTitle(value);
+    });
+  }
+
+  void _validateDescription(String value) {
+    setState(() {
+      _descriptionError = ValidationService.validateDescription(value);
+    });
+  }
+
+  void _validateTag(String value) {
+    setState(() {
+      _tagError = ValidationService.validateTag(value);
+    });
+  }
+
+  bool _isFormValid() {
+    return _contentError == null && 
+           _titleError == null && 
+           _descriptionError == null &&
+           _tagError == null &&
+           _contentController.text.trim().isNotEmpty &&
+           _titleController.text.trim().isNotEmpty;
+  }
+
   void _showError(String message) {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -510,7 +592,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
               )
             else
               TextButton(
-                onPressed: _createChecklist,
+                onPressed: _isFormValid() ? _createChecklist : null,
                 child: Text(TranslationService.translate('create')),
               ),
           ],
@@ -656,9 +738,12 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
                           'paste_content_hint',
                         ),
                         border: const OutlineInputBorder(),
+                        errorText: _contentError,
+                        suffixText: '${_contentController.text.length}/10000',
                       ),
                       maxLines: 8,
                       onChanged: (value) {
+                        _validateContent(value);
                         if (value.isNotEmpty) {
                           _processContent();
                         }
@@ -698,12 +783,12 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
                           'enter_checklist_title',
                         ),
                         border: const OutlineInputBorder(),
+                        errorText: _titleError,
+                        suffixText: '${_titleController.text.length}/50',
                       ),
+                      onChanged: _validateTitle,
                       validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return TranslationService.translate('title_required');
-                        }
-                        return null;
+                        return ValidationService.validateTitle(value);
                       },
                     ),
                     const SizedBox(height: 16),
@@ -717,7 +802,10 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
                           'enter_checklist_description',
                         ),
                         border: const OutlineInputBorder(),
+                        errorText: _descriptionError,
+                        suffixText: '${_descriptionController.text.length}/500',
                       ),
+                      onChanged: _validateDescription,
                       maxLines: 3,
                     ),
                   ],
@@ -753,7 +841,10 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
                                 'enter_tag',
                               ),
                               border: const OutlineInputBorder(),
+                              errorText: _tagError,
+                              suffixText: '${_tagController.text.length}/20',
                             ),
+                            onChanged: _validateTag,
                           ),
                         ),
                         const SizedBox(width: 8),

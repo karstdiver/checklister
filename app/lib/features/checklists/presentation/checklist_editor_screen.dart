@@ -14,6 +14,7 @@ import '../../auth/presentation/login_screen.dart';
 
 import '../../../core/services/analytics_service.dart';
 import '../../../core/services/translation_service.dart';
+import '../../../core/services/validation_service.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/usage_indicator.dart';
 import 'import_screen.dart';
@@ -39,6 +40,11 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
   List<String> _tags = [];
   bool _isPublic = false;
   bool _isLoading = false;
+  
+  // Validation state
+  String? _titleError;
+  String? _descriptionError;
+  String? _tagError;
 
   @override
   void initState() {
@@ -63,6 +69,36 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
     _descriptionController.dispose();
     _tagController.dispose();
     super.dispose();
+  }
+
+  // Validation methods
+  void _validateTitle(String value) {
+    setState(() {
+      _titleError = ValidationService.validateTitle(value);
+    });
+  }
+
+  void _validateDescription(String value) {
+    setState(() {
+      _descriptionError = ValidationService.validateDescription(value);
+    });
+  }
+
+  void _validateTag(String value) {
+    setState(() {
+      _tagError = ValidationService.validateTag(value);
+      if (_tagError == null) {
+        // Also check for duplicates and limits
+        _tagError = ValidationService.validateTagList(_tags, value);
+      }
+    });
+  }
+
+  bool _isFormValid() {
+    return _titleError == null && 
+           _descriptionError == null && 
+           _tagError == null &&
+           _titleController.text.trim().isNotEmpty;
   }
 
   bool _isDirty() {
@@ -201,7 +237,7 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
                   tooltip: TranslationService.translate('import'),
                 ),
               TextButton(
-                onPressed: _saveChecklist,
+                onPressed: _isFormValid() ? _saveChecklist : null,
                 child: Text(TranslationService.translate('save')),
               ),
             ],
@@ -234,12 +270,12 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
                           'enter_checklist_title',
                         ),
                         border: const OutlineInputBorder(),
+                        errorText: _titleError,
+                        suffixText: '${_titleController.text.length}/${ValidationService.maxTitleLength}',
                       ),
+                      onChanged: _validateTitle,
                       validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return TranslationService.translate('title_required');
-                        }
-                        return null;
+                        return ValidationService.validateTitle(value);
                       },
                     ),
                     const SizedBox(height: 16),
@@ -253,7 +289,10 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
                           'enter_checklist_description',
                         ),
                         border: const OutlineInputBorder(),
+                        errorText: _descriptionError,
+                        suffixText: '${_descriptionController.text.length}/${ValidationService.maxDescriptionLength}',
                       ),
+                      onChanged: _validateDescription,
                       maxLines: 3,
                     ),
                     const SizedBox(height: 16),
@@ -331,7 +370,10 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
                                 'enter_tag',
                               ),
                               border: const OutlineInputBorder(),
+                              errorText: _tagError,
+                              suffixText: '${_tagController.text.length}/${ValidationService.maxTagLength}',
                             ),
+                            onChanged: _validateTag,
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -486,12 +528,31 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
 
   void _addTag() {
     final tag = _tagController.text.trim();
-    if (tag.isNotEmpty && !_tags.contains(tag)) {
+    
+    // Validate the tag
+    final tagError = ValidationService.validateTag(tag);
+    if (tagError != null) {
       setState(() {
-        _tags.add(tag);
-        _tagController.clear();
+        _tagError = tagError;
       });
+      return;
     }
+    
+    // Check for duplicates and limits
+    final listError = ValidationService.validateTagList(_tags, tag);
+    if (listError != null) {
+      setState(() {
+        _tagError = listError;
+      });
+      return;
+    }
+    
+    // Add the tag
+    setState(() {
+      _tags.add(tag);
+      _tagController.clear();
+      _tagError = null; // Clear any previous errors
+    });
   }
 
   void _removeTag(String tag) {
@@ -611,7 +672,15 @@ class _ChecklistEditorScreenState extends ConsumerState<ChecklistEditorScreen> {
   }
 
   Future<void> _saveChecklist() async {
-    if (!_formKey.currentState!.validate()) {
+    // Validate form and check for errors
+    if (!_formKey.currentState!.validate() || !_isFormValid()) {
+      // Show error message if form is invalid
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(TranslationService.translate('please_fix_errors')),
+          backgroundColor: Colors.red,
+        ),
+      );
       return;
     }
 
