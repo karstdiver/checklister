@@ -428,3 +428,86 @@ Flutter Version: 3.33.0-1.0.pre.450
 Firebase CLI: 14.9.0
 Xcode: Latest stable
 Android Studio: Latest stable
+
+## Custom Scripts
+
+This repo includes helper scripts to automate common tasks.
+
+### Top-level scripts/
+- `scripts/git-admin/`:
+  - `clone_repo.sh`, `create_branch.sh`, `repo-merge.sh`, `sync-with-repo.sh` — Git workflow helpers
+  - Usage: `bash scripts/git-admin/create_branch.sh feature/your-feature`
+- `scripts/setup-project.sh`: Optional bootstrap steps for a fresh clone
+- `scripts/make_zipfile.sh`: Build an archive; excludes secrets by default
+
+### App-level app/scripts/
+- `app/scripts/flutter-utils.sh`: Convenience Flutter commands
+- `app/scripts/clean-platform.sh`: Clean platform-specific build artifacts
+- `app/scripts/build-release.sh`: Build release artifacts (ensure signing set up)
+- `app/scripts/ios-build-script.sh`: iOS build helper
+- `app/scripts/figma-admin/`: Figma-related utilities
+- `app/scripts/firebase-admin/`: Node-based Firebase Admin utilities for maintenance
+  - `firebaseUserCRUD.js`, `deleteAnonymousUsers.js`, `deleteUnusedSessions.js`, `fbusers.sh`
+  - `README.md` with detailed usage and prerequisites
+  - Requires a Firebase service account key (see Secrets below)
+
+Example (list Firebase users with admin script):
+```bash
+cd app/scripts/firebase-admin
+npm install  # first time
+node firebaseUserCRUD.js
+```
+
+## Secrets Management
+
+Follow these rules to keep secrets out of source control and machines secure.
+
+### Firebase Admin credentials (for admin scripts only)
+- Required only for `app/scripts/firebase-admin/*` Node scripts.
+- Obtain from Firebase Console → Project Settings → Service Accounts → "Generate new private key".
+- Save the file as `serviceAccountKey.json` in `app/scripts/firebase-admin/` (do NOT commit).
+- Prefer using an environment variable instead of a file when possible:
+  ```bash
+  export GOOGLE_APPLICATION_CREDENTIALS="$PWD/app/scripts/firebase-admin/serviceAccountKey.json"
+  node app/scripts/firebase-admin/firebaseUserCRUD.js
+  ```
+- Ensure `.gitignore` excludes `serviceAccountKey.json`. If needed, double-check before commits:
+  ```bash
+  git update-index --assume-unchanged app/scripts/firebase-admin/serviceAccountKey.json
+  ```
+
+### Firebase config in Flutter app
+- Managed by `flutterfire configure` which generates `app/lib/firebase_options.dart`.
+- This file contains client-config values (not highly secret). Keep it in repo for builds.
+- App Check and other sensitive tokens should be configured in Firebase Console, not hardcoded.
+
+### Android signing
+- Release signing is configured via `app/android/app/build.gradle.kts` using `key.properties`:
+  - Path: `app/android/key.properties` (or `app/android/app/key.properties` depending on setup)
+  - Contents define `storeFile`, `storePassword`, `keyAlias`, `keyPassword`.
+- Store the keystore (`.jks/.keystore`) outside the repo (e.g., `~/.keystores/checklister.jks`).
+- Example `key.properties` (do not commit real values):
+  ```properties
+  storeFile=/Users/you/.keystores/checklister.jks
+  storePassword=env_or_keychain
+  keyAlias=checklister
+  keyPassword=env_or_keychain
+  ```
+- Optionally export at build time instead of storing plaintext:
+  ```bash
+  export KEYSTORE_PATH="$HOME/.keystores/checklister.jks"
+  export KEYSTORE_PASSWORD=... 
+  export KEY_ALIAS=checklister
+  export KEY_PASSWORD=...
+  ```
+
+### iOS signing
+- Use Xcode automatic signing for development.
+- For release, manage certificates and profiles via Apple Developer account.
+- Do not commit `.p12` certs or provisioning profiles; store in Keychain or a secure vault.
+
+### General practices
+- Never commit: private keys, service account JSONs, keystores, or raw API secrets.
+- Use environment variables and developer keychains where possible.
+- Review `git status` before commit; consider a pre-commit hook to block accidental secrets.
+- If a secret was committed, rotate it immediately and purge from history if necessary.
