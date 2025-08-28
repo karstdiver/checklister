@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
-# Wear OS Emulator Setup Helper (macOS)
+# Android AVD Setup Helper (macOS)
 # - Interactive, error-tolerant, and reusable
+# - Supports both Phone and Wear OS AVDs
 # - Guides installation of SDK components, creates AVDs, and launches emulators
 
 set -u
@@ -121,7 +122,7 @@ count_avds() {
   fi
 }
 
-action_create_single() {
+action_create_wear_single() {
   local arch channel api device_id avd_name abi
   arch=$(detect_arch)
   local channel_default="google_apis"
@@ -148,10 +149,37 @@ action_create_single() {
   fi
 }
 
-action_create_presets() {
+action_create_phone_single() {
+  local arch channel api device_id avd_name abi
+  arch=$(detect_arch)
+  local channel_default="google_apis"
+  local api_default="34"   # Android 14
+  local device_default="pixel_7"
+  local name_default="Phone_${api_default}_${arch}"
+
+  log_info "Detected CPU architecture: $arch"
+  log_info "Listing available Android images (for reference):"
+  list_android_images
+
+  channel=$(choose_value "Channel (google_apis or google_apis_playstore)" "$channel_default")
+  api=$(choose_value "Android API level (e.g., 34 for Android 14)" "$api_default")
+  device_id=$(choose_value "Device ID (e.g., pixel_7, pixel_6, galaxy_s21)" "$device_default")
+  avd_name=$(choose_value "AVD name" "$name_default")
+  abi="$arch"
+
+  if prompt_yn "Install Android image api=$api channel=$channel abi=$abi?" Y; then
+    install_android_image "$api" "$abi" "$channel" || return 1
+  fi
+  create_avd "$avd_name" "$api" "$abi" "$channel" "$device_id" || return 1
+  if prompt_yn "Launch '$avd_name' now?" Y; then
+    launch_emulator "$avd_name"
+  fi
+}
+
+action_create_wear_presets() {
   local arch=$(detect_arch)
   log_info "Detected CPU architecture: $arch"
-  echo "Preset options:"
+  echo "Wear OS Preset options:"
   echo "  1) Wear OS 4 (API 33) Pixel Watch (round)"
   echo "  2) Wear OS 4 (API 33) Large Round"
   echo "  3) Wear OS 4 (API 33) Small Round"
@@ -171,6 +199,36 @@ action_create_presets() {
   local channel="google_apis" abi="$arch" avd_name="WearOS_${name_suffix}_API${api}_${abi}"
   if prompt_yn "Install Wear OS image api=$api channel=$channel abi=$abi?" Y; then
     install_wear_image "$api" "$abi" "$channel" || return 1
+  fi
+  create_avd "$avd_name" "$api" "$abi" "$channel" "$device_id" || return 1
+  if prompt_yn "Launch '$avd_name' now?" Y; then
+    launch_emulator "$avd_name"
+  fi
+}
+
+action_create_phone_presets() {
+  local arch=$(detect_arch)
+  log_info "Detected CPU architecture: $arch"
+  echo "Phone Preset options:"
+  echo "  1) Android 14 (API 34) Pixel 7"
+  echo "  2) Android 14 (API 34) Pixel 6"
+  echo "  3) Android 14 (API 34) Galaxy S21"
+  echo "  4) Android 13 (API 33) Pixel 7"
+  echo "  5) Android 13 (API 33) Pixel 6"
+  echo "  6) Android 12 (API 31) Pixel 6"
+  read -r -p "Choose preset [1-6]: " p || p=1
+  local device_id name_suffix api
+  case "$p" in
+    2) device_id="pixel_6"; name_suffix="Pixel6"; api="34" ;;
+    3) device_id="galaxy_s21"; name_suffix="GalaxyS21"; api="34" ;;
+    4) device_id="pixel_7"; name_suffix="Pixel7"; api="33" ;;
+    5) device_id="pixel_6"; name_suffix="Pixel6"; api="33" ;;
+    6) device_id="pixel_6"; name_suffix="Pixel6"; api="31" ;;
+    *) device_id="pixel_7"; name_suffix="Pixel7"; api="34" ;;
+  esac
+  local channel="google_apis" abi="$arch" avd_name="Phone_${name_suffix}_API${api}_${abi}"
+  if prompt_yn "Install Android image api=$api channel=$channel abi=$abi?" Y; then
+    install_android_image "$api" "$abi" "$channel" || return 1
   fi
   create_avd "$avd_name" "$api" "$abi" "$channel" "$device_id" || return 1
   if prompt_yn "Launch '$avd_name' now?" Y; then
@@ -378,10 +436,10 @@ action_show_help() {
   echo "  AVDs are emulated Android devices that run on your computer"
   echo "  They let you test Android apps without needing physical hardware"
   echo
-  echo "For Wear OS development:"
-  echo "  • AVDs simulate smartwatches (round/square screens, small displays)"
-  echo "  • They run Wear OS (Android for watches)"
-  echo "  • Perfect for testing watch companion apps"
+  echo "For Android development:"
+  echo "  • Phone AVDs simulate Android phones/tablets (large screens, touch interfaces)"
+  echo "  • Wear OS AVDs simulate smartwatches (round/square screens, small displays)"
+  echo "  • Perfect for testing apps on different device types"
   echo
   echo "AVD Components:"
   echo "  • Device definition: Physical characteristics (screen size, shape, buttons)"
@@ -389,11 +447,21 @@ action_show_help() {
   echo "  • Hardware profile: RAM, storage, sensors, etc."
   echo "  • Configuration: Settings like Google Play, camera, etc."
   echo
+  echo "Common Phone AVDs:"
+  echo "  • Pixel 7/6: Modern Android phones"
+  echo "  • Galaxy S21: Samsung flagship"
+  echo "  • Various tablets: Different screen sizes"
+  echo
   echo "Common Wear OS AVDs:"
   echo "  • Pixel Watch: Round screen, modern design"
   echo "  • Large Round: Bigger round watch face"
   echo "  • Small Round: Compact round watch face"
   echo "  • Square: Rectangular watch face"
+  echo
+  echo "API Levels (Android versions):"
+  echo "  • API 31: Android 12"
+  echo "  • API 33: Android 13"
+  echo "  • API 34: Android 14 (current stable)"
   echo
   echo "API Levels (Wear OS versions):"
   echo "  • API 33: Wear OS 4 (current stable)"
@@ -403,7 +471,8 @@ action_show_help() {
   echo "  1. Create an AVD (options 1 or 2 in this script)"
   echo "  2. Launch the AVD (option 9)"
   echo "  3. Install your app on the running emulator"
-  echo "  4. Test your app's watch interface"
+  echo "  4. Test your app's interface"
+  echo "  5. For companion apps: Run both phone and watch AVDs"
   echo
   echo "AVD Storage:"
   echo "  • Location: ~/.android/avd/"
@@ -421,10 +490,11 @@ action_show_help() {
   echo "  • If app won't install: Check API compatibility"
   echo
   echo "Next Steps:"
-  echo "  1. Create your first Wear OS AVD (option 1 or 2)"
+  echo "  1. Create your first AVD (option 1 or 2)"
   echo "  2. Launch it (option 9)"
   echo "  3. Install Android Studio for better AVD management"
-  echo "  4. Start developing your watch companion app!"
+  echo "  4. For companion apps: Create both phone and watch AVDs"
+  echo "  5. Start developing your Android app!"
   echo
   read -r -p "Press Enter to continue..."
 }
@@ -434,9 +504,25 @@ list_wear_images() {
   sdkmanager --list | grep -i "system-images;android-.*;wearos" || true
 }
 
+list_android_images() {
+  log_info "Querying available Android system images..."
+  sdkmanager --list | grep -i "system-images;android-.*;google_apis" | grep -v wearos || true
+}
+
 install_wear_image() {
   local api="$1" abi="$2" channel="$3"
   local pkg="system-images;android-${api};wearos;${channel};${abi}"
+  log_info "Installing system image: $pkg"
+  yes | sdkmanager "$pkg" || {
+    log_err "Failed to install $pkg"
+    return 1
+  }
+  log_ok "Installed $pkg"
+}
+
+install_android_image() {
+  local api="$1" abi="$2" channel="$3"
+  local pkg="system-images;android-${api};${channel};${abi}"
   log_info "Installing system image: $pkg"
   yes | sdkmanager "$pkg" || {
     log_err "Failed to install $pkg"
@@ -491,11 +577,38 @@ main() {
   ensure_tools_in_path
   ensure_cmdline_tools || exit 1
 
+  # Select device type
+  local device_type
   while true; do
     echo
-    echo "Select an action:"
-    echo "  1) Create a Wear OS AVD"
-    echo "  2) Create multiple AVDs from quick presets"
+    echo "Select device type:"
+    echo "  1) Phone AVDs (Android phones/tablets)"
+    echo "  2) Wear OS AVDs (Android smartwatches)"
+    echo "  h) Help - What are AVDs and how to use them"
+    echo "  q) Quit"
+    read -r -p "Choice: " choice || choice="q"
+    
+    case "$choice" in
+      1) device_type="phone"; break ;;
+      2) device_type="wear"; break ;;
+      h|H) action_show_help; continue ;;
+      q|Q) log_ok "Done."; exit 0 ;;
+      *) log_warn "Unknown choice."; continue ;;
+    esac
+  done
+
+  # Main menu based on device type
+  while true; do
+    echo
+    if [[ "$device_type" == "phone" ]]; then
+      echo "=== PHONE AVD MANAGEMENT ==="
+      echo "  1) Create a Phone AVD"
+      echo "  2) Create multiple Phone AVDs from quick presets"
+    else
+      echo "=== WEAR OS AVD MANAGEMENT ==="
+      echo "  1) Create a Wear OS AVD"
+      echo "  2) Create multiple Wear OS AVDs from quick presets"
+    fi
     echo "  3) List existing AVDs"
     echo "  4) Show AVD details"
     echo "  5) Delete an AVD"
@@ -503,16 +616,25 @@ main() {
     echo "  7) Export AVD definition to JSON"
     echo "  8) Import and create AVD from JSON"
     echo "  9) Launch an AVD"
+    echo "  s) Switch device type (Phone ↔ Wear OS)"
     echo "  h) Help - What are AVDs and how to use them"
     echo "  q) Quit"
     read -r -p "Choice: " choice || choice="q"
 
     case "$choice" in
       1)
-        action_create_single || true
+        if [[ "$device_type" == "phone" ]]; then
+          action_create_phone_single || true
+        else
+          action_create_wear_single || true
+        fi
         ;;
       2)
-        action_create_presets || true
+        if [[ "$device_type" == "phone" ]]; then
+          action_create_phone_presets || true
+        else
+          action_create_wear_presets || true
+        fi
         ;;
       3)
         list_existing_avds || true
@@ -534,6 +656,15 @@ main() {
         ;;
       9)
         action_launch_avd || true
+        ;;
+      s|S)
+        if [[ "$device_type" == "phone" ]]; then
+          device_type="wear"
+          log_info "Switched to Wear OS AVD management"
+        else
+          device_type="phone"
+          log_info "Switched to Phone AVD management"
+        fi
         ;;
       h|H)
         action_show_help || true
