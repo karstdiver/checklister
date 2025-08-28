@@ -367,6 +367,68 @@ action_launch_avd() {
   launch_emulator "$name"
 }
 
+action_show_help() {
+  echo
+  echo "=========================================="
+  echo "           AVD HELP GUIDE"
+  echo "=========================================="
+  echo
+  echo "What is an AVD?"
+  echo "  AVD = Android Virtual Device"
+  echo "  AVDs are emulated Android devices that run on your computer"
+  echo "  They let you test Android apps without needing physical hardware"
+  echo
+  echo "For Wear OS development:"
+  echo "  • AVDs simulate smartwatches (round/square screens, small displays)"
+  echo "  • They run Wear OS (Android for watches)"
+  echo "  • Perfect for testing watch companion apps"
+  echo
+  echo "AVD Components:"
+  echo "  • Device definition: Physical characteristics (screen size, shape, buttons)"
+  echo "  • System image: Android/Wear OS version (API level)"
+  echo "  • Hardware profile: RAM, storage, sensors, etc."
+  echo "  • Configuration: Settings like Google Play, camera, etc."
+  echo
+  echo "Common Wear OS AVDs:"
+  echo "  • Pixel Watch: Round screen, modern design"
+  echo "  • Large Round: Bigger round watch face"
+  echo "  • Small Round: Compact round watch face"
+  echo "  • Square: Rectangular watch face"
+  echo
+  echo "API Levels (Wear OS versions):"
+  echo "  • API 33: Wear OS 4 (current stable)"
+  echo "  • API 34: Wear OS 5 (latest features)"
+  echo
+  echo "How to use AVDs:"
+  echo "  1. Create an AVD (options 1 or 2 in this script)"
+  echo "  2. Launch the AVD (option 9)"
+  echo "  3. Install your app on the running emulator"
+  echo "  4. Test your app's watch interface"
+  echo
+  echo "AVD Storage:"
+  echo "  • Location: ~/.android/avd/"
+  echo "  • Each AVD has: .ini file + .avd directory"
+  echo "  • Can be backed up, moved, or shared"
+  echo
+  echo "Performance Tips:"
+  echo "  • Use hardware acceleration when possible"
+  echo "  • Close unused AVDs to save resources"
+  echo "  • Physical devices are faster than emulators"
+  echo
+  echo "Troubleshooting:"
+  echo "  • If AVD won't start: Check hardware acceleration"
+  echo "  • If slow: Increase RAM in AVD settings"
+  echo "  • If app won't install: Check API compatibility"
+  echo
+  echo "Next Steps:"
+  echo "  1. Create your first Wear OS AVD (option 1 or 2)"
+  echo "  2. Launch it (option 9)"
+  echo "  3. Install Android Studio for better AVD management"
+  echo "  4. Start developing your watch companion app!"
+  echo
+  read -r -p "Press Enter to continue..."
+}
+
 list_wear_images() {
   log_info "Querying available Wear OS system images..."
   sdkmanager --list | grep -i "system-images;android-.*;wearos" || true
@@ -441,6 +503,7 @@ main() {
     echo "  7) Export AVD definition to JSON"
     echo "  8) Import and create AVD from JSON"
     echo "  9) Launch an AVD"
+    echo "  h) Help - What are AVDs and how to use them"
     echo "  q) Quit"
     read -r -p "Choice: " choice || choice="q"
 
@@ -471,6 +534,9 @@ main() {
         ;;
       9)
         action_launch_avd || true
+        ;;
+      h|H)
+        action_show_help || true
         ;;
       q|Q)
         log_ok "Done."
