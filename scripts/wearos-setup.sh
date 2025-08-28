@@ -98,9 +98,26 @@ ensure_cmdline_tools() {
 list_existing_avds() {
   log_info "Existing AVDs:"
   if command -v emulator >/dev/null 2>&1; then
-    emulator -list-avds || true
+    emulator -list-avds | nl || true
   else
-    avdmanager list avd || true
+    avdmanager list avd | nl || true
+  fi
+}
+
+get_avd_by_number() {
+  local num="$1"
+  if command -v emulator >/dev/null 2>&1; then
+    emulator -list-avds | sed -n "${num}p" || echo ""
+  else
+    avdmanager list avd | grep "Name:" | sed -n "${num}p" | sed 's/.*Name: //' || echo ""
+  fi
+}
+
+count_avds() {
+  if command -v emulator >/dev/null 2>&1; then
+    emulator -list-avds | wc -l
+  else
+    avdmanager list avd | grep "Name:" | wc -l
   fi
 }
 
@@ -163,9 +180,22 @@ action_create_presets() {
 
 action_show_details() {
   list_existing_avds
-  local name
-  read -r -p "Enter AVD name to show details: " name || return 0
-  if [[ -z "$name" ]]; then return 0; fi
+  local count=$(count_avds)
+  if [[ "$count" -eq 0 ]]; then
+    log_warn "No AVDs found."
+    return 0
+  fi
+  local num name
+  read -r -p "Enter AVD number [1-$count]: " num || return 0
+  if [[ -z "$num" || ! "$num" =~ ^[0-9]+$ || "$num" -lt 1 || "$num" -gt "$count" ]]; then
+    log_warn "Invalid number."
+    return 0
+  fi
+  name=$(get_avd_by_number "$num")
+  if [[ -z "$name" ]]; then
+    log_err "Could not get AVD name for number $num"
+    return 1
+  fi
   local dir="$HOME/.android/avd/${name}.avd"
   if [[ -d "$dir" ]]; then
     log_info "Config: $dir/config.ini"
@@ -177,9 +207,22 @@ action_show_details() {
 
 action_delete_avd() {
   list_existing_avds
-  local name
-  read -r -p "Enter AVD name to delete: " name || return 0
-  if [[ -z "$name" ]]; then return 0; fi
+  local count=$(count_avds)
+  if [[ "$count" -eq 0 ]]; then
+    log_warn "No AVDs found."
+    return 0
+  fi
+  local num name
+  read -r -p "Enter AVD number to delete [1-$count]: " num || return 0
+  if [[ -z "$num" || ! "$num" =~ ^[0-9]+$ || "$num" -lt 1 || "$num" -gt "$count" ]]; then
+    log_warn "Invalid number."
+    return 0
+  fi
+  name=$(get_avd_by_number "$num")
+  if [[ -z "$name" ]]; then
+    log_err "Could not get AVD name for number $num"
+    return 1
+  fi
   if prompt_yn "Really delete AVD '$name'?" N; then
     avdmanager delete avd -n "$name" && log_ok "Deleted $name" || log_err "Failed to delete $name"
   fi
@@ -187,9 +230,22 @@ action_delete_avd() {
 
 action_rename_avd() {
   list_existing_avds
-  local old new
-  read -r -p "Old AVD name: " old || return 0
-  [[ -z "$old" ]] && return 0
+  local count=$(count_avds)
+  if [[ "$count" -eq 0 ]]; then
+    log_warn "No AVDs found."
+    return 0
+  fi
+  local num old new
+  read -r -p "Enter AVD number to rename [1-$count]: " num || return 0
+  if [[ -z "$num" || ! "$num" =~ ^[0-9]+$ || "$num" -lt 1 || "$num" -gt "$count" ]]; then
+    log_warn "Invalid number."
+    return 0
+  fi
+  old=$(get_avd_by_number "$num")
+  if [[ -z "$old" ]]; then
+    log_err "Could not get AVD name for number $num"
+    return 1
+  fi
   read -r -p "New AVD name: " new || return 0
   [[ -z "$new" ]] && return 0
   local base="$HOME/.android/avd"
@@ -229,9 +285,22 @@ need_jq() {
 action_export_json() {
   need_jq || { log_warn "Skipping export."; return 0; }
   list_existing_avds
-  local name out
-  read -r -p "AVD name to export: " name || return 0
-  [[ -z "$name" ]] && return 0
+  local count=$(count_avds)
+  if [[ "$count" -eq 0 ]]; then
+    log_warn "No AVDs found."
+    return 0
+  fi
+  local num name out
+  read -r -p "Enter AVD number to export [1-$count]: " num || return 0
+  if [[ -z "$num" || ! "$num" =~ ^[0-9]+$ || "$num" -lt 1 || "$num" -gt "$count" ]]; then
+    log_warn "Invalid number."
+    return 0
+  fi
+  name=$(get_avd_by_number "$num")
+  if [[ -z "$name" ]]; then
+    log_err "Could not get AVD name for number $num"
+    return 1
+  fi
   read -r -p "Output JSON path [${name}.json]: " out || out=""
   out=${out:-"${name}.json"}
   local dir="$HOME/.android/avd/${name}.avd" ini="$HOME/.android/avd/${name}.ini"
@@ -279,9 +348,22 @@ action_import_json() {
 
 action_launch_avd() {
   list_existing_avds
-  local name
-  read -r -p "AVD name to launch: " name || return 0
-  [[ -z "$name" ]] && return 0
+  local count=$(count_avds)
+  if [[ "$count" -eq 0 ]]; then
+    log_warn "No AVDs found."
+    return 0
+  fi
+  local num name
+  read -r -p "Enter AVD number to launch [1-$count]: " num || return 0
+  if [[ -z "$num" || ! "$num" =~ ^[0-9]+$ || "$num" -lt 1 || "$num" -gt "$count" ]]; then
+    log_warn "Invalid number."
+    return 0
+  fi
+  name=$(get_avd_by_number "$num")
+  if [[ -z "$name" ]]; then
+    log_err "Could not get AVD name for number $num"
+    return 1
+  fi
   launch_emulator "$name"
 }
 
