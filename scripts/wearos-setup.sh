@@ -138,14 +138,20 @@ action_create_presets() {
   echo "  1) Wear OS 4 (API 33) Pixel Watch (round)"
   echo "  2) Wear OS 4 (API 33) Large Round"
   echo "  3) Wear OS 4 (API 33) Small Round"
-  read -r -p "Choose preset [1-3]: " p || p=1
-  local device_id name_suffix
+  echo "  4) Wear OS 5 (API 34) Pixel Watch (round)"
+  echo "  5) Wear OS 5 (API 34) Large Round"
+  echo "  6) Wear OS 5 (API 34) Small Round"
+  read -r -p "Choose preset [1-6]: " p || p=1
+  local device_id name_suffix api
   case "$p" in
-    2) device_id="wearos_large_round"; name_suffix="LargeRound" ;;
-    3) device_id="wearos_small_round"; name_suffix="SmallRound" ;;
-    *) device_id="pixel_watch"; name_suffix="PixelWatch" ;;
+    2) device_id="wearos_large_round"; name_suffix="LargeRound"; api="33" ;;
+    3) device_id="wearos_small_round"; name_suffix="SmallRound"; api="33" ;;
+    4) device_id="pixel_watch"; name_suffix="PixelWatch"; api="34" ;;
+    5) device_id="wearos_large_round"; name_suffix="LargeRound"; api="34" ;;
+    6) device_id="wearos_small_round"; name_suffix="SmallRound"; api="34" ;;
+    *) device_id="pixel_watch"; name_suffix="PixelWatch"; api="33" ;;
   esac
-  local api="33" channel="google_apis" abi="$arch" avd_name="WearOS_${name_suffix}_API${api}_${abi}"
+  local channel="google_apis" abi="$arch" avd_name="WearOS_${name_suffix}_API${api}_${abi}"
   if prompt_yn "Install Wear OS image api=$api channel=$channel abi=$abi?" Y; then
     install_wear_image "$api" "$abi" "$channel" || return 1
   fi
