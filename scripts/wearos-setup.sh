@@ -95,6 +95,190 @@ ensure_cmdline_tools() {
   return 1
 }
 
+list_existing_avds() {
+  log_info "Existing AVDs:"
+  if command -v emulator >/dev/null 2>&1; then
+    emulator -list-avds || true
+  else
+    avdmanager list avd || true
+  fi
+}
+
+action_create_single() {
+  local arch channel api device_id avd_name abi
+  arch=$(detect_arch)
+  local channel_default="google_apis"
+  local api_default="33"   # Wear OS 4
+  local device_default="pixel_watch"
+  local name_default="WearOS_${api_default}_${arch}"
+
+  log_info "Detected CPU architecture: $arch"
+  log_info "Listing available Wear OS images (for reference):"
+  list_wear_images
+
+  channel=$(choose_value "Channel (google_apis or google_apis_playstore)" "$channel_default")
+  api=$(choose_value "Android API level for Wear (e.g., 33 for Wear OS 4)" "$api_default")
+  device_id=$(choose_value "Device ID (e.g., pixel_watch, wearos_large_round)" "$device_default")
+  avd_name=$(choose_value "AVD name" "$name_default")
+  abi="$arch"
+
+  if prompt_yn "Install Wear OS image api=$api channel=$channel abi=$abi?" Y; then
+    install_wear_image "$api" "$abi" "$channel" || return 1
+  fi
+  create_avd "$avd_name" "$api" "$abi" "$channel" "$device_id" || return 1
+  if prompt_yn "Launch '$avd_name' now?" Y; then
+    launch_emulator "$avd_name"
+  fi
+}
+
+action_create_presets() {
+  local arch=$(detect_arch)
+  log_info "Detected CPU architecture: $arch"
+  echo "Preset options:"
+  echo "  1) Wear OS 4 (API 33) Pixel Watch (round)"
+  echo "  2) Wear OS 4 (API 33) Large Round"
+  echo "  3) Wear OS 4 (API 33) Small Round"
+  read -r -p "Choose preset [1-3]: " p || p=1
+  local device_id name_suffix
+  case "$p" in
+    2) device_id="wearos_large_round"; name_suffix="LargeRound" ;;
+    3) device_id="wearos_small_round"; name_suffix="SmallRound" ;;
+    *) device_id="pixel_watch"; name_suffix="PixelWatch" ;;
+  esac
+  local api="33" channel="google_apis" abi="$arch" avd_name="WearOS_${name_suffix}_API${api}_${abi}"
+  if prompt_yn "Install Wear OS image api=$api channel=$channel abi=$abi?" Y; then
+    install_wear_image "$api" "$abi" "$channel" || return 1
+  fi
+  create_avd "$avd_name" "$api" "$abi" "$channel" "$device_id" || return 1
+  if prompt_yn "Launch '$avd_name' now?" Y; then
+    launch_emulator "$avd_name"
+  fi
+}
+
+action_show_details() {
+  list_existing_avds
+  local name
+  read -r -p "Enter AVD name to show details: " name || return 0
+  if [[ -z "$name" ]]; then return 0; fi
+  local dir="$HOME/.android/avd/${name}.avd"
+  if [[ -d "$dir" ]]; then
+    log_info "Config: $dir/config.ini"
+    sed -n '1,200p' "$dir/config.ini" | sed 's/^/  /'
+  else
+    log_warn "AVD directory not found: $dir"
+  fi
+}
+
+action_delete_avd() {
+  list_existing_avds
+  local name
+  read -r -p "Enter AVD name to delete: " name || return 0
+  if [[ -z "$name" ]]; then return 0; fi
+  if prompt_yn "Really delete AVD '$name'?" N; then
+    avdmanager delete avd -n "$name" && log_ok "Deleted $name" || log_err "Failed to delete $name"
+  fi
+}
+
+action_rename_avd() {
+  list_existing_avds
+  local old new
+  read -r -p "Old AVD name: " old || return 0
+  [[ -z "$old" ]] && return 0
+  read -r -p "New AVD name: " new || return 0
+  [[ -z "$new" ]] && return 0
+  local base="$HOME/.android/avd"
+  local old_ini="$base/${old}.ini" new_ini="$base/${new}.ini"
+  local old_dir="$base/${old}.avd" new_dir="$base/${new}.avd"
+  if [[ ! -f "$old_ini" || ! -d "$old_dir" ]]; then
+    log_err "AVD '$old' not found"
+    return 1
+  fi
+  if [[ -e "$new_ini" || -e "$new_dir" ]]; then
+    log_err "Target name '$new' already exists"
+    return 1
+  fi
+  mv "$old_ini" "$new_ini" && mv "$old_dir" "$new_dir" || { log_err "Rename failed"; return 1; }
+  # Update paths inside ini
+  sed -i '' "s/${old}.avd/${new}.avd/g" "$new_ini" 2>/dev/null || true
+  log_ok "Renamed '$old' to '$new'"
+}
+
+need_jq() {
+  if ! command -v jq >/dev/null 2>&1; then
+    log_warn "jq not found. Needed for JSON export/import."
+    if prompt_yn "Install jq via Homebrew now?" Y; then
+      if command -v brew >/dev/null 2>&1; then
+        brew install jq || { log_err "Failed to install jq"; return 1; }
+      else
+        log_err "Homebrew not found. Install jq manually: https://stedolan.github.io/jq/"
+        return 1
+      fi
+    else
+      return 1
+    fi
+  fi
+  return 0
+}
+
+action_export_json() {
+  need_jq || { log_warn "Skipping export."; return 0; }
+  list_existing_avds
+  local name out
+  read -r -p "AVD name to export: " name || return 0
+  [[ -z "$name" ]] && return 0
+  read -r -p "Output JSON path [${name}.json]: " out || out=""
+  out=${out:-"${name}.json"}
+  local dir="$HOME/.android/avd/${name}.avd" ini="$HOME/.android/avd/${name}.ini"
+  if [[ ! -d "$dir" || ! -f "$ini" ]]; then
+    log_err "AVD '$name' not found"
+    return 1
+  fi
+  # Extract a few key fields
+  local target device path_pkg abi
+  target=$(grep -E '^target=' "$ini" | cut -d'=' -f2-)
+  device=$(grep -E '^hw.device.name=' "$dir/config.ini" | cut -d'=' -f2-)
+  path_pkg=$(grep -E '^image.sysdir.1=' "$dir/config.ini" | cut -d'=' -f2-)
+  abi=$(grep -E '^abi.type=' "$dir/config.ini" | cut -d'=' -f2-)
+  jq -n --arg name "$name" --arg device "$device" --arg sysdir "$path_pkg" --arg abi "$abi" --arg target "$target" '{name:$name, device:$device, systemImage:$sysdir, abi:$abi, target:$target}' > "$out"
+  log_ok "Exported to $out"
+}
+
+action_import_json() {
+  need_jq || { log_warn "Skipping import."; return 0; }
+  local json
+  read -r -p "Path to preset JSON: " json || return 0
+  [[ -z "$json" || ! -f "$json" ]] && { log_err "File not found"; return 1; }
+  local name device sysdir abi target api channel
+  name=$(jq -r '.name' "$json")
+  device=$(jq -r '.device' "$json")
+  sysdir=$(jq -r '.systemImage' "$json")
+  abi=$(jq -r '.abi' "$json")
+  target=$(jq -r '.target' "$json")
+  # Parse system image path to get api + channel
+  # e.g., system-images/android-33/wearos/google_apis/arm64-v8a/
+  api=$(echo "$sysdir" | sed -n 's#.*/android-\([0-9][0-9]*\)/.*#\1#p')
+  channel=$(echo "$sysdir" | sed -n 's#.*/wearos/\([^/]*\)/.*#\1#p')
+  if [[ -z "$api" || -z "$channel" ]]; then
+    log_warn "Could not infer API/channel from systemImage path; falling back to API 33, google_apis"
+    api="33"; channel="google_apis"
+  fi
+  if prompt_yn "Install system image api=$api channel=$channel abi=$abi?" Y; then
+    install_wear_image "$api" "$abi" "$channel" || return 1
+  fi
+  create_avd "$name" "$api" "$abi" "$channel" "$device" || return 1
+  if prompt_yn "Launch '$name' now?" Y; then
+    launch_emulator "$name"
+  fi
+}
+
+action_launch_avd() {
+  list_existing_avds
+  local name
+  read -r -p "AVD name to launch: " name || return 0
+  [[ -z "$name" ]] && return 0
+  launch_emulator "$name"
+}
+
 list_wear_images() {
   log_info "Querying available Wear OS system images..."
   sdkmanager --list | grep -i "system-images;android-.*;wearos" || true
@@ -157,41 +341,58 @@ main() {
   ensure_tools_in_path
   ensure_cmdline_tools || exit 1
 
-  local arch channel api device_id avd_name abi
-  arch=$(detect_arch)
-  channel_default="google_apis"   # or google_apis_playstore if available
-  api_default="33"                # Wear OS 4
-  device_default="pixel_watch"    # common Wear device id
-  name_default="WearOS_${api_default}_${arch}"
+  while true; do
+    echo
+    echo "Select an action:"
+    echo "  1) Create a Wear OS AVD"
+    echo "  2) Create multiple AVDs from quick presets"
+    echo "  3) List existing AVDs"
+    echo "  4) Show AVD details"
+    echo "  5) Delete an AVD"
+    echo "  6) Rename an AVD (safe)"
+    echo "  7) Export AVD definition to JSON"
+    echo "  8) Import and create AVD from JSON"
+    echo "  9) Launch an AVD"
+    echo "  q) Quit"
+    read -r -p "Choice: " choice || choice="q"
 
-  log_info "Detected CPU architecture: $arch"
-  log_info "Listing available Wear OS images (for reference):"
-  list_wear_images
-
-  channel=$(choose_value "Channel (google_apis or google_apis_playstore)" "$channel_default")
-  api=$(choose_value "Android API level for Wear (e.g., 33 for Wear OS 4)" "$api_default")
-  device_id=$(choose_value "Device ID (e.g., pixel_watch, wearos_large_round)" "$device_default")
-  avd_name=$(choose_value "AVD name" "$name_default")
-
-  abi="$arch"
-  log_info "Preparing to install image for: api=$api channel=$channel abi=$abi"
-  if prompt_yn "Install required Wear OS system image now?" Y; then
-    install_wear_image "$api" "$abi" "$channel" || exit 1
-  else
-    log_warn "Skipping image install; assuming it's already installed."
-  fi
-
-  if prompt_yn "Create (or recreate) AVD '$avd_name'?" Y; then
-    create_avd "$avd_name" "$api" "$abi" "$channel" "$device_id" || exit 1
-  fi
-
-  if prompt_yn "Launch emulator '$avd_name' now?" Y; then
-    launch_emulator "$avd_name"
-  else
-    log_info "You can launch later with: emulator -avd $avd_name"
-  fi
-
-  log_ok "All done. Happy hacking!"
+    case "$choice" in
+      1)
+        action_create_single || true
+        ;;
+      2)
+        action_create_presets || true
+        ;;
+      3)
+        list_existing_avds || true
+        ;;
+      4)
+        action_show_details || true
+        ;;
+      5)
+        action_delete_avd || true
+        ;;
+      6)
+        action_rename_avd || true
+        ;;
+      7)
+        action_export_json || true
+        ;;
+      8)
+        action_import_json || true
+        ;;
+      9)
+        action_launch_avd || true
+        ;;
+      q|Q)
+        log_ok "Done."
+        break
+        ;;
+      *)
+        log_warn "Unknown choice."
+        ;;
+    esac
+  done
 }
 
 main "$@"
