@@ -87,6 +87,12 @@ dependencies:
   hive: ^2.2.3
   hive_flutter: ^1.1.0
 
+  # Wear OS specific
+  wear: ^1.1.0                    # Wear OS platform support
+  
+  # Communication
+  nearby_connections: ^3.3.0      # Android phone-watch communication
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
