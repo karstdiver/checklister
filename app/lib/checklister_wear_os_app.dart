@@ -20,6 +20,11 @@ class ChecklisterWearOSApp extends ConsumerWidget {
     logger.i('📱 Platform: ${PlatformDetector.platformType}');
     logger.i('⌚ Wear OS Support: ${PlatformDetector.supportsWatchFeatures}');
 
+    // Initialize auth in a separate function to avoid framework issues
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeAuth(ref);
+    });
+
     return MaterialApp(
       title: 'Checklister Watch',
       debugShowCheckedModeBanner: false,
@@ -34,7 +39,7 @@ class ChecklisterWearOSApp extends ConsumerWidget {
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system,
 
-      // Home screen - simplified for testing
+      // Home screen - simplified to avoid framework issues
       home: const ChecklistWatchScreen(),
 
       // Navigation
@@ -43,5 +48,16 @@ class ChecklisterWearOSApp extends ConsumerWidget {
         // Add more Wear OS specific routes here
       },
     );
+  }
+
+  void _initializeAuth(WidgetRef ref) {
+    // Sign in anonymously for Wear OS testing
+    try {
+      final authNotifier = ref.read(authNotifierProvider.notifier);
+      authNotifier.signInAnonymously();
+      logger.i('✅ Anonymous authentication initiated for Wear OS');
+    } catch (e) {
+      logger.e('❌ Anonymous authentication failed: $e');
+    }
   }
 }

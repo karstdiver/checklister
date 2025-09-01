@@ -421,4 +421,77 @@ class ChecklistRepository {
       '[DEBUG] ChecklistRepository: Successfully cleared ALL checklists from Hive',
     );
   }
+
+  // Create sample checklists for Wear OS testing
+  Future<void> createSampleChecklists(String userId) async {
+    print(
+      '[DEBUG] ChecklistRepository: Creating sample checklists for userId=$userId',
+    );
+
+    final now = DateTime.now();
+
+    // Sample checklist 1: Groceries
+    final groceriesChecklist = Checklist.create(
+      title: 'Grocery Shopping',
+      description: 'Weekly grocery shopping list',
+      userId: userId,
+      items: [
+        ChecklistItem.create(text: 'Buy milk', order: 0),
+        ChecklistItem.create(text: 'Buy bread', order: 1),
+        ChecklistItem.create(text: 'Buy eggs', order: 2),
+        ChecklistItem.create(text: 'Buy apples', order: 3),
+        ChecklistItem.create(text: 'Buy cheese', order: 4),
+      ],
+      tags: ['shopping', 'food'],
+    );
+
+    // Sample checklist 2: Pre-Bicycle Launch
+    final preBikeChecklist = Checklist.create(
+      title: 'Pre-Bicycle Launch',
+      description: 'Safety checks before cycling',
+      userId: userId,
+      items: [
+        ChecklistItem.create(text: 'Check tire pressure', order: 0),
+        ChecklistItem.create(text: 'Test brakes', order: 1),
+        ChecklistItem.create(text: 'Check chain', order: 2),
+        ChecklistItem.create(text: 'Pack water bottle', order: 3),
+        ChecklistItem.create(text: 'Check weather', order: 4),
+      ],
+      tags: ['cycling', 'safety'],
+    );
+
+    // Sample checklist 3: Post-Bicycle Landing
+    final postBikeChecklist = Checklist.create(
+      title: 'Post-Bicycle Landing',
+      description: 'Post-ride maintenance and cleanup',
+      userId: userId,
+      items: [
+        ChecklistItem.create(text: 'Park bike securely', order: 0),
+        ChecklistItem.create(text: 'Remove helmet', order: 1),
+        ChecklistItem.create(text: 'Check for damage', order: 2),
+        ChecklistItem.create(text: 'Clean bike if needed', order: 3),
+        ChecklistItem.create(text: 'Log ride distance', order: 4),
+      ],
+      tags: ['cycling', 'maintenance'],
+    );
+
+    // Save all sample checklists to local storage
+    final sampleChecklists = [
+      groceriesChecklist,
+      preBikeChecklist,
+      postBikeChecklist,
+    ];
+
+    await saveChecklistsToLocal(sampleChecklists, userId: userId);
+
+    for (final checklist in sampleChecklists) {
+      print(
+        '[DEBUG] ChecklistRepository: Created sample checklist: ${checklist.title}',
+      );
+    }
+
+    print(
+      '[DEBUG] ChecklistRepository: Successfully created ${sampleChecklists.length} sample checklists',
+    );
+  }
 }
