@@ -4,6 +4,8 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:logger/logger.dart';
 
 import 'core/shared/platform_detector.dart';
+import 'core/providers/providers.dart';
+import 'features/auth/domain/auth_state.dart';
 import 'features/checklists/presentation/wear_os/checklist_watch_screen.dart';
 import 'shared/themes/app_theme.dart';
 
@@ -21,20 +23,20 @@ class ChecklisterWearOSApp extends ConsumerWidget {
     return MaterialApp(
       title: 'Checklister Watch',
       debugShowCheckedModeBanner: false,
-      
+
       // Localization
       localizationsDelegates: context.localizationDelegates,
       supportedLocales: context.supportedLocales,
       locale: context.locale,
-      
+
       // Theme
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system,
-      
-      // Home screen
+
+      // Home screen - simplified for testing
       home: const ChecklistWatchScreen(),
-      
+
       // Navigation
       routes: {
         '/checklist': (context) => const ChecklistWatchScreen(),

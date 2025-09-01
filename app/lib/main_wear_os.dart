@@ -18,7 +18,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'core/services/analytics_service.dart';
 
-
 final Logger logger = Logger();
 
 // Keys for SharedPreferences
@@ -111,9 +110,7 @@ void main() async {
   };
 
   // Initialize Firebase
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   // Initialize analytics
   await AnalyticsService().initialize();
@@ -123,10 +120,15 @@ void main() async {
 
   // Get language preference
   final prefs = await SharedPreferences.getInstance();
-  final savedLanguage = prefs.getString(kLanguageKey) ?? 'en';
+  final savedLanguage = prefs.getString(kLanguageKey) ?? 'en_US';
 
   // Set up localization
   await EasyLocalization.ensureInitialized();
+
+  // Parse language and country code safely
+  final languageParts = savedLanguage.split('_');
+  final languageCode = languageParts[0];
+  final countryCode = languageParts.length > 1 ? languageParts[1] : 'US';
 
   // Run the Wear OS app
   runApp(
@@ -135,10 +137,8 @@ void main() async {
       path: 'assets/translations',
       fallbackLocale: const Locale('en', 'US'),
       assetLoader: UnderscoreAssetLoader(),
-      startLocale: Locale(savedLanguage.split('_')[0], savedLanguage.split('_')[1]),
-      child: ProviderScope(
-        child: ChecklisterWearOSApp(),
-      ),
+      startLocale: Locale(languageCode, countryCode),
+      child: ProviderScope(child: ChecklisterWearOSApp()),
     ),
   );
 }
