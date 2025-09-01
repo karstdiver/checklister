@@ -1,7 +1,7 @@
-# Wear OS & watchOS Companion App - Architecture Summary
+# Wear OS Companion App - Professional Architecture Summary
 
 ## 🎯 Project Overview
-Developing an MVP companion app for both Wear OS (Android) and watchOS (iOS) platforms for Checklister that will eventually support two-way integration with Android and iOS phone apps.
+Developing a **Wear OS MVP companion app** for Checklister using Flutter, with a clear path to add watchOS later as a separate native SwiftUI application. This professional approach focuses on delivering a working solution first.
 
 ## ✅ Current Environment Status
 - **Flutter**: 3.33.0-1.0.pre.450 (master channel)
@@ -13,25 +13,24 @@ Developing an MVP companion app for both Wear OS (Android) and watchOS (iOS) pla
 ## 🏗️ Architecture Decisions
 
 ### Shared Code Strategy
-- **Domain Models**: Shared between phone, Wear OS, and watchOS apps
+- **Domain Models**: Shared between phone and Wear OS apps
 - **Business Logic**: Core checklist operations shared
-- **State Management**: Riverpod providers for cross-platform state
+- **State Management**: Riverpod providers for Flutter apps
 - **Local Storage**: Hive database for consistency
 
 ### Platform-Specific Design
 - **Wear OS**: 240x240px small round display, 48dp touch targets, swipe/tap/crown navigation
-- **watchOS**: Multiple screen sizes (38mm-49mm), digital crown, force touch, complications
+- **watchOS**: Future native SwiftUI app with digital crown, force touch, complications
 - **Shared**: Battery optimization, haptic feedback, voice input, glanceable information
 
 ## 📋 MVP Feature Phases
 
 ### Phase 1: Foundation (Weeks 1-2)
-- [ ] Cross-platform watch project structure setup
+- [ ] Wear OS project structure setup
 - [ ] Shared domain models implementation
 - [ ] Basic Wear OS UI components
-- [ ] Basic watchOS UI components
 - [ ] Local storage with Hive
-- [ ] Basic checklist viewing for both platforms
+- [ ] Basic checklist viewing
 
 ### Phase 2: Core Functionality (Weeks 3-4)
 - [ ] Item check/uncheck functionality
@@ -41,11 +40,11 @@ Developing an MVP companion app for both Wear OS (Android) and watchOS (iOS) pla
 - [ ] Error handling
 
 ### Phase 3: Companion Integration (Weeks 5-6)
-- [ ] Phone detection (Android & iOS)
+- [ ] Phone detection (Android)
 - [ ] Data synchronization
 - [ ] Conflict resolution
 - [ ] Notification support
-- [ ] Physical device testing (both platforms)
+- [ ] Physical device testing (Wear OS)
 
 ### Phase 4: Polish & Testing (Weeks 7-8)
 - [ ] Performance optimization
@@ -63,14 +62,8 @@ dependencies:
   wear: ^4.0.0                    # Wear OS platform support
   flutter_wear_os: ^1.0.0        # Wear OS Flutter bindings
   
-  # watchOS specific
-  flutter_watch_os: ^1.0.0       # watchOS Flutter bindings (when available)
-  watch_connectivity: ^0.1.0     # iOS Watch Connectivity framework
-  
-  # Cross-platform communication
+  # Communication
   nearby_connections: ^3.3.0      # Android phone-watch communication
-  ble_serial: ^0.1.0             # Bluetooth LE communication
-  flutter_blue_plus: ^1.0.0      # Cross-platform Bluetooth
 ```
 
 ### Existing Dependencies (Shared)
@@ -87,15 +80,12 @@ app/lib/
 │   ├── checklists/
 │   │   ├── presentation/
 │   │   │   ├── wear_os/          # Wear OS specific UI
-│   │   │   ├── watch_os/         # watchOS specific UI
 │   │   │   └── shared/           # Shared with phone
 │   │   ├── domain/               # Shared business logic
 │   │   └── data/                 # Shared data layer
-│   ├── sync/                     # Sync functionality
-│   └── companion/                # Phone-watch integration
+│   └── sync/                     # Sync functionality
 ├── core/
 │   ├── wear_os/                  # Wear OS specific utilities
-│   ├── watch_os/                 # watchOS specific utilities
 │   └── shared/                   # Shared infrastructure
 └── shared/                       # Cross-platform components
 ```
@@ -117,26 +107,23 @@ app/lib/
 ## 🚀 Immediate Next Steps
 
 ### This Week
-1. **Set up cross-platform watch project structure** in `feature/watch-companion` branch
-2. **Create shared domain models** for phone, Wear OS, and watchOS compatibility
+1. **Set up Wear OS project structure** in `feature/watch-companion` branch
+2. **Create shared domain models** for phone and Wear OS compatibility
 3. **Implement basic Wear OS UI** for checklist viewing
-4. **Implement basic watchOS UI** for checklist viewing
-5. **Set up local storage** with Hive for offline support
-6. **Test with Wear_OS_Small_Round AVD and iOS Simulator**
+4. **Set up local storage** with Hive for offline support
+5. **Test with Wear_OS_Small_Round AVD**
 
 ### Next 2 Weeks
 1. Complete Phase 1 foundation work
-2. Implement basic checklist interactions for both platforms
+2. Implement basic checklist interactions
 3. Add progress tracking and visual feedback
 4. Create sync infrastructure
-5. Test with physical devices (Wear OS and watchOS)
+5. Test with physical Wear OS device
 
 ## ⚠️ Risk Mitigation
 
 ### Technical Risks
 - **Wear OS API Limitations**: Early prototyping and API research
-- **watchOS API Limitations**: Early prototyping and API research
-- **Cross-Platform Complexity**: Manage platform-specific implementations
 - **Performance Issues**: Performance monitoring and optimization
 - **Sync Complexity**: Robust conflict resolution implementation
 - **Battery Drain**: Power usage monitoring and optimization
@@ -149,11 +136,12 @@ app/lib/
 
 ## 📚 Documentation
 
-- **Full MVP Plan**: `docs/wear-os-companion-mvp-plan.md`
+- **Wear OS MVP Plan**: `docs/wear-os-mvp-plan.md`
+- **watchOS Native Plan**: `docs/watchos-native-plan.md`
 - **Architecture Summary**: `docs/wear-os-architecture-summary.md` (this document)
 - **Development Guide**: To be created during implementation
 - **Testing Guide**: To be created during testing phase
 
 ---
 
-*This summary provides the essential information needed to begin implementation of the cross-platform watch companion app MVP (Wear OS & watchOS).*
+*This summary provides the essential information needed to begin implementation of the Wear OS companion app MVP, with a clear path to add watchOS later.*

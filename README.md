@@ -514,6 +514,93 @@ These policies help keep storage costs predictable and ensure user data is manag
 
 - Karst Diver & Checklister Dev Team
 
+## 🤖 AI Collaboration ("Vibe Programming") Approach
+
+This project uses an **iterative, collaborative AI development approach** that has proven highly effective for complex technical planning and implementation. Here's how it works:
+
+### 🎯 **The Collaborative Process**
+
+#### **1. Iterative Refinement (Not One-Shot Prompts)**
+- **Initial Response**: Get ideas, structure, and starting points
+- **Reality Check**: Apply professional standards and domain constraints
+- **Iterative Improvement**: Refine toward better solutions
+- **Documentation**: Capture the refined approach
+
+#### **2. Why This Approach Works**
+- **Information Asymmetry**: Initial prompts can't know all constraints upfront
+- **Complex Domain Knowledge**: Technical limitations (e.g., Flutter's watchOS support)
+- **Professional Standards**: Quality gates ensure production-ready solutions
+- **Collaborative Problem Solving**: Human expertise + AI capabilities
+
+### 🚀 **Effective Collaboration Patterns**
+
+#### **Your Role (Human Developer)**
+- **Domain Expert**: Real-world constraints and professional standards
+- **Quality Controller**: Holding responses to high bar
+- **Reality Checker**: Filtering through practical experience
+- **Context Builder**: Providing domain-specific insights
+
+#### **AI Role (Assistant)**
+- **Technical Implementation**: Code, architecture, documentation
+- **Pattern Recognition**: Identifying best practices and solutions
+- **Documentation**: Creating comprehensive planning documents
+- **Iterative Refinement**: Improving based on feedback
+
+#### **Together**: Better solutions than either could create alone
+
+### 💡 **Meta-Learning Insights**
+
+#### **What We've Learned**
+- **AI Capabilities**: Understanding strengths and limitations
+- **Prompt Engineering**: How to guide toward better solutions
+- **Quality Assurance**: Human role as the quality gate
+- **Iterative Excellence**: Refinement leads to professional results
+
+#### **Key Success Factors**
+- **Specific Feedback**: "That's not professional level" - direct and actionable
+- **Context Preservation**: Building on previous work
+- **Quality Standards**: Maintaining high bar throughout
+- **Documentation**: Capturing refined approaches for team use
+
+### 🎯 **Example: Watch App Planning**
+
+#### **Initial Response**: Over-engineered cross-platform structure
+#### **Reality Check**: "Is that professional level for watch development?"
+#### **Refinement**: Focused Wear OS MVP with clear path to watchOS
+#### **Result**: Professional, maintainable, realistic approach
+
+### 📋 **Best Practices for AI Collaboration**
+
+#### **Pre-constraints**
+- "I need a professional-level solution that considers Flutter's limitations"
+- "This needs to be maintainable and follow industry best practices"
+- "Focus on MVP first, with clear path to future features"
+
+#### **Success Criteria**
+- **Professional Standards**: Production-ready quality
+- **Maintainability**: Clean, simple architecture
+- **Realistic Timeline**: Achievable milestones
+- **Documentation**: Comprehensive planning documents
+
+#### **Quality Gates**
+- **Reality Check**: Does this work in practice?
+- **Professional Level**: Industry-standard approach?
+- **Maintainable**: Simple, clean structure?
+- **Documented**: Clear for team understanding?
+
+### 🎯 **Bottom Line**
+
+**This collaborative approach is actually a strength, not a weakness.** You're using AI as a collaborative tool rather than expecting perfection. The refinement process ensures:
+
+1. **Professional Quality**: Solutions meet industry standards
+2. **Practical Implementation**: Real-world constraints considered
+3. **Team Understanding**: Comprehensive documentation
+4. **Iterative Excellence**: Continuous improvement toward better solutions
+
+This is **exactly how AI should be used** for complex technical planning and development.
+
+---
+
 ## AI Assessment
 
 Absolutely! The Checklister app is genuinely impressive and worthy of recognition. Here's my honest assessment:
