@@ -443,7 +443,7 @@ class ChecklistRepository {
         ChecklistItem.create(text: 'Buy cheese', order: 4),
       ],
       tags: ['shopping', 'food'],
-    );
+    ).copyWith(id: 'sample_groceries_${now.millisecondsSinceEpoch}');
 
     // Sample checklist 2: Pre-Bicycle Launch
     final preBikeChecklist = Checklist.create(
@@ -458,7 +458,7 @@ class ChecklistRepository {
         ChecklistItem.create(text: 'Check weather', order: 4),
       ],
       tags: ['cycling', 'safety'],
-    );
+    ).copyWith(id: 'sample_prebike_${now.millisecondsSinceEpoch + 1}');
 
     // Sample checklist 3: Post-Bicycle Landing
     final postBikeChecklist = Checklist.create(
@@ -473,7 +473,7 @@ class ChecklistRepository {
         ChecklistItem.create(text: 'Log ride distance', order: 4),
       ],
       tags: ['cycling', 'maintenance'],
-    );
+    ).copyWith(id: 'sample_postbike_${now.millisecondsSinceEpoch + 2}');
 
     // Save all sample checklists to local storage
     final sampleChecklists = [
@@ -486,7 +486,7 @@ class ChecklistRepository {
 
     for (final checklist in sampleChecklists) {
       print(
-        '[DEBUG] ChecklistRepository: Created sample checklist: ${checklist.title}',
+        '[DEBUG] ChecklistRepository: Created sample checklist: ${checklist.title} with ID: ${checklist.id}',
       );
     }
 
