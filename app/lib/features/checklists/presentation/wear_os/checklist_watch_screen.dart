@@ -180,44 +180,119 @@ class _ChecklistWatchScreenState extends ConsumerState<ChecklistWatchScreen> {
                 ],
               ),
 
-              // Page indicator dots
+              // Page indicator dots with navigation hints
               const SizedBox(height: 6),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 mainAxisSize: MainAxisSize.min,
-                children: List.generate(
-                  displayChecklists.length,
-                  (index) => Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 1),
-                    width: 4,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: index == _currentChecklistIndex
-                          ? Colors.white
-                          : Colors.grey.withOpacity(0.3),
+                children: [
+                  // Left arrow indicator (if not on first page)
+                  if (_currentChecklistIndex > 0)
+                    Container(
+                      margin: const EdgeInsets.only(right: 8),
+                      child: const Icon(
+                        Icons.chevron_left,
+                        color: Colors.grey,
+                        size: 12,
+                      ),
+                    ),
+
+                  // Page dots
+                  ...List.generate(
+                    displayChecklists.length,
+                    (index) => Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 1),
+                      width: 4,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: index == _currentChecklistIndex
+                            ? Colors.white
+                            : Colors.grey.withOpacity(0.3),
+                      ),
                     ),
                   ),
-                ),
+
+                  // Right arrow indicator (if not on last page)
+                  if (_currentChecklistIndex < displayChecklists.length - 1)
+                    Container(
+                      margin: const EdgeInsets.only(left: 8),
+                      child: const Icon(
+                        Icons.chevron_right,
+                        color: Colors.grey,
+                        size: 12,
+                      ),
+                    ),
+                ],
               ),
             ],
           ),
         ),
 
-        // Swipeable checklist content
+        // Swipeable checklist content with improved gesture handling
         Expanded(
-          child: PageView.builder(
-            controller: _pageController,
-            onPageChanged: (index) {
-              setState(() {
-                _currentChecklistIndex = index;
-              });
+          child: RawGestureDetector(
+            gestures: <Type, GestureRecognizerFactory>{
+              HorizontalDragGestureRecognizer:
+                  GestureRecognizerFactoryWithHandlers<
+                    HorizontalDragGestureRecognizer
+                  >(() => HorizontalDragGestureRecognizer(), (
+                    HorizontalDragGestureRecognizer instance,
+                  ) {
+                    instance
+                      ..onStart = (details) {
+                        logger.d(
+                          '⌚ Raw horizontal drag started: ${details.globalPosition}',
+                        );
+                      }
+                      ..onUpdate = (details) {
+                        logger.d(
+                          '⌚ Raw horizontal drag update: ${details.delta.dx}',
+                        );
+                      }
+                      ..onEnd = (details) {
+                        logger.d(
+                          '⌚ Raw horizontal drag ended: velocity=${details.primaryVelocity}',
+                        );
+
+                        if (details.primaryVelocity != null) {
+                          if (details.primaryVelocity! > 150 &&
+                              _currentChecklistIndex > 0) {
+                            // Swipe right - go to previous checklist
+                            logger.i('⌚ Raw swipe right to previous checklist');
+                            _pageController.previousPage(
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeInOut,
+                            );
+                          } else if (details.primaryVelocity! < -150 &&
+                              _currentChecklistIndex <
+                                  displayChecklists.length - 1) {
+                            // Swipe left - go to next checklist
+                            logger.i('⌚ Raw swipe left to next checklist');
+                            _pageController.nextPage(
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeInOut,
+                            );
+                          }
+                        }
+                      };
+                  }),
             },
-            itemCount: displayChecklists.length,
-            itemBuilder: (context, index) {
-              final checklist = displayChecklists[index];
-              return _buildChecklistItems(checklist);
-            },
+            child: PageView.builder(
+              controller: _pageController,
+              physics:
+                  const NeverScrollableScrollPhysics(), // Disable PageView's own scrolling
+              onPageChanged: (index) {
+                setState(() {
+                  _currentChecklistIndex = index;
+                });
+              },
+              itemCount: displayChecklists.length,
+              itemBuilder: (context, index) {
+                final checklist = displayChecklists[index];
+                return _buildChecklistItems(checklist);
+              },
+            ),
           ),
         ),
       ],

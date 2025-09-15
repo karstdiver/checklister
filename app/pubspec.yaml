@@ -90,7 +90,7 @@ dependencies:
   # Wear OS specific (commented out for initial testing due to AGP compatibility)
   # wear: ^1.1.0                    # Wear OS platform support
   
-  # Communication (commented out for initial testing)
+  # Communication (commented out due to AGP compatibility)
   # nearby_connections: ^3.3.0      # Android phone-watch communication
 
 dev_dependencies:
